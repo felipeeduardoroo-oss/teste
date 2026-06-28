@@ -771,6 +771,52 @@
             50% { opacity: 0.3; }
             100% { opacity: 1; }
         }
+
+        /* Botão flutuante do Telegram */
+        .telegram-test-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 180, 216, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .telegram-test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 180, 216, 0.6);
+        }
+
+        .telegram-test-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .telegram-test-btn .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -1182,21 +1228,27 @@
     </div>
 
     <!-- ============================================================
+    BOTÃO FLUTUANTE — TESTAR TELEGRAM
+    ============================================================ -->
+    <button class="telegram-test-btn" id="test-telegram-btn">
+        <span id="test-btn-label">📨 Testar Alerta</span>
+    </button>
+
+    <!-- ============================================================
     JAVASCRIPT
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAÇÃO DO TELEGRAM (TOKEN DIRETO)
+        // 0. CONFIGURAÇÃO DO TELEGRAM
         // ================================================================
         const TELEGRAM_TOKEN = '8643573887:AAEu1d_RPy8vKl_-XYTd9ygdvN_yD4gF5gE';
         const TELEGRAM_CHAT_ID = '1137196768';
-
-        // ================================================================
-        // 0.1 ALERTAS VIA TELEGRAM
-        // ================================================================
         let lastAlertTime = 0;
         const ALERT_COOLDOWN = 3600000; // 1 hora
 
+        // ================================================================
+        // 0.1 FUNÇÃO DE ENVIO (compartilhada)
+        // ================================================================
         async function sendTelegramAlert(message) {
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
@@ -1211,14 +1263,67 @@
                 });
                 if (response.ok) {
                     console.log('✅ Alerta enviado para o Telegram');
+                    return { success: true };
                 } else {
-                    console.warn('❌ Falha ao enviar alerta:', await response.text());
+                    const errorText = await response.text();
+                    console.warn('❌ Falha ao enviar alerta:', errorText);
+                    return { success: false, error: errorText };
                 }
             } catch (error) {
                 console.warn('❌ Erro ao enviar alerta:', error);
+                return { success: false, error: error.message };
             }
         }
 
+        // ================================================================
+        // 0.2 BOTÃO DE TESTE — TELEGRAM
+        // ================================================================
+        document.getElementById('test-telegram-btn')?.addEventListener('click', async function() {
+            const btn = this;
+            const label = document.getElementById('test-btn-label');
+
+            const score = document.getElementById('score-value')?.textContent || '--';
+            const price = document.getElementById('btc-price')?.textContent || '--';
+            const timestamp = getCurrentTimestamp();
+
+            const testMessage = `
+🔔 <b>TESTE DE ALERTA</b>
+
+Este é um alerta de teste do seu dashboard.
+Se você está vendo esta mensagem, a integração com o Telegram está funcionando perfeitamente!
+
+✅ Status: CONECTADO
+📊 Score atual: ${score}
+💰 Preço BTC: ${price}
+
+⏰ Enviado em: ${timestamp}
+            `.trim();
+
+            // Feedback visual
+            label.innerHTML = '<span class="spinner"></span> Enviando...';
+            btn.disabled = true;
+
+            const result = await sendTelegramAlert(testMessage);
+
+            if (result.success) {
+                label.textContent = '✅ Enviado!';
+                setTimeout(() => {
+                    label.textContent = '📨 Testar Alerta';
+                    btn.disabled = false;
+                }, 2500);
+            } else {
+                label.textContent = '❌ Falha';
+                console.error('Erro detalhado:', result.error);
+                setTimeout(() => {
+                    label.textContent = '📨 Testar Alerta';
+                    btn.disabled = false;
+                }, 3000);
+            }
+        });
+
+        // ================================================================
+        // 0.3 ALERTA ESTRUTURADO (LONG/SHORT)
+        // ================================================================
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale) {
             const emojis = { long: '🟢', short: '🔴' };
             const direction = signalType.toUpperCase();
@@ -1439,7 +1544,7 @@
         }
 
         // ================================================================
-        // 5. CANDLESTICK (LIVE DA BINANCE) + CÁLCULOS DE EMA/RSI
+        // 5. CANDLESTICK + EMAs/RSI
         // ================================================================
         let candleCharts = {};
         let ema50 = 65000,
@@ -1489,7 +1594,6 @@
             }
         }
 
-        // Cálculo de EMA
         function calculateEMA(closes, period) {
             if (closes.length < period) return closes[closes.length - 1];
             const k = 2 / (period + 1);
@@ -1500,7 +1604,6 @@
             return ema;
         }
 
-        // Cálculo de RSI
         function calculateRSI(closes, period = 14) {
             if (closes.length < period + 1) return 50;
             let gains = 0,
@@ -1569,7 +1672,6 @@
                         candleCharts[p.id].candleSeries.setData(data);
                         candleCharts[p.id].chart.timeScale().fitContent();
 
-                        // Atualizar EMAs e RSI para BTC (usando dados do BTC)
                         if (p.symbol === 'BTCUSDT') {
                             const closes = data.map(c => c.close);
                             ema50 = calculateEMA(closes, 50);
@@ -1697,7 +1799,6 @@
             const rawScore = (layer1 * 0.60) + (layer2 * 0.25) + (layer3 * 0.15);
             const finalScore = clamp(rawScore, 0, 100);
 
-            // Determinar sinal
             let signal_type = 'NEUTRAL';
             let conviction = 'LOW';
             if (finalScore >= 80 && data.fearGreed < 40) { signal_type = 'STRONG_LONG';
@@ -1757,7 +1858,7 @@
         let lastSignal = 'NEUTRAL';
 
         // ================================================================
-        // 8. FUNÇÕES DE ATUALIZAÇÃO
+        // 8. UPDATE DISPLAY + ALERTAS
         // ================================================================
 
         function updateScoreDisplay(scoreData) {
@@ -1795,15 +1896,22 @@
             else if (signal_type === 'STRONG_SHORT') desc.innerHTML = '🔴 <strong>STRONG SHORT</strong> — Entrada recomendada.';
         }
 
+        // ================================================================
+        // 9. CHECK AND SEND ALERT (LIMIARES AJUSTADOS PARA TESTE)
+        // ================================================================
         async function checkAndSendAlert(scoreData) {
             const now = Date.now();
             const { score, signal_type } = scoreData;
 
+            // ⚠️ Limiares ajustados para facilitar o teste:
+            // - LONG: score >= 65 (antes era 75)
+            // - SHORT: score <= 35 (antes era 25)
+            // Depois de testar, você pode reverter para 75/25.
             if (now - lastAlertTime < ALERT_COOLDOWN) return;
 
             const price = globalData.price || 60000;
 
-            if (signal_type === 'STRONG_LONG' || signal_type === 'LONG') {
+            if ((signal_type === 'STRONG_LONG' || signal_type === 'LONG') && score >= 65) {
                 const stop = price * 0.985;
                 const targets = [
                     { price: price * 1.02, rr: 1.33 },
@@ -1814,7 +1922,8 @@
                     'Golden Cross + Fear & Greed < 30 + MVRV STH baixo + Whale acumulação.'
                 );
                 lastAlertTime = now;
-            } else if (signal_type === 'STRONG_SHORT' || signal_type === 'SHORT') {
+                console.log('✅ Alerta LONG enviado (score = ' + score + ')');
+            } else if ((signal_type === 'STRONG_SHORT' || signal_type === 'SHORT') && score <= 35) {
                 const stop = price * 1.015;
                 const targets = [
                     { price: price * 0.98, rr: 1.33 },
@@ -1825,11 +1934,14 @@
                     'RSI > 70 + OI Delta > 15% + Fear & Greed > 70.'
                 );
                 lastAlertTime = now;
+                console.log('✅ Alerta SHORT enviado (score = ' + score + ')');
+            } else {
+                console.log('ℹ️ Score = ' + score + ' — sem alerta (limiares: LONG >= 65, SHORT <= 35)');
             }
         }
 
         // ================================================================
-        // 9. FUNÇÕES DE BUSCA (APIs)
+        // 10. FUNÇÕES DE BUSCA (APIs)
         // ================================================================
 
         async function fetchPrices() {
@@ -1941,7 +2053,6 @@
                     globalData.fundingRate = fr;
                 }
 
-                // Funding Rate média 8h
                 const respAvg = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8');
                 if (respAvg.ok) {
                     const dataAvg = await respAvg.json();
@@ -1977,8 +2088,7 @@
                         if (oiDelta > 10) {
                             interp.textContent = '⚠️ OI subiu >10% — divergência!';
                             interp.className = 'alert-divergence';
-                            // Envio de alerta de risco via Telegram
-                            if (Date.now() - lastAlertTime > 300000) { // 5 min
+                            if (Date.now() - lastAlertTime > 300000) {
                                 sendTelegramAlert(
                                     `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n` +
                                     `📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n` +
@@ -1997,7 +2107,7 @@
                 }
                 localStorage.setItem('prevOI', currentOI);
 
-                // Basis (perp vs spot)
+                // Basis
                 const resp3 = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT');
                 if (!resp3.ok) throw new Error('HTTP ' + resp3.status);
                 const data3 = await resp3.json();
@@ -2044,12 +2154,10 @@
                         }
                         updateSourceTimestamp('ls-pos-source');
                         globalData.longPositionRatio = longP / 100;
-                        // Atualiza RSI estimado (proxy)
                         globalData.rsi = 50 + (longP - 50) * 0.5;
                     }
                 }
 
-                // Long/Short Ratio (contas)
                 const respLSAcc = await fetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortAccountRatio?symbol=BTCUSDT&period=24h&limit=1'
                     );
@@ -2067,7 +2175,6 @@
 
                 updateLiveTime();
 
-                // Recalcular score após atualização
                 const scoreData = computeInstitutionalScore(globalData);
                 updateScoreDisplay(scoreData);
                 await checkAndSendAlert(scoreData);
@@ -2166,7 +2273,7 @@
         }
 
         // ================================================================
-        // 10. MASTER REFRESH
+        // 11. MASTER REFRESH
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
@@ -2179,7 +2286,6 @@
                 fetchHashrate(),
                 fetchGasPrice()
             ]);
-            // Reforça o cálculo do score após todas as atualizações
             const scoreData = computeInstitutionalScore(globalData);
             updateScoreDisplay(scoreData);
             await checkAndSendAlert(scoreData);
@@ -2188,7 +2294,7 @@
         }
 
         // ================================================================
-        // 11. INIT
+        // 12. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
@@ -2212,6 +2318,10 @@
         });
 
         updateTimestamp();
+
+        // Log inicial para debug
+        console.log('✅ Dashboard iniciado. Token Telegram configurado.');
+        console.log('ℹ️ Limiares de alerta: LONG >= 65, SHORT <= 35 (modo teste).');
     </script>
 </body>
-    </html>
+</html>
