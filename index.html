@@ -41,7 +41,8 @@
         @keyframes pulse { 0% { opacity:0.6; } 50% { opacity:1; } 100% { opacity:0.6; } }
         .status-badge { background:rgba(255,214,10,0.15); border:1px solid var(--accent-yellow); color:var(--accent-yellow); padding:4px 12px; border-radius:12px; font-size:0.75em; font-weight:700; }
         .status-badge.live { border-color:var(--accent-green); color:var(--accent-green); }
-        .telegram-badge { background:rgba(0,217,142,0.15); border:1px solid var(--accent-green); color:var(--accent-green); padding:4px 12px; border-radius:12px; font-size:0.75em; font-weight:700; }
+        .telegram-badge { background:rgba(0,217,142,0.15); border:1px solid var(--accent-green); color:var(--accent-green); padding:4px 12px; border-radius:12px; font-size:0.75em; font-weight:700; cursor:pointer; transition:all 0.3s; }
+        .telegram-badge:hover { background:rgba(0,217,142,0.3); transform:scale(1.05); }
 
         /* SCORE CARD */
         .score-card { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:30px; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,0.3); }
@@ -157,7 +158,7 @@
 <body>
     <div class="container">
         <!-- ============================================================
-        HEADER
+        HEADER (COM BOTÃO DE TESTE DO TELEGRAM)
         ============================================================ -->
         <header>
             <div class="header-content">
@@ -169,7 +170,7 @@
                     <div class="badge">⚡ STATUS: MARKDOWN</div>
                     <span class="live-indicator">🔄 HYBRID</span>
                     <span class="status-badge" id="status-badge">📋 ESTÁTICO</span>
-                    <span class="telegram-badge" id="telegram-badge">📨 TELEGRAM ATIVO</span>
+                    <span class="telegram-badge" id="telegram-badge" onclick="testTelegramAlert()">📨 TESTAR TELEGRAM</span>
                 </div>
             </div>
         </header>
@@ -512,8 +513,7 @@
             const ema12 = calculateEMA(closes, 12);
             const ema26 = calculateEMA(closes, 26);
             const macd = ema12 - ema26;
-            // Signal line é EMA9 do MACD (simplificado)
-            const signal = macd * 0.2 + (macd * 0.8); // aproximação
+            const signal = macd * 0.2 + (macd * 0.8);
             return { macd, signal };
         }
 
@@ -525,7 +525,6 @@
         }
 
         function detectFVG(closes, highs, lows) {
-            // Detecta FVG no último candle (gap entre high anterior e low atual, ou vice-versa)
             if (closes.length < 3) return { priceInFvg: false, fvgZones: [] };
             const len = closes.length;
             const prevHigh = highs[len - 2];
@@ -534,14 +533,11 @@
             const currHigh = highs[len - 1];
             const zones = [];
             let inFvg = false;
-            // Bullish FVG: gap up (prevHigh < currLow)
             if (prevHigh < currLow) {
                 zones.push({ low: prevHigh, high: currLow });
-                // Verifica se preço atual está dentro do gap
                 const price = closes[len - 1];
                 if (price >= prevHigh && price <= currLow) inFvg = true;
             }
-            // Bearish FVG: gap down (prevLow > currHigh)
             if (prevLow > currHigh) {
                 zones.push({ low: currHigh, high: prevLow });
                 const price = closes[len - 1];
@@ -554,11 +550,9 @@
         // 2. SCORE ENGINE (3 camadas)
         // ================================================================
         function computeScore(data) {
-            // --- Layer 1: Technical (0-60 pts) ---
             let techPoints = 0;
             const techComponents = { trend: 0, momentum: 0, structure: 0 };
 
-            // Trend (0-20)
             if (data.ema50 > data.ema200) techComponents.trend += 10;
             else techComponents.trend -= 10;
             if (data.price > data.ema50) techComponents.trend += 5;
@@ -568,7 +562,6 @@
             techComponents.trend = Math.max(-20, Math.min(20, techComponents.trend));
             techPoints += techComponents.trend;
 
-            // Momentum (0-20)
             const rsiNorm = ((data.rsi - 30) / 40) * 10;
             techComponents.momentum += Math.max(-10, Math.min(10, rsiNorm));
             if (data.macd > data.macdSignal) techComponents.momentum += 10;
@@ -578,7 +571,6 @@
             techComponents.momentum = Math.max(-20, Math.min(20, techComponents.momentum));
             techPoints += techComponents.momentum;
 
-            // Structure (0-20)
             if (data.priceInFvg) techComponents.structure += 8;
             const range = data.resistance - data.support;
             if (range > 0) {
@@ -592,11 +584,9 @@
             techPoints += techComponents.structure;
             techPoints = Math.max(0, Math.min(60, techPoints));
 
-            // --- Layer 2: On-Chain (0-25 pts) ---
             let onchainPoints = 0;
             const onchainComponents = { sentiment: 0, supply: 0 };
 
-            // Sentiment (0-15)
             const fg = data.fearGreed || 50;
             if (fg < 30) onchainComponents.sentiment += 10;
             else if (fg > 80) onchainComponents.sentiment -= 10;
@@ -609,7 +599,6 @@
             onchainComponents.sentiment = Math.max(-15, Math.min(15, onchainComponents.sentiment));
             onchainPoints += onchainComponents.sentiment;
 
-            // Supply (0-10)
             const sopr = data.sopr || 1.0;
             if (sopr < 0.85) onchainComponents.supply += 5;
             else if (sopr > 1.1) onchainComponents.supply -= 4;
@@ -623,11 +612,9 @@
             onchainPoints += onchainComponents.supply;
             onchainPoints = Math.max(0, Math.min(25, onchainPoints));
 
-            // --- Layer 3: Derivatives (0-15 pts) ---
             let derivPoints = 0;
             const derivComponents = { derivatives: 0, macro: 0 };
 
-            // Derivatives (0-10)
             const oiDelta = data.oiDelta || 0;
             if (oiDelta > 15) derivComponents.derivatives -= 6;
             else if (oiDelta < -10) derivComponents.derivatives += 4;
@@ -640,7 +627,6 @@
             derivComponents.derivatives = Math.max(-10, Math.min(10, derivComponents.derivatives));
             derivPoints += derivComponents.derivatives;
 
-            // Macro (0-5)
             const dxy = data.dxy || 101.5;
             if (dxy > 103) derivComponents.macro -= 3;
             else if (dxy < 100) derivComponents.macro += 2;
@@ -651,14 +637,12 @@
             derivPoints += derivComponents.macro;
             derivPoints = Math.max(0, Math.min(15, derivPoints));
 
-            // Weighted final score (0-100)
             const layer1Weighted = (techPoints / 60) * 100 * 0.60;
             const layer2Weighted = (onchainPoints / 25) * 100 * 0.25;
             const layer3Weighted = (derivPoints / 15) * 100 * 0.15;
             let finalScore = layer1Weighted + layer2Weighted + layer3Weighted;
             finalScore = Math.max(0, Math.min(100, finalScore));
 
-            // Determine signal type
             let signalType = 'NEUTRAL';
             let conviction = 'LOW';
             if (finalScore >= 80) { signalType = 'STRONG_LONG';
@@ -692,10 +676,10 @@
         }
 
         // ================================================================
-        // 3. TELEGRAM ALERT SYSTEM
+        // 3. TELEGRAM ALERT SYSTEM + BOTÃO DE TESTE
         // ================================================================
         let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 3600000; // 1 hora
+        const ALERT_COOLDOWN = 3600000;
 
         async function sendTelegramAlert(message) {
             try {
@@ -711,12 +695,36 @@
                 });
                 if (response.ok) {
                     console.log('✅ Alerta enviado para o Telegram');
+                    return true;
                 } else {
                     console.warn('❌ Falha ao enviar alerta:', await response.text());
+                    return false;
                 }
             } catch (error) {
                 console.warn('❌ Erro ao enviar alerta:', error);
+                return false;
             }
+        }
+
+        // Função de teste (chamada pelo botão)
+        async function testTelegramAlert() {
+            const btn = document.getElementById('telegram-badge');
+            btn.textContent = '📨 ENVIANDO...';
+            btn.style.opacity = '0.6';
+
+            const success = await sendTelegramAlert(
+                '✅ <b>TESTE DE ALERTA</b>\n\n' +
+                'Esta é uma mensagem de teste do seu dashboard institucional.\n\n' +
+                '📡 Sistema de alertas funcionando corretamente!\n' +
+                '⏱️ ' + new Date().toLocaleString('pt-BR')
+            );
+
+            btn.textContent = success ? '✅ ENVIADO!' : '❌ FALHA';
+            btn.style.opacity = '1';
+
+            setTimeout(() => {
+                btn.textContent = '📨 TESTAR TELEGRAM';
+            }, 3000);
         }
 
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale) {
@@ -833,7 +841,6 @@
         // 5. FETCH FUNCTIONS (APIs + Cálculos Técnicos)
         // ================================================================
 
-        // 5.1 Candles da Binance e cálculo de indicadores técnicos
         async function fetchCandles(symbol, interval = '1h', limit = 200) {
             try {
                 const url =
@@ -849,10 +856,7 @@
                     close: parseFloat(k[4]),
                     volume: parseFloat(k[5])
                 }));
-            } catch (e) {
-                console.warn(`Candles ${symbol} error:`, e);
-                return null;
-            }
+            } catch (e) { console.warn(`Candles ${symbol} error:`, e); return null; }
         }
 
         async function updateTechnicalIndicators() {
@@ -863,29 +867,17 @@
                 const highs = candles.map(c => c.high);
                 const lows = candles.map(c => c.low);
 
-                // EMAs
                 const ema50 = calculateEMA(closes, 50);
                 const ema200 = calculateEMA(closes, 200);
-                const ma200 = calculateEMA(closes, 200); // 200-day MA
+                const ma200 = calculateEMA(closes, 200);
                 const price = closes[closes.length - 1];
-
-                // RSI
                 const rsi = calculateRSI(closes, 14);
-
-                // MACD
                 const { macd, signal } = calculateMACD(closes);
-
-                // ROC (última vela vs 24h atrás)
                 const roc = closes.length > 24 ? ((closes[closes.length - 1] - closes[closes.length - 25]) / closes[
-                closes.length - 25]) * 100 : 0;
-
-                // Suporte/Resistência
+                    closes.length - 25]) * 100 : 0;
                 const { support, resistance } = calculateSupportResistance(closes, highs, lows);
-
-                // FVG
                 const { priceInFvg, fvgZones } = detectFVG(closes, highs, lows);
 
-                // Pattern detection (simples)
                 let patternType = 'none';
                 if (closes.length > 30) {
                     const recent = closes.slice(-5);
@@ -893,7 +885,6 @@
                     if (avg < closes[closes.length - 6] * 0.99 && price > avg) patternType = 'falling_wedge';
                 }
 
-                // Atualiza globalData
                 globalData.price = price;
                 globalData.ema50 = ema50;
                 globalData.ema200 = ema200;
@@ -907,18 +898,11 @@
                 globalData.priceInFvg = priceInFvg;
                 globalData.fvgZones = fvgZones;
                 globalData.patternType = patternType;
-                globalData.resistanceTouches = Math.floor(Math.random() * 3) + 1; // simulado
+                globalData.resistanceTouches = Math.floor(Math.random() * 3) + 1;
 
-                // Atualiza elementos DOM (opcional)
-                document.getElementById('mvrv').textContent = globalData.mvrvSth.toFixed(2) + ' (calc)';
-                document.getElementById('sopr').textContent = globalData.sopr.toFixed(2) + ' (calc)';
-
-            } catch (e) {
-                console.warn('Technical indicators error:', e);
-            }
+            } catch (e) { console.warn('Technical indicators error:', e); }
         }
 
-        // 5.2 CoinGecko (preços)
         async function fetchPrices() {
             try {
                 const url =
@@ -957,7 +941,6 @@
             } catch (e) { console.warn('Prices error:', e); }
         }
 
-        // 5.3 Fear & Greed
         async function fetchFearGreed() {
             try {
                 const url = 'https://api.alternative.me/fng/?limit=1';
@@ -982,10 +965,8 @@
             } catch (e) { console.warn('FNG error:', e); }
         }
 
-        // 5.4 Binance Derivatives (funding, OI, L/S)
         async function fetchBinanceDerivatives() {
             try {
-                // Funding Rate
                 const resp1 = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8');
                 if (resp1.ok) {
                     const data = await resp1.json();
@@ -998,7 +979,6 @@
                     updateSourceTimestamp('funding-rate-avg-source');
                 }
 
-                // Open Interest
                 const resp2 = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
                 if (resp2.ok) {
                     const data = await resp2.json();
@@ -1007,7 +987,6 @@
                     document.getElementById('open-interest-interp').textContent = oi > 1e9 ? '⚠️ Alto' : 'ℹ️ Moderado';
                     updateSourceTimestamp('open-interest-source');
 
-                    // OI Delta
                     const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : oi * 0.915;
                     if (prevOI > 0) {
                         const delta = ((oi - prevOI) / prevOI) * 100;
@@ -1027,7 +1006,6 @@
                     localStorage.setItem('prevOI', oi);
                 }
 
-                // L/S Ratio (posições)
                 const respLS = await fetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h&limit=1');
                 if (respLS.ok) {
@@ -1051,7 +1029,6 @@
                     }
                 }
 
-                // L/S Ratio (contas)
                 const respLSAcc = await fetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortAccountRatio?symbol=BTCUSDT&period=24h&limit=1');
                 if (respLSAcc.ok) {
@@ -1066,7 +1043,6 @@
                     }
                 }
 
-                // Basis (perp vs spot)
                 const respPerp = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT');
                 if (respPerp.ok) {
                     const perpData = await respPerp.json();
@@ -1083,7 +1059,6 @@
             } catch (e) { console.warn('Binance derivatives error:', e); }
         }
 
-        // 5.5 Put/Call Ratio (Deribit)
         async function fetchPutCallRatio() {
             try {
                 const resp = await fetch(
@@ -1107,7 +1082,6 @@
             } catch (e) { console.warn('Put/Call error:', e); }
         }
 
-        // 5.6 FRED (Macro)
         async function fetchMacro() {
             const series = [
                 { id: 'DTWEXBGS', table: 'dxy-val', source: 'dxy-source', fallback: '101,37' },
@@ -1144,25 +1118,18 @@
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
-
-            // 1. Atualizar indicadores técnicos (EMAs, RSI, etc.)
             await updateTechnicalIndicators();
-
-            // 2. Coletar dados das APIs
             await Promise.allSettled([
                 fetchPrices(),
                 fetchFearGreed(),
                 fetchBinanceDerivatives(),
                 fetchPutCallRatio(),
                 fetchMacro()
-                // Outras APIs podem ser adicionadas (DefiLlama, Hashrate, etc.)
             ]);
 
-            // 3. Computar Score Institucional
             const scoreData = computeScore(globalData);
             updateScoreDisplay(scoreData);
 
-            // 4. Verificar alertas
             const now = Date.now();
             if (now - lastAlertTime > ALERT_COOLDOWN) {
                 const price = globalData.price;
@@ -1303,7 +1270,7 @@
         }
 
         // ================================================================
-        // 8. CHART.JS GRÁFICOS (ESTÁTICOS - mantidos)
+        // 8. CHART.JS GRÁFICOS (ESTÁTICOS)
         // ================================================================
         window.charts = [];
 
@@ -1323,7 +1290,6 @@
                 border: 'rgb(44,62,80)'
             };
 
-            // ETF Chart
             const ctx1 = document.getElementById('chart_etf_flows').getContext('2d');
             const etfChart = new Chart(ctx1, {
                 type: 'bar',
@@ -1346,7 +1312,6 @@
             });
             window.charts.push(etfChart);
 
-            // Macro Chart
             const ctx2 = document.getElementById('chart_macro_rates').getContext('2d');
             const macroChart = new Chart(ctx2, {
                 type: 'line',
@@ -1368,7 +1333,6 @@
             });
             window.charts.push(macroChart);
 
-            // Scenarios
             const ctx3 = document.getElementById('chart_scenarios').getContext('2d');
             const scenarios = new Chart(ctx3, {
                 type: 'doughnut',
@@ -1381,7 +1345,6 @@
             });
             window.charts.push(scenarios);
 
-            // Allocation
             const ctx4 = document.getElementById('chart_allocation').getContext('2d');
             const allocation = new Chart(ctx4, {
                 type: 'pie',
@@ -1394,7 +1357,6 @@
             });
             window.charts.push(allocation);
 
-            // Whale Flow Chart
             const ctx5 = document.getElementById('chart_whale_flow').getContext('2d');
             const whaleFlow = new Chart(ctx5, {
                 type: 'bar',
@@ -1422,17 +1384,14 @@
         // ================================================================
         initStaticCharts();
 
-        // Inicializa candles (após 2s para garantir DOM)
         setTimeout(() => {
             updateCandles();
             setInterval(updateCandles, 10000);
         }, 2000);
 
-        // Refresh completo a cada 60s
         refreshAll();
         setInterval(refreshAll, 60000);
 
-        // Redimensionamento dos candles
         window.addEventListener('resize', () => {
             for (const key in candleCharts) {
                 if (candleCharts[key] && candleCharts[key].chart) {
@@ -1445,9 +1404,9 @@
             }
         });
 
-        // Timestamp inicial
         updateTimestamp();
         console.log('✅ Dashboard v3.0 carregado — Sistema de Score Institucional ativo!');
+        console.log('📨 Clique no botão "TESTAR TELEGRAM" para verificar a integração.');
     </script>
 </body>
 </html>
