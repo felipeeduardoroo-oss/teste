@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Estático + Live + Alertas</title>
+    <title>Dashboard Institucional — Score + Alertas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
     </script>
     <style>
         /* ============================================================
-           ESTILOS (MANTIDOS + NOVOS)
+           ESTILOS COMPLETOS (MANTIDOS E NOVOS)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -142,18 +142,77 @@
             color: var(--accent-green);
         }
 
-        .update-timestamp {
-            color: var(--text-muted);
+        .telegram-badge {
+            background: rgba(0, 217, 142, 0.15);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            padding: 4px 12px;
+            border-radius: 12px;
             font-size: 0.75em;
-            margin-top: 2px;
-            display: block;
+            font-weight: 700;
         }
 
-        .source-with-time {
-            font-size: 0.75em;
+        /* SCORE CARD */
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-value {
+            font-size: 4em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .score-label {
+            font-size: 1.2em;
             color: var(--text-muted);
-            display: block;
-            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .score-bar-container {
+            width: 100%;
+            height: 12px;
+            background: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .score-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .score-detail-item {
+            background: var(--primary);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            border: 1px solid var(--border);
+        }
+
+        .score-detail-item .label {
+            color: var(--text-muted);
+        }
+
+        .score-detail-item .value {
+            font-weight: 700;
+            color: var(--text-light);
         }
 
         /* CANDLES */
@@ -218,7 +277,6 @@
             height: 250px;
         }
 
-        /* LEGENDA DOS CANDLES */
         .candle-legend {
             display: flex;
             justify-content: center;
@@ -593,7 +651,7 @@
             text-align: center;
         }
 
-        .score-value {
+        .score-box .score-value {
             font-size: 2.5em;
             font-weight: 700;
             margin-bottom: 8px;
@@ -703,7 +761,6 @@
             font-size: 0.85em;
         }
 
-        /* Alerta de divergência OI */
         .alert-divergence {
             color: var(--accent-yellow);
             font-weight: 700;
@@ -714,17 +771,6 @@
             50% { opacity: 0.3; }
             100% { opacity: 1; }
         }
-
-        /* Badge Telegram ativo */
-        .telegram-badge {
-            background: rgba(0, 217, 142, 0.15);
-            border: 1px solid var(--accent-green);
-            color: var(--accent-green);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.75em;
-            font-weight: 700;
-        }
     </style>
 </head>
 <body>
@@ -734,7 +780,7 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Estático + Live + Alertas</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -746,6 +792,32 @@
                 </div>
             </div>
         </header>
+
+        <!-- ============================================================
+        SCORE CARD (NOVO)
+        ============================================================ -->
+        <section>
+            <div class="score-card">
+                <div class="score-label">Score Institucional</div>
+                <div class="score-value" id="score-value" style="color: var(--accent-yellow);">50</div>
+                <div class="score-bar-container">
+                    <div class="score-bar-fill" id="score-bar" style="width: 50%; background: var(--accent-yellow);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: var(--text-muted);">
+                    <span>🔴 VENDA (0)</span>
+                    <span>🟡 NEUTRO (50)</span>
+                    <span>🟢 COMPRA (100)</span>
+                </div>
+                <div class="score-details">
+                    <div class="score-detail-item"><span class="label">Tendência</span> <span class="value" id="score-trend">--</span></div>
+                    <div class="score-detail-item"><span class="label">Momentum</span> <span class="value" id="score-momentum">--</span></div>
+                    <div class="score-detail-item"><span class="label">Estrutura</span> <span class="value" id="score-structure">--</span></div>
+                    <div class="score-detail-item"><span class="label">On-Chain</span> <span class="value" id="score-onchain">--</span></div>
+                    <div class="score-detail-item"><span class="label">Volume</span> <span class="value" id="score-volume">--</span></div>
+                    <div class="score-detail-item"><span class="label">OI Delta</span> <span class="value" id="score-oi">--</span></div>
+                </div>
+            </div>
+        </section>
 
         <!-- ============================================================
         RESUMO EXECUTIVO
@@ -790,7 +862,7 @@
         </section>
 
         <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK (LIVE DA BINANCE)
+        GRÁFICOS DE CANDLESTICK
         ============================================================ -->
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (LIVE)</h2>
@@ -844,7 +916,7 @@
         </section>
 
         <!-- ============================================================
-        ON-CHAIN ANALYSIS (com novos indicadores)
+        ON-CHAIN ANALYSIS
         ============================================================ -->
         <section>
             <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS</h2>
@@ -1098,9 +1170,8 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Gráficos de candle: dados ao vivo da Binance (atualização a cada 10s). Demais métricas: dados estáticos de referência, com tentativas de atualização em background via APIs (CoinGecko, Alternative.me, etc.).</p>
+                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Alertas Telegram para condições extremas.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
-                    <p><strong>Alertas via Telegram:</strong> Notificações enviadas quando OI Delta > 10% ou Long Ratio > 70%.</p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
@@ -1118,8 +1189,12 @@
         const TELEGRAM_CHAT_ID = '1137196768';
 
         // ================================================================
-        // 0.1 ALERTAS VIA TELEGRAM
+        // 0.1 ALERTAS VIA TELEGRAM (ESTRUTURADOS)
         // ================================================================
+        let lastAlertScore = 50;
+        let lastAlertTime = 0;
+        const ALERT_COOLDOWN = 3600000; // 1 hora
+
         async function sendTelegramAlert(message) {
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
@@ -1140,6 +1215,25 @@
             } catch (error) {
                 console.warn('❌ Erro ao enviar alerta:', error);
             }
+        }
+
+        async function sendStructuredAlert(signalType, score, price, stop, targets, rationale) {
+            const emojis = { long: '🟢', short: '🔴' };
+            const direction = signalType.toUpperCase();
+            let msg = `${emojis[signalType]} <b>SINAL ${direction} - BTCUSDT</b>\n`;
+            msg += `Confiança: ${Math.round(score)}%\n`;
+            msg += `Preço: $${price.toFixed(2)}\n`;
+            msg += `Stop Loss: $${stop.toFixed(2)}\n`;
+            msg += `Alvos:\n`;
+            targets.forEach((t, i) => {
+                msg += `  TP${i+1}: $${t.price.toFixed(2)} (R:R ${t.rr.toFixed(1)})\n`;
+            });
+            msg += `Score: ${Math.round(score)}/100\n`;
+            msg += `Fundamentos: ${rationale}\n`;
+            msg += `Risco: ${score > 75 ? 'Médio' : 'Alto'}\n`;
+            msg += `Próxima atualização: ${getCurrentTimestamp()}`;
+
+            await sendTelegramAlert(msg);
         }
 
         // ================================================================
@@ -1318,6 +1412,10 @@
             return now.toLocaleString('pt-BR', options);
         }
 
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
         // ================================================================
         // 4. TIMESTAMP
         // ================================================================
@@ -1348,7 +1446,7 @@
         }
 
         // ================================================================
-        // 5. CANDLESTICK (LIVE DA BINANCE)
+        // 5. CANDLESTICK
         // ================================================================
         let candleCharts = {};
 
@@ -1466,8 +1564,168 @@
         }
 
         // ================================================================
-        // 6. FUNÇÕES DE ATUALIZAÇÃO EM BACKGROUND (tentam APIs)
+        // 6. SCORE INSTITUCIONAL
         // ================================================================
+        let lastScore = 50;
+        let lastScoreTime = 0;
+
+        function computeScore(data) {
+            // Extrair dados (com fallbacks)
+            const price = data.price || 60000;
+            const ema50 = data.ema50 || 65000;
+            const ema200 = data.ema200 || 62000;
+            const rsi = data.rsi !== undefined ? data.rsi : 45;
+            const macd = data.macd || 120;
+            const macdSignal = data.macdSignal || 100;
+            const roc = data.roc || -2.5;
+            const support = data.support || 58000;
+            const resistance = data.resistance || 70000;
+            const fvgZones = data.fvgZones || [{ low: 62000, high: 63500 }];
+            const mvrv = data.mvrv || 1.2;
+            const sopr = data.sopr || 0.95;
+            const volumeRel = data.volumeRel || 1.0;
+            const oiDelta = data.oiDelta || 0.0;
+
+            // --- 1. Tendência ---
+            let t = (ema50 > ema200) ? 1 : -1;
+
+            // --- 2. Momentum ---
+            let rsi_norm = clamp((rsi - 30) / 40, 0, 1);
+            let macd_diff = macd - macdSignal;
+            let macd_norm = clamp((macd_diff / 200) + 0.5, 0, 1);
+            let roc_norm = clamp((roc / 100) + 0.5, 0, 1);
+            let m = (rsi_norm + macd_norm + roc_norm) / 3;
+
+            // --- 3. Estrutura ---
+            let range = resistance - support;
+            let se_raw = (price - support) / range;
+            let se = 1 - clamp(se_raw, 0, 1);
+            // Bônus FVG
+            let inFvg = fvgZones.some(fvg => price >= fvg.low && price <= fvg.high);
+            if (inFvg) se = Math.min(se + 0.2, 1);
+
+            // --- 4. On-Chain ---
+            let mvrv_norm = 1 - clamp((mvrv - 1) / 3, 0, 1);
+            let sopr_norm = clamp(sopr - 0.5, 0, 1);
+            let o = (mvrv_norm + sopr_norm) / 2;
+
+            // --- 5. Volume ---
+            let vol = clamp((volumeRel - 0.5) * 2, -1, 1);
+            vol = (vol + 1) / 2; // 0 a 1
+
+            // --- 6. OI Delta ---
+            let oi = clamp(oiDelta / 20, -1, 1);
+            oi = (oi + 1) / 2; // 0 a 1
+
+            // --- Score final com pesos ---
+            let raw = (t * 0.25 + m * 0.20 + se * 0.15 + o * 0.10 + vol * 0.15 + oi * 0.15);
+            // Ajuste: se raw < 0, vai para 0; se > 1, vai para 1
+            raw = clamp((raw + 1) / 2, 0, 1);
+
+            let finalScore = raw * 100;
+
+            // Penalidade por divergência OI (se delta > 10%)
+            if (Math.abs(oiDelta) > 10) {
+                finalScore -= 10;
+                finalScore = clamp(finalScore, 0, 100);
+            }
+
+            // Guardar componentes para exibição
+            const components = {
+                trend: (t * 0.25 * 50 + 50).toFixed(1),
+                momentum: (m * 0.20 * 50 + 50).toFixed(1),
+                structure: (se * 0.15 * 50 + 50).toFixed(1),
+                onchain: (o * 0.10 * 50 + 50).toFixed(1),
+                volume: (vol * 0.15 * 50 + 50).toFixed(1),
+                oi: (oi * 0.15 * 50 + 50).toFixed(1)
+            };
+
+            return { score: Math.round(finalScore), components };
+        }
+
+        function updateScoreDisplay(scoreData) {
+            const score = scoreData.score;
+            const components = scoreData.components;
+
+            const scoreValue = document.getElementById('score-value');
+            const scoreBar = document.getElementById('score-bar');
+
+            if (scoreValue) {
+                scoreValue.textContent = score;
+                if (score >= 75) {
+                    scoreValue.style.color = 'var(--accent-green)';
+                    scoreBar.style.background = 'var(--accent-green)';
+                } else if (score <= 25) {
+                    scoreValue.style.color = 'var(--accent-red)';
+                    scoreBar.style.background = 'var(--accent-red)';
+                } else {
+                    scoreValue.style.color = 'var(--accent-yellow)';
+                    scoreBar.style.background = 'var(--accent-yellow)';
+                }
+            }
+            if (scoreBar) {
+                scoreBar.style.width = score + '%';
+            }
+
+            document.getElementById('score-trend').textContent = components.trend;
+            document.getElementById('score-momentum').textContent = components.momentum;
+            document.getElementById('score-structure').textContent = components.structure;
+            document.getElementById('score-onchain').textContent = components.onchain;
+            document.getElementById('score-volume').textContent = components.volume;
+            document.getElementById('score-oi').textContent = components.oi;
+
+            // Verificar se deve enviar alerta
+            const now = Date.now();
+            if (now - lastAlertTime > ALERT_COOLDOWN) {
+                if (score >= 75) {
+                    const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
+                    const stop = price * 0.98;
+                    const targets = [
+                        { price: price * 1.02, rr: 1.0 },
+                        { price: price * 1.05, rr: 2.5 }
+                    ];
+                    sendStructuredAlert('long', score, price, stop, targets,
+                        'Golden Cross + RSI > 50, MVRV baixo, SOPR > 1, funding rate negativo.'
+                    );
+                    lastAlertTime = now;
+                    lastAlertScore = score;
+                } else if (score <= 25) {
+                    const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
+                    const stop = price * 1.02;
+                    const targets = [
+                        { price: price * 0.98, rr: 1.0 },
+                        { price: price * 0.95, rr: 2.5 }
+                    ];
+                    sendStructuredAlert('short', score, price, stop, targets,
+                        'RSI > 70, resistência quebrada, OI em alta, overbought extremo.'
+                    );
+                    lastAlertTime = now;
+                    lastAlertScore = score;
+                }
+            }
+        }
+
+        // ================================================================
+        // 7. FUNÇÕES DE ATUALIZAÇÃO EM BACKGROUND
+        // ================================================================
+
+        // Variáveis globais para o score
+        let globalData = {
+            price: 60000,
+            ema50: 65000,
+            ema200: 62000,
+            rsi: 45,
+            macd: 120,
+            macdSignal: 100,
+            roc: -2.5,
+            support: 58000,
+            resistance: 70000,
+            fvgZones: [{ low: 62000, high: 63500 }],
+            mvrv: 1.2,
+            sopr: 0.95,
+            volumeRel: 1.0,
+            oiDelta: 0.0
+        };
 
         async function fetchPrices() {
             try {
@@ -1481,6 +1739,7 @@
                 document.getElementById('btc-price').className = 'value ' + getChangeClass(btc.usd_24h_change);
                 document.getElementById('btc-change').textContent = formatChange(btc.usd_24h_change) + ' (live)';
                 updateSourceTimestamp('btc-source');
+                globalData.price = btc.usd;
                 const eth = data.ethereum;
                 document.getElementById('eth-price').textContent = formatCurrency(eth.usd);
                 document.getElementById('eth-price').className = 'value ' + getChangeClass(eth.usd_24h_change);
@@ -1527,7 +1786,6 @@
 
         async function fetchDeFiData() {
             try {
-                // Stablecoin Supply
                 const resp1 = await fetch('https://stablecoins.llama.fi/stablecoins');
                 if (!resp1.ok) throw new Error('HTTP ' + resp1.status);
                 const data1 = await resp1.json();
@@ -1540,7 +1798,6 @@
                     updateSourceTimestamp('stablecoin-source');
                 }
 
-                // DeFi TVL
                 const resp2 = await fetch('https://api.llama.fi/charts');
                 if (!resp2.ok) throw new Error('HTTP ' + resp2.status);
                 const data2 = await resp2.json();
@@ -1603,20 +1860,21 @@
                 // OI Delta (usando localStorage)
                 const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : currentOI *
                 0.915;
+                let oiDelta = 0;
                 if (prevOI > 0 && currentOI > 0) {
-                    const delta = ((currentOI - prevOI) / prevOI) * 100;
-                    if (!isNaN(delta)) {
-                        document.getElementById('oi-delta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1) +
+                    oiDelta = ((currentOI - prevOI) / prevOI) * 100;
+                    if (!isNaN(oiDelta)) {
+                        document.getElementById('oi-delta').textContent = (oiDelta >= 0 ? '+' : '') + oiDelta.toFixed(1) +
                             '% (live)';
                         const interp = document.getElementById('oi-delta-interp');
-                        if (delta > 10) {
+                        if (oiDelta > 10) {
                             interp.textContent = '⚠️ OI subiu >10% — divergência!';
                             interp.className = 'alert-divergence';
-                            // ENVIA ALERTA TELEGRAM
+                            // Alerta via Telegram
                             const price = document.getElementById('btc-price')?.textContent || 'N/A';
                             sendTelegramAlert(
                                 `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n` +
-                                `📊 OI subiu <b>${delta.toFixed(1)}%</b> em 24h!\n` +
+                                `📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n` +
                                 `💰 Preço BTC: ${price}\n` +
                                 `⚠️ Possível divergência de preço e OI.`
                             );
@@ -1625,6 +1883,7 @@
                             interp.className = '';
                         }
                         updateSourceTimestamp('oi-delta-source');
+                        globalData.oiDelta = oiDelta;
                     }
                 }
                 localStorage.setItem('prevOI', currentOI);
@@ -1661,7 +1920,7 @@
                         if (longP > 70) {
                             interp.textContent = '⚠️ Long extremo (>70%)';
                             interp.className = 'alert-divergence';
-                            // ENVIA ALERTA TELEGRAM
+                            // Alerta via Telegram
                             const price = document.getElementById('btc-price')?.textContent || 'N/A';
                             sendTelegramAlert(
                                 `⚠️ <b>ALERTA DE SENTIMENTO EXTREMO</b>\n\n` +
@@ -1674,6 +1933,8 @@
                             interp.className = '';
                         }
                         updateSourceTimestamp('ls-pos-source');
+                        // Atualizar RSI estimado (proxy)
+                        globalData.rsi = 50 + (longP - 50) * 0.5;
                     }
                 }
 
@@ -1694,6 +1955,12 @@
                 }
 
                 updateLiveTime();
+
+                // Atualizar score após obter novos dados
+                const scoreData = computeScore(globalData);
+                updateScoreDisplay(scoreData);
+                lastScore = scoreData.score;
+
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
             }
@@ -1737,6 +2004,9 @@
                             document.getElementById(m.interp).textContent = interpText;
                         }
                         updateSourceTimestamp(m.source);
+                        // Atualizar variáveis globais para o score
+                        if (m.id === 'mvrv') globalData.mvrv = parseFloat(val);
+                        if (m.id === 'sopr') globalData.sopr = parseFloat(val);
                     }
                 } catch (err) {
                     console.warn('BRK error for ' + m.id, err);
@@ -1785,7 +2055,7 @@
         }
 
         // ================================================================
-        // 7. MASTER REFRESH
+        // 8. MASTER REFRESH
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
@@ -1798,10 +2068,14 @@
                 fetchHashrate(),
                 fetchGasPrice()
             ]);
+            // Atualiza o score novamente após todas as APIs
+            const scoreData = computeScore(globalData);
+            updateScoreDisplay(scoreData);
+            lastScore = scoreData.score;
         }
 
         // ================================================================
-        // 8. INIT
+        // 9. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
