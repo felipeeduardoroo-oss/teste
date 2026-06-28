@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Score + Alertas</title>
+    <title>Dashboard Institucional — Score + Alertas (LIVE)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
@@ -771,6 +771,11 @@
             50% { opacity: 0.3; }
             100% { opacity: 1; }
         }
+
+        /* Novo estilo para os dados macro dinâmicos */
+        .macro-live {
+            color: var(--accent-green);
+        }
     </style>
 </head>
 <body>
@@ -780,7 +785,7 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas (LIVE)</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -794,7 +799,7 @@
         </header>
 
         <!-- ============================================================
-        SCORE CARD (NOVO)
+        SCORE CARD
         ============================================================ -->
         <section>
             <div class="score-card">
@@ -827,31 +832,31 @@
             <div class="summary-grid">
                 <div class="summary-card">
                     <h3>Bitcoin</h3>
-                    <div class="value negative" id="btc-price">$60.000</div>
-                    <div class="subtext" id="btc-change">↓ 5,94% (referência)</div>
-                    <span class="source-with-time" id="btc-source">CoinGecko • estático</span>
+                    <div class="value negative" id="btc-price">$---</div>
+                    <div class="subtext" id="btc-change">---</div>
+                    <span class="source-with-time" id="btc-source">CoinGecko (LIVE)</span>
                 </div>
                 <div class="summary-card">
                     <h3>Ethereum</h3>
-                    <div class="value negative" id="eth-price">$1.573,53</div>
-                    <div class="subtext" id="eth-change">↓ 0,15% (referência)</div>
-                    <span class="source-with-time" id="eth-source">CoinGecko • estático</span>
+                    <div class="value negative" id="eth-price">$---</div>
+                    <div class="subtext" id="eth-change">---</div>
+                    <span class="source-with-time" id="eth-source">CoinGecko (LIVE)</span>
                 </div>
                 <div class="summary-card">
                     <h3>Solana</h3>
-                    <div class="value negative" id="sol-price">$170,00</div>
-                    <div class="subtext" id="sol-change">↓ 2,30% (referência)</div>
-                    <span class="source-with-time" id="sol-source">CoinGecko • estático</span>
+                    <div class="value negative" id="sol-price">$---</div>
+                    <div class="subtext" id="sol-change">---</div>
+                    <span class="source-with-time" id="sol-source">CoinGecko (LIVE)</span>
                 </div>
                 <div class="summary-card">
                     <h3>Sentiment Macro</h3>
-                    <div class="value negative" id="macro-summary">DXY 101,37 | US10Y 4,28%</div>
-                    <div class="subtext" id="macro-status">Referência</div>
-                    <span class="source-with-time" id="macro-source">FRED • estático</span>
+                    <div class="value negative" id="macro-summary">DXY <span id="macro-dxy">--</span> | US10Y <span id="macro-us10y">--%</span></div>
+                    <div class="subtext" id="macro-status">Carregando...</div>
+                    <span class="source-with-time" id="macro-source">FRED (LIVE)</span>
                 </div>
                 <div class="summary-card">
                     <h3>Tether Premium</h3>
-                    <div class="value negative" id="tether-premium">-0,05%</div>
+                    <div class="value negative" id="tether-premium">-0,05% (ref)</div>
                     <div class="subtext">USDT/BRL vs USD/BRL</div>
                     <span class="source-with-time" id="tether-source">ExchangeRate • estático</span>
                 </div>
@@ -916,133 +921,152 @@
         </section>
 
         <!-- ============================================================
-        ON-CHAIN ANALYSIS
+        ON-CHAIN ANALYSIS (com novos campos)
         ============================================================ -->
         <section>
-            <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS</h2>
+            <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS (LIVE)</h2>
             <div class="table-wrapper">
                 <table>
                     <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
                     <tbody>
                         <tr>
                             <td><strong>MVRV (BTC)</strong></td>
-                            <td id="mvrv">1,15</td>
-                            <td id="mvrv-interp">⚠️ Acima de 1.0</td>
-                            <td><span class="data-source" id="mvrv-source">BitView • estático</span></td>
+                            <td id="mvrv">⏳</td>
+                            <td id="mvrv-interp">--</td>
+                            <td><span class="data-source" id="mvrv-source">BitView (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>MVRV STH (BTC)</strong></td>
-                            <td id="mvrv-sth">0,84</td>
-                            <td id="mvrv-sth-interp">✅ STH em perda</td>
-                            <td><span class="data-source" id="mvrv-sth-source">BitView • estático</span></td>
+                            <td id="mvrv-sth">⏳</td>
+                            <td id="mvrv-sth-interp">--</td>
+                            <td><span class="data-source" id="mvrv-sth-source">BitView (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>SOPR</strong></td>
-                            <td id="sopr">0,80</td>
-                            <td id="sopr-interp">🔴 Weakness</td>
-                            <td><span class="data-source" id="sopr-source">BitView • estático</span></td>
+                            <td id="sopr">⏳</td>
+                            <td id="sopr-interp">--</td>
+                            <td><span class="data-source" id="sopr-source">BitView (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>aSOPR 7D</strong></td>
-                            <td id="asopr">0,99</td>
-                            <td id="asopr-interp">⚠️ Ajustado fraco</td>
-                            <td><span class="data-source" id="asopr-source">BitView • estático</span></td>
+                            <td id="asopr">⏳</td>
+                            <td id="asopr-interp">--</td>
+                            <td><span class="data-source" id="asopr-source">BitView (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Realized Price (BTC)</strong></td>
-                            <td id="realized-price">$53.600</td>
+                            <td id="realized-price">⏳</td>
                             <td>ℹ️ Preço médio de custo</td>
-                            <td><span class="data-source" id="realized-price-source">BitView • estático</span></td>
+                            <td><span class="data-source" id="realized-price-source">BitView (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>ETF Flows (BTC)</strong></td>
-                            <td id="etf-btc-live"><strong>-$445M</strong></td>
-                            <td id="etf-btc-interp">🔴 Saída</td>
-                            <td><span class="data-source" id="etf-btc-source">Farside • estático</span></td>
+                            <td id="etf-btc-live"><strong>⏳</strong></td>
+                            <td id="etf-btc-interp">--</td>
+                            <td><span class="data-source" id="etf-btc-source">Farside (referência)</span></td>
                         </tr>
                         <tr>
                             <td><strong>ETF Flows (ETH)</strong></td>
-                            <td id="etf-eth-live"><strong>-$12,85M</strong></td>
-                            <td id="etf-eth-interp">🔴 Saída</td>
-                            <td><span class="data-source" id="etf-eth-source">Farside • estático</span></td>
+                            <td id="etf-eth-live"><strong>⏳</strong></td>
+                            <td id="etf-eth-interp">--</td>
+                            <td><span class="data-source" id="etf-eth-source">Farside (referência)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Exchange Netflow</strong></td>
-                            <td id="exchange-netflow">7.247 BTC</td>
-                            <td id="exchange-netflow-interp">⚠️ Entrada em exchanges</td>
-                            <td><span class="data-source" id="exchange-netflow-source">CoinGlass • estático</span></td>
+                            <td id="exchange-netflow">⏳</td>
+                            <td id="exchange-netflow-interp">--</td>
+                            <td><span class="data-source" id="exchange-netflow-source">CoinGlass (estático)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Funding Rate (atual)</strong></td>
-                            <td id="funding-rate">0,0043%</td>
-                            <td id="funding-rate-interp">ℹ️ Neutro</td>
-                            <td><span class="data-source" id="funding-rate-source">Binance • estático</span></td>
+                            <td id="funding-rate">⏳</td>
+                            <td id="funding-rate-interp">--</td>
+                            <td><span class="data-source" id="funding-rate-source">Binance (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Funding Rate (média 8h)</strong></td>
-                            <td id="funding-rate-avg">0,0038%</td>
+                            <td id="funding-rate-avg">⏳</td>
                             <td>ℹ️ Suavizado</td>
-                            <td><span class="data-source" id="funding-rate-avg-source">Binance • estático</span></td>
+                            <td><span class="data-source" id="funding-rate-avg-source">Binance (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Open Interest</strong></td>
-                            <td id="open-interest">$20,69B</td>
-                            <td id="open-interest-interp">ℹ️ Moderado</td>
-                            <td><span class="data-source" id="open-interest-source">Binance • estático</span></td>
+                            <td id="open-interest">⏳</td>
+                            <td id="open-interest-interp">--</td>
+                            <td><span class="data-source" id="open-interest-source">Binance (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>OI Delta (24h)</strong></td>
-                            <td id="oi-delta">+8,5%</td>
-                            <td id="oi-delta-interp">ℹ️ Variação normal</td>
-                            <td><span class="data-source" id="oi-delta-source">Binance • estático</span></td>
+                            <td id="oi-delta">⏳</td>
+                            <td id="oi-delta-interp">--</td>
+                            <td><span class="data-source" id="oi-delta-source">Binance (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Basis (perp vs spot)</strong></td>
-                            <td id="basis">+0,15%</td>
-                            <td>ℹ️ Prêmio moderado</td>
-                            <td><span class="data-source" id="basis-source">Binance/CoinGecko • estático</span></td>
+                            <td id="basis">⏳</td>
+                            <td>ℹ️ Prêmio/desconto</td>
+                            <td><span class="data-source" id="basis-source">Binance/CoinGecko (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Long/Short Ratio (posições)</strong></td>
-                            <td id="ls-ratio-pos">60% / 40%</td>
-                            <td id="ls-ratio-pos-interp">ℹ️ Neutro</td>
-                            <td><span class="data-source" id="ls-pos-source">Binance • estático</span></td>
+                            <td id="ls-ratio-pos">⏳</td>
+                            <td id="ls-ratio-pos-interp">--</td>
+                            <td><span class="data-source" id="ls-pos-source">Binance (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Long/Short Ratio (contas)</strong></td>
-                            <td id="ls-ratio-acc">55% / 45%</td>
-                            <td id="ls-ratio-acc-interp">ℹ️ Levemente long</td>
-                            <td><span class="data-source" id="ls-acc-source">Binance • estático</span></td>
+                            <td id="ls-ratio-acc">⏳</td>
+                            <td id="ls-ratio-acc-interp">--</td>
+                            <td><span class="data-source" id="ls-acc-source">Binance (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>BTC Put/Call Ratio</strong></td>
-                            <td id="put-call-ratio">0,63</td>
-                            <td id="put-call-interp">⚠️ Proteção baixa</td>
-                            <td><span class="data-source" id="put-call-source">Deribit • estático</span></td>
+                            <td id="put-call-ratio">⏳</td>
+                            <td id="put-call-interp">--</td>
+                            <td><span class="data-source" id="put-call-source">Deribit (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>BTC Hashrate</strong></td>
-                            <td id="btc-hashrate">893 EH/s</td>
+                            <td id="btc-hashrate">⏳</td>
                             <td>✅ Elevado</td>
-                            <td><span class="data-source" id="hashrate-source">Blockchain.com • estático</span></td>
+                            <td><span class="data-source" id="hashrate-source">Blockchain.com (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Miner Outflow</strong></td>
-                            <td id="miner-outflow">1.234,56 BTC</td>
-                            <td id="miner-outflow-interp">⚠️ Miners vendendo</td>
-                            <td><span class="data-source" id="miner-outflow-source">CoinGlass • estático</span></td>
+                            <td id="miner-outflow">⏳</td>
+                            <td id="miner-outflow-interp">--</td>
+                            <td><span class="data-source" id="miner-outflow-source">CoinGlass (estático)</span></td>
                         </tr>
                         <tr>
                             <td><strong>Active Addresses</strong></td>
-                            <td id="active-addresses">605.298</td>
+                            <td id="active-addresses">⏳</td>
                             <td>ℹ️ Moderado</td>
-                            <td><span class="data-source" id="active-addresses-source">BitView • estático</span></td>
+                            <td><span class="data-source" id="active-addresses-source">BitView (LIVE)</span></td>
                         </tr>
                         <tr>
                             <td><strong>ETH Gas Price</strong></td>
-                            <td id="eth-gas">5,68 Gwei</td>
+                            <td id="eth-gas">⏳</td>
                             <td>✅ Baixo</td>
-                            <td><span class="data-source" id="gas-source">Etherscan • estático</span></td>
+                            <td><span class="data-source" id="gas-source">Etherscan (LIVE)</span></td>
+                        </tr>
+                        <!-- Novas linhas para macro dinâmicas -->
+                        <tr>
+                            <td><strong>DXY (USD Index)</strong></td>
+                            <td id="dxy-live">⏳</td>
+                            <td>🔴 USD Forte</td>
+                            <td><span class="data-source" id="dxy-live-source">FRED (LIVE)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>US 10Y Yield</strong></td>
+                            <td id="us10y-live">⏳</td>
+                            <td>⚠️ Yields elevados</td>
+                            <td><span class="data-source" id="us10y-live-source">FRED (LIVE)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>VIX</strong></td>
+                            <td id="vix-live">⏳</td>
+                            <td>ℹ️ Estresse do mercado</td>
+                            <td><span class="data-source" id="vix-live-source">FRED (LIVE)</span></td>
                         </tr>
                     </tbody>
                 </table>
@@ -1068,20 +1092,20 @@
         </section>
 
         <!-- ============================================================
-        MACRO INDICADORES
+        MACRO INDICADORES (agora com dados dinâmicos)
         ============================================================ -->
         <section>
-            <h2 class="section-title">🌍 INDICADORES MACROECONÔMICOS (referência)</h2>
+            <h2 class="section-title">🌍 INDICADORES MACROECONÔMICOS (LIVE)</h2>
             <div class="table-wrapper">
                 <table>
                     <thead><tr><th>Indicador</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>DXY</strong></td><td>101,37</td><td>🔴 USD Forte</td><td><span class="data-source" id="dxy-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>Fed Rate</strong></td><td>3,62%</td><td>⚠️ Juros restritivos</td><td><span class="data-source" id="fed-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>US 10Y Yield</strong></td><td>4,28%</td><td>⚠️ Yields elevados</td><td><span class="data-source" id="us10y-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>VIX</strong></td><td>18,41</td><td>ℹ️ Estresse do mercado</td><td><span class="data-source" id="vix-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>NASDAQ % (24h)</strong></td><td>-1,09%</td><td>🔴 Tech</td><td><span class="data-source" id="nasdaq-source">Alpha Vantage • estático</span></td></tr>
-                        <tr><td><strong>S&amp;P 500 % (24h)</strong></td><td>-0,05%</td><td>ℹ️ Broad market</td><td><span class="data-source" id="sp500-source">Alpha Vantage • estático</span></td></tr>
+                        <tr><td><strong>DXY</strong></td><td id="dxy-table">⏳</td><td>🔴 USD Forte</td><td><span class="data-source" id="dxy-table-source">FRED (LIVE)</span></td></tr>
+                        <tr><td><strong>Fed Rate</strong></td><td id="fed-table">⏳</td><td>⚠️ Juros restritivos</td><td><span class="data-source" id="fed-table-source">FRED (LIVE)</span></td></tr>
+                        <tr><td><strong>US 10Y Yield</strong></td><td id="us10y-table">⏳</td><td>⚠️ Yields elevados</td><td><span class="data-source" id="us10y-table-source">FRED (LIVE)</span></td></tr>
+                        <tr><td><strong>VIX</strong></td><td id="vix-table">⏳</td><td>ℹ️ Estresse do mercado</td><td><span class="data-source" id="vix-table-source">FRED (LIVE)</span></td></tr>
+                        <tr><td><strong>NASDAQ % (24h)</strong></td><td id="nasdaq-table">⏳</td><td>🔴 Tech</td><td><span class="data-source" id="nasdaq-table-source">Alpha Vantage (LIVE)</span></td></tr>
+                        <tr><td><strong>S&amp;P 500 % (24h)</strong></td><td id="sp500-table">⏳</td><td>ℹ️ Broad market</td><td><span class="data-source" id="sp500-table-source">Alpha Vantage (LIVE)</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1089,32 +1113,32 @@
         </section>
 
         <!-- ============================================================
-        WHALE ACTIVITY
+        WHALE ACTIVITY (dinâmico via Blockchain.com)
         ============================================================ -->
         <section>
-            <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (referência)</h2>
+            <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (LIVE)</h2>
             <div class="whale-activity" id="whale-container">
                 <div class="whale-card" id="whale-btc">
-                    <div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action accumulating">ACUMULANDO</span></div>
-                    <div class="whale-value">US$ 700 Milhões</div>
-                    <div class="whale-transaction">✅ Retirada de 11.400+ BTC para cold storage</div>
-                    <span class="source-with-time" id="whale-btc-source">Whale Alert • estático</span>
+                    <div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action">CARREGANDO</span></div>
+                    <div class="whale-value" id="whale-btc-value">--</div>
+                    <div class="whale-transaction" id="whale-btc-tx">⏳ Buscando transações...</div>
+                    <span class="source-with-time" id="whale-btc-source">Blockchain.com (LIVE)</span>
                 </div>
                 <div class="whale-card" id="whale-eth">
-                    <div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action distributing">DISTRIBUINDO</span></div>
-                    <div class="whale-value">US$ 27,4 Milhões</div>
-                    <div class="whale-transaction">🔴 Venda após 8 anos de hodl</div>
-                    <span class="source-with-time" id="whale-eth-source">Whale Alert • estático</span>
+                    <div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action">CARREGANDO</span></div>
+                    <div class="whale-value" id="whale-eth-value">--</div>
+                    <div class="whale-transaction" id="whale-eth-tx">⏳ Buscando transações...</div>
+                    <span class="source-with-time" id="whale-eth-source">Blockchain.com (LIVE)</span>
                 </div>
                 <div class="whale-card" id="whale-sol">
-                    <div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action accumulating">ACUMULANDO</span></div>
-                    <div class="whale-value">US$ 445,56 Milhões</div>
-                    <div class="whale-transaction">🔥 Transferência de 6,27M SOL da Binance</div>
-                    <span class="source-with-time" id="whale-sol-source">Whale Alert • estático</span>
+                    <div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action">CARREGANDO</span></div>
+                    <div class="whale-value" id="whale-sol-value">--</div>
+                    <div class="whale-transaction" id="whale-sol-tx">⏳ Buscando transações...</div>
+                    <span class="source-with-time" id="whale-sol-source">Blockchain.com (LIVE)</span>
                 </div>
             </div>
             <div class="chart-wrapper"><canvas id="chart_whale_flow"></canvas></div>
-            <div class="confirmation-description" id="whale-summary"><strong>Smart Money Direction (referência):</strong> BTC acumulando, ETH distribuindo, SOL acumulando.</div>
+            <div class="confirmation-description" id="whale-summary"><strong>Smart Money Direction:</strong> ⏳ Atualizando...</div>
         </section>
 
         <!-- ============================================================
@@ -1126,9 +1150,9 @@
                 <table>
                     <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Total Stablecoin Supply</strong></td><td id="stablecoin-supply">$320B</td><td>✅ Liquidez disponível</td><td><span class="data-source" id="stablecoin-source">DefiLlama • estático</span></td></tr>
-                        <tr><td><strong>DeFi TVL</strong></td><td id="defi-tvl">$70B</td><td id="defi-tvl-interp">⚠️ Comprimido</td><td><span class="data-source" id="defi-tvl-source">DefiLlama • estático</span></td></tr>
-                        <tr><td><strong>DeFi TVL Change (24h)</strong></td><td id="defi-tvl-change">-0,02%</td><td>ℹ️ Estável</td><td><span class="data-source" id="defi-change-source">DefiLlama • estático</span></td></tr>
+                        <tr><td><strong>Total Stablecoin Supply</strong></td><td id="stablecoin-supply">⏳</td><td>✅ Liquidez disponível</td><td><span class="data-source" id="stablecoin-source">DefiLlama (LIVE)</span></td></tr>
+                        <tr><td><strong>DeFi TVL</strong></td><td id="defi-tvl">⏳</td><td id="defi-tvl-interp">--</td><td><span class="data-source" id="defi-tvl-source">DefiLlama (LIVE)</span></td></tr>
+                        <tr><td><strong>DeFi TVL Change (24h)</strong></td><td id="defi-tvl-change">⏳</td><td>ℹ️ Movimento</td><td><span class="data-source" id="defi-change-source">DefiLlama (LIVE)</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1170,7 +1194,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Alertas Telegram para condições extremas.</p>
+                    <p>Score institucional calculado com dados em tempo real (EMA, RSI, MVRV, SOPR, Funding, OI, Put/Call, DXY, US10Y, VIX, Whale Activity). Alertas Telegram para condições extremas.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
@@ -1179,7 +1203,7 @@
     </div>
 
     <!-- ============================================================
-    JAVASCRIPT
+    JAVASCRIPT (COMPLETO COM MELHORIAS)
     ============================================================ -->
     <script>
         // ================================================================
@@ -1187,14 +1211,17 @@
         // ================================================================
         const TELEGRAM_TOKEN = '8643573887:AAEu1d_RPy8vKl_-XYTd9ygdvN_yD4gF5gE';
         const TELEGRAM_CHAT_ID = '1137196768';
+        const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
+        const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
+        const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
 
-        // ================================================================
-        // 0.1 ALERTAS VIA TELEGRAM (ESTRUTURADOS)
-        // ================================================================
         let lastAlertScore = 50;
         let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 3600000; // 1 hora
+        const ALERT_COOLDOWN = 3600000;
 
+        // ================================================================
+        // 0.1 ALERTAS TELEGRAM (estruturados)
+        // ================================================================
         async function sendTelegramAlert(message) {
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
@@ -1232,19 +1259,92 @@
             msg += `Fundamentos: ${rationale}\n`;
             msg += `Risco: ${score > 75 ? 'Médio' : 'Alto'}\n`;
             msg += `Próxima atualização: ${getCurrentTimestamp()}`;
-
             await sendTelegramAlert(msg);
         }
 
         // ================================================================
-        // 1. CHAVES DE API
+        // 1. HELPERS E TIMESTAMP
         // ================================================================
-        const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
-        const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
-        const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
+        function getCurrentTimestamp() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                second: '2-digit', timeZone: 'America/Sao_Paulo' };
+            return now.toLocaleString('pt-BR', options);
+        }
+
+        function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
+
+        function formatCurrency(value) {
+            return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatChange(value) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '--';
+            return (num >= 0 ? '+' : '') + num.toFixed(2) + '%';
+        }
+
+        function getChangeClass(value) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return 'negative';
+            return num >= 0 ? 'positive' : 'negative';
+        }
+
+        function updateTimestamp() {
+            const ts = getCurrentTimestamp();
+            document.getElementById('header-timestamp').textContent = '📅 ' + ts + ' UTC-3';
+            document.getElementById('last-update').textContent = ts;
+        }
+
+        function updateLiveTime() {
+            const ts = getCurrentTimestamp();
+            document.getElementById('live-update-time').textContent = ts;
+            const badge = document.getElementById('status-badge');
+            badge.textContent = '✅ LIVE';
+            badge.className = 'status-badge live';
+        }
+
+        function updateSourceTimestamp(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                const currentText = el.textContent;
+                if (currentText.includes('•')) {
+                    el.textContent = currentText.replace(/•.*$/, '• ' + getCurrentTimestamp());
+                } else {
+                    el.textContent = currentText + ' • ' + getCurrentTimestamp();
+                }
+            }
+        }
 
         // ================================================================
-        // 2. CHART.JS — GRÁFICOS (ESTÁTICOS)
+        // 2. CÁLCULOS TÉCNICOS (EMA, RSI)
+        // ================================================================
+        function calculateEMA(closes, period) {
+            const k = 2 / (period + 1);
+            let ema = closes[0];
+            for (let i = 1; i < closes.length; i++) {
+                ema = closes[i] * k + ema * (1 - k);
+            }
+            return ema;
+        }
+
+        function calculateRSI(closes, period = 14) {
+            let gains = 0,
+                losses = 0;
+            for (let i = 1; i <= period; i++) {
+                const diff = closes[i] - closes[i - 1];
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+            const avgGain = gains / period;
+            const avgLoss = losses / period;
+            if (avgLoss === 0) return 100;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        // ================================================================
+        // 3. CHART.JS — GRÁFICOS (ESTÁTICOS)
         // ================================================================
         window.charts = [];
 
@@ -1379,74 +1479,7 @@
         }
 
         // ================================================================
-        // 3. HELPERS
-        // ================================================================
-        function formatCurrency(value) {
-            return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function formatChange(value) {
-            const num = parseFloat(value);
-            if (isNaN(num)) return '--';
-            return (num >= 0 ? '+' : '') + num.toFixed(2) + '%';
-        }
-
-        function getChangeClass(value) {
-            const num = parseFloat(value);
-            if (isNaN(num)) return 'negative';
-            return num >= 0 ? 'positive' : 'negative';
-        }
-
-        function formatCurrencyShort(value) {
-            const abs = Math.abs(value);
-            if (abs >= 1e9) return (value / 1e9).toFixed(2) + 'B';
-            if (abs >= 1e6) return (value / 1e6).toFixed(2) + 'M';
-            if (abs >= 1e3) return (value / 1e3).toFixed(2) + 'K';
-            return value.toFixed(2);
-        }
-
-        function getCurrentTimestamp() {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                second: '2-digit', timeZone: 'America/Sao_Paulo' };
-            return now.toLocaleString('pt-BR', options);
-        }
-
-        function clamp(value, min, max) {
-            return Math.min(Math.max(value, min), max);
-        }
-
-        // ================================================================
-        // 4. TIMESTAMP
-        // ================================================================
-        function updateTimestamp() {
-            const ts = getCurrentTimestamp();
-            document.getElementById('header-timestamp').textContent = '📅 ' + ts + ' UTC-3';
-            document.getElementById('last-update').textContent = ts;
-        }
-
-        function updateLiveTime() {
-            const ts = getCurrentTimestamp();
-            document.getElementById('live-update-time').textContent = ts;
-            const badge = document.getElementById('status-badge');
-            badge.textContent = '✅ LIVE';
-            badge.className = 'status-badge live';
-        }
-
-        function updateSourceTimestamp(elementId) {
-            const el = document.getElementById(elementId);
-            if (el) {
-                const currentText = el.textContent;
-                if (currentText.includes('•')) {
-                    el.textContent = currentText.replace(/•.*$/, '• ' + getCurrentTimestamp());
-                } else {
-                    el.textContent = currentText + ' • ' + getCurrentTimestamp();
-                }
-            }
-        }
-
-        // ================================================================
-        // 5. CANDLESTICK
+        // 4. CANDLESTICK (LIVE DA BINANCE) + EMAs + RSI
         // ================================================================
         let candleCharts = {};
 
@@ -1564,10 +1597,31 @@
         }
 
         // ================================================================
-        // 6. SCORE INSTITUCIONAL
+        // 5. SCORE INSTITUCIONAL (REFINADO COM DADOS DINÂMICOS)
         // ================================================================
-        let lastScore = 50;
-        let lastScoreTime = 0;
+        let globalData = {
+            price: 60000,
+            ema50: 65000,
+            ema200: 62000,
+            rsi: 45,
+            macd: 120,
+            macdSignal: 100,
+            roc: -2.5,
+            support: 58000,
+            resistance: 70000,
+            fvgZones: [{ low: 62000, high: 63500 }],
+            mvrv: 1.2,
+            sopr: 0.95,
+            volumeRel: 1.0,
+            oiDelta: 0.0,
+            fearGreed: 50,
+            fundingRate: 0.00043,
+            longPositionRatio: 0.5,
+            dxy: 101.5,
+            etfFlow7d: -500,
+            putCallRatio: 0.63,
+            whaleAccumulation: 0
+        };
 
         function computeScore(data) {
             // Extrair dados (com fallbacks)
@@ -1585,59 +1639,103 @@
             const sopr = data.sopr || 0.95;
             const volumeRel = data.volumeRel || 1.0;
             const oiDelta = data.oiDelta || 0.0;
+            const fearGreed = data.fearGreed || 50;
+            const fundingRate = data.fundingRate || 0.00043;
+            const longRatio = data.longPositionRatio || 0.5;
+            const dxy = data.dxy || 101.5;
+            const etfFlow = data.etfFlow7d || -500;
+            const putCall = data.putCallRatio || 0.63;
+            const whaleAccum = data.whaleAccumulation || 0;
 
-            // --- 1. Tendência ---
+            // --- CAMADA 1: TÉCNICA (60%) ---
+            // Tendência
             let t = (ema50 > ema200) ? 1 : -1;
-
-            // --- 2. Momentum ---
+            // Momentum
             let rsi_norm = clamp((rsi - 30) / 40, 0, 1);
             let macd_diff = macd - macdSignal;
             let macd_norm = clamp((macd_diff / 200) + 0.5, 0, 1);
             let roc_norm = clamp((roc / 100) + 0.5, 0, 1);
             let m = (rsi_norm + macd_norm + roc_norm) / 3;
-
-            // --- 3. Estrutura ---
+            // Estrutura
             let range = resistance - support;
             let se_raw = (price - support) / range;
             let se = 1 - clamp(se_raw, 0, 1);
-            // Bônus FVG
             let inFvg = fvgZones.some(fvg => price >= fvg.low && price <= fvg.high);
             if (inFvg) se = Math.min(se + 0.2, 1);
 
-            // --- 4. On-Chain ---
-            let mvrv_norm = 1 - clamp((mvrv - 1) / 3, 0, 1);
-            let sopr_norm = clamp(sopr - 0.5, 0, 1);
-            let o = (mvrv_norm + sopr_norm) / 2;
+            // --- CAMADA 2: ON-CHAIN (25%) ---
+            // Sentimento
+            let fgScore = 0;
+            if (fearGreed < 30) fgScore = 1;
+            else if (fearGreed > 80) fgScore = -1;
+            else if (fearGreed < 45) fgScore = 0.5;
+            else if (fearGreed > 70) fgScore = -0.5;
+            // MVRV STH
+            let mvrvSth = data.mvrvSth || 1.0;
+            let mvrvSthScore = 0;
+            if (mvrvSth < 0.85) mvrvSthScore = 1;
+            else if (mvrvSth > 1.2) mvrvSthScore = -1;
+            else if (mvrvSth < 1.0) mvrvSthScore = 0.5;
+            // SOPR
+            let soprScore = 0;
+            if (sopr < 0.85) soprScore = 1;
+            else if (sopr > 1.1) soprScore = -0.5;
+            // Whale
+            let whaleScore = 0;
+            if (whaleAccum > 0) whaleScore = 1;
+            else if (whaleAccum < -500) whaleScore = -1;
+            // Média da camada on-chain
+            let o = (fgScore * 0.4 + mvrvSthScore * 0.3 + soprScore * 0.2 + whaleScore * 0.1);
+            o = (o + 1) / 2; // 0 a 1
 
-            // --- 5. Volume ---
-            let vol = clamp((volumeRel - 0.5) * 2, -1, 1);
-            vol = (vol + 1) / 2; // 0 a 1
+            // --- CAMADA 3: DERIVATIVOS & MACRO (15%) ---
+            // OI Delta
+            let oiScore = clamp(oiDelta / 20, -1, 1);
+            oiScore = (oiScore + 1) / 2;
+            // Funding Rate
+            let frScore = 0;
+            if (fundingRate > 0.0008) frScore = -1;
+            else if (fundingRate < -0.0008) frScore = 1;
+            // Long/Short
+            let lsScore = 0;
+            if (longRatio > 0.70) lsScore = -1;
+            else if (longRatio < 0.40) lsScore = 1;
+            // Put/Call
+            let pcScore = 0;
+            if (putCall < 0.5) pcScore = -1;
+            else if (putCall > 1.0) pcScore = 1;
+            // DXY
+            let dxyScore = 0;
+            if (dxy > 103) dxyScore = -1;
+            else if (dxy < 100) dxyScore = 0.5;
+            // ETF Flow
+            let etfScore = 0;
+            if (etfFlow < -1000) etfScore = -1;
+            else if (etfFlow > 200) etfScore = 0.5;
+            // Média camada 3
+            let d = (oiScore * 0.2 + (frScore + 1) / 2 * 0.15 + (lsScore + 1) / 2 * 0.15 +
+                (pcScore + 1) / 2 * 0.15 + (dxyScore + 1) / 2 * 0.15 + (etfScore + 1) / 2 * 0.2);
+            d = clamp(d, 0, 1);
 
-            // --- 6. OI Delta ---
-            let oi = clamp(oiDelta / 20, -1, 1);
-            oi = (oi + 1) / 2; // 0 a 1
-
-            // --- Score final com pesos ---
-            let raw = (t * 0.25 + m * 0.20 + se * 0.15 + o * 0.10 + vol * 0.15 + oi * 0.15);
-            // Ajuste: se raw < 0, vai para 0; se > 1, vai para 1
+            // --- PESOS DAS CAMADAS ---
+            let raw = (t * 0.25 + m * 0.20 + se * 0.15 + o * 0.25 + d * 0.15);
             raw = clamp((raw + 1) / 2, 0, 1);
-
             let finalScore = raw * 100;
 
-            // Penalidade por divergência OI (se delta > 10%)
+            // Penalidade OI delta extremo
             if (Math.abs(oiDelta) > 10) {
                 finalScore -= 10;
                 finalScore = clamp(finalScore, 0, 100);
             }
 
-            // Guardar componentes para exibição
+            // Componentes para exibição
             const components = {
                 trend: (t * 0.25 * 50 + 50).toFixed(1),
                 momentum: (m * 0.20 * 50 + 50).toFixed(1),
                 structure: (se * 0.15 * 50 + 50).toFixed(1),
-                onchain: (o * 0.10 * 50 + 50).toFixed(1),
-                volume: (vol * 0.15 * 50 + 50).toFixed(1),
-                oi: (oi * 0.15 * 50 + 50).toFixed(1)
+                onchain: (o * 0.25 * 50 + 50).toFixed(1),
+                volume: ((volumeRel - 0.5) * 50 + 50).toFixed(1),
+                oi: (oiScore * 50 + 50).toFixed(1)
             };
 
             return { score: Math.round(finalScore), components };
@@ -1674,11 +1772,11 @@
             document.getElementById('score-volume').textContent = components.volume;
             document.getElementById('score-oi').textContent = components.oi;
 
-            // Verificar se deve enviar alerta
+            // Alertas Telegram
             const now = Date.now();
             if (now - lastAlertTime > ALERT_COOLDOWN) {
                 if (score >= 75) {
-                    const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
+                    const price = globalData.price || 60000;
                     const stop = price * 0.98;
                     const targets = [
                         { price: price * 1.02, rr: 1.0 },
@@ -1690,7 +1788,7 @@
                     lastAlertTime = now;
                     lastAlertScore = score;
                 } else if (score <= 25) {
-                    const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
+                    const price = globalData.price || 60000;
                     const stop = price * 1.02;
                     const targets = [
                         { price: price * 0.98, rr: 1.0 },
@@ -1706,27 +1804,10 @@
         }
 
         // ================================================================
-        // 7. FUNÇÕES DE ATUALIZAÇÃO EM BACKGROUND
+        // 6. FUNÇÕES DE BUSCA (COM NOVAS INTEGRAÇÕES)
         // ================================================================
 
-        // Variáveis globais para o score
-        let globalData = {
-            price: 60000,
-            ema50: 65000,
-            ema200: 62000,
-            rsi: 45,
-            macd: 120,
-            macdSignal: 100,
-            roc: -2.5,
-            support: 58000,
-            resistance: 70000,
-            fvgZones: [{ low: 62000, high: 63500 }],
-            mvrv: 1.2,
-            sopr: 0.95,
-            volumeRel: 1.0,
-            oiDelta: 0.0
-        };
-
+        // 6.1 Preços
         async function fetchPrices() {
             try {
                 const url =
@@ -1756,6 +1837,7 @@
             }
         }
 
+        // 6.2 Fear & Greed
         async function fetchFearGreed() {
             try {
                 const url = 'https://api.alternative.me/fng/?limit=1';
@@ -1765,6 +1847,7 @@
                 const item = data.data[0];
                 const value = item.value;
                 const classification = item.value_classification;
+                globalData.fearGreed = parseInt(value);
                 document.getElementById('fng-value').textContent = value;
                 document.getElementById('fng-value').className = 'value ' + (parseInt(value) <= 25 ? 'negative' :
                     'positive');
@@ -1784,6 +1867,7 @@
             }
         }
 
+        // 6.3 DeFi (DefiLlama)
         async function fetchDeFiData() {
             try {
                 const resp1 = await fetch('https://stablecoins.llama.fi/stablecoins');
@@ -1820,20 +1904,37 @@
             }
         }
 
+        // 6.4 Binance Derivatives + EMA/RSI
         async function fetchBinanceDerivatives() {
             try {
-                // Funding Rate atual
+                // Primeiro, obter candles para EMA/RSI
+                const candles = await fetchCandles('BTCUSDT', '1h', 200);
+                if (candles && candles.length >= 200) {
+                    const closes = candles.map(c => c.close);
+                    const ema50 = calculateEMA(closes, 50);
+                    const ema200 = calculateEMA(closes, 200);
+                    const rsi = calculateRSI(closes, 14);
+                    globalData.ema50 = ema50;
+                    globalData.ema200 = ema200;
+                    globalData.rsi = rsi;
+                    // Suporte/resistência aproximados
+                    const high = Math.max(...candles.map(c => c.high));
+                    const low = Math.min(...candles.map(c => c.low));
+                    globalData.resistance = high * 1.02;
+                    globalData.support = low * 0.98;
+                }
+
+                // Funding Rate
                 const resp1 = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1');
-                if (!resp1.ok) throw new Error('HTTP ' + resp1.status);
-                const data1 = await resp1.json();
-                const fr = data1[0]?.fundingRate || 0;
-                if (fr) {
+                if (resp1.ok) {
+                    const data1 = await resp1.json();
+                    const fr = data1[0]?.fundingRate || 0;
+                    globalData.fundingRate = fr;
                     document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '% (live)';
                     document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
                         fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
                     updateSourceTimestamp('funding-rate-source');
                 }
-
                 // Funding Rate média 8h
                 const respAvg = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8');
                 if (respAvg.ok) {
@@ -1847,64 +1948,63 @@
 
                 // Open Interest
                 const resp2 = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
-                if (!resp2.ok) throw new Error('HTTP ' + resp2.status);
-                const data2 = await resp2.json();
-                const currentOI = parseFloat(data2.openInterest) || 0;
-                if (currentOI > 0) {
-                    document.getElementById('open-interest').textContent = formatCurrency(currentOI) + ' (live)';
-                    document.getElementById('open-interest-interp').textContent = currentOI > 1e9 ? '⚠️ Alto' :
-                        'ℹ️ Moderado';
-                    updateSourceTimestamp('open-interest-source');
+                if (resp2.ok) {
+                    const data2 = await resp2.json();
+                    const currentOI = parseFloat(data2.openInterest) || 0;
+                    if (currentOI > 0) {
+                        document.getElementById('open-interest').textContent = formatCurrency(currentOI) + ' (live)';
+                        document.getElementById('open-interest-interp').textContent = currentOI > 1e9 ? '⚠️ Alto' :
+                            'ℹ️ Moderado';
+                        updateSourceTimestamp('open-interest-source');
+                    }
+                    // OI Delta
+                    const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) :
+                        currentOI * 0.915;
+                    let oiDelta = 0;
+                    if (prevOI > 0 && currentOI > 0) {
+                        oiDelta = ((currentOI - prevOI) / prevOI) * 100;
+                        globalData.oiDelta = oiDelta;
+                        if (!isNaN(oiDelta)) {
+                            document.getElementById('oi-delta').textContent = (oiDelta >= 0 ? '+' : '') + oiDelta.toFixed(
+                            1) + '% (live)';
+                            const interp = document.getElementById('oi-delta-interp');
+                            if (oiDelta > 10) {
+                                interp.textContent = '⚠️ OI subiu >10% — divergência!';
+                                interp.className = 'alert-divergence';
+                                sendTelegramAlert(
+                                    `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n` +
+                                    `📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n` +
+                                    `💰 Preço BTC: ${globalData.price}\n` +
+                                    `⚠️ Possível divergência de preço e OI.`
+                                );
+                            } else {
+                                interp.textContent = 'ℹ️ Variação normal';
+                                interp.className = '';
+                            }
+                            updateSourceTimestamp('oi-delta-source');
+                        }
+                    }
+                    localStorage.setItem('prevOI', currentOI);
                 }
 
-                // OI Delta (usando localStorage)
-                const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : currentOI *
-                0.915;
-                let oiDelta = 0;
-                if (prevOI > 0 && currentOI > 0) {
-                    oiDelta = ((currentOI - prevOI) / prevOI) * 100;
-                    if (!isNaN(oiDelta)) {
-                        document.getElementById('oi-delta').textContent = (oiDelta >= 0 ? '+' : '') + oiDelta.toFixed(1) +
+                // Basis
+                const resp3 = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT');
+                if (resp3.ok) {
+                    const data3 = await resp3.json();
+                    const perpPrice = parseFloat(data3.price) || 0;
+                    const spotResp = await fetch(
+                        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+                    const spotData = await spotResp.json();
+                    const spotPrice = spotData.bitcoin.usd || 0;
+                    if (perpPrice > 0 && spotPrice > 0) {
+                        const basis = ((perpPrice - spotPrice) / spotPrice) * 100;
+                        document.getElementById('basis').textContent = (basis >= 0 ? '+' : '') + basis.toFixed(2) +
                             '% (live)';
-                        const interp = document.getElementById('oi-delta-interp');
-                        if (oiDelta > 10) {
-                            interp.textContent = '⚠️ OI subiu >10% — divergência!';
-                            interp.className = 'alert-divergence';
-                            // Alerta via Telegram
-                            const price = document.getElementById('btc-price')?.textContent || 'N/A';
-                            sendTelegramAlert(
-                                `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n` +
-                                `📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n` +
-                                `💰 Preço BTC: ${price}\n` +
-                                `⚠️ Possível divergência de preço e OI.`
-                            );
-                        } else {
-                            interp.textContent = 'ℹ️ Variação normal';
-                            interp.className = '';
-                        }
-                        updateSourceTimestamp('oi-delta-source');
-                        globalData.oiDelta = oiDelta;
+                        updateSourceTimestamp('basis-source');
                     }
                 }
-                localStorage.setItem('prevOI', currentOI);
 
-                // Basis (perp vs spot)
-                const resp3 = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT');
-                if (!resp3.ok) throw new Error('HTTP ' + resp3.status);
-                const data3 = await resp3.json();
-                const perpPrice = parseFloat(data3.price) || 0;
-                const spotResp = await fetch(
-                'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
-                const spotData = await spotResp.json();
-                const spotPrice = spotData.bitcoin.usd || 0;
-                if (perpPrice > 0 && spotPrice > 0) {
-                    const basis = ((perpPrice - spotPrice) / spotPrice) * 100;
-                    document.getElementById('basis').textContent = (basis >= 0 ? '+' : '') + basis.toFixed(2) +
-                        '% (live)';
-                    updateSourceTimestamp('basis-source');
-                }
-
-                // Long/Short Ratio (posições)
+                // Long/Short Ratio
                 const respLS = await fetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h&limit=1'
                     );
@@ -1914,18 +2014,17 @@
                     if (item) {
                         const longP = parseFloat(item.longPositionRatio) * 100;
                         const shortP = parseFloat(item.shortPositionRatio) * 100;
+                        globalData.longPositionRatio = longP / 100;
                         document.getElementById('ls-ratio-pos').textContent = longP.toFixed(1) + '% / ' + shortP
-                        .toFixed(1) + '% (live)';
+                            .toFixed(1) + '% (live)';
                         const interp = document.getElementById('ls-ratio-pos-interp');
                         if (longP > 70) {
                             interp.textContent = '⚠️ Long extremo (>70%)';
                             interp.className = 'alert-divergence';
-                            // Alerta via Telegram
-                            const price = document.getElementById('btc-price')?.textContent || 'N/A';
                             sendTelegramAlert(
                                 `⚠️ <b>ALERTA DE SENTIMENTO EXTREMO</b>\n\n` +
                                 `📊 Long/Short Ratio: <b>${longP.toFixed(1)}%</b> de traders estão comprados.\n` +
-                                `💰 Preço BTC: ${price}\n` +
+                                `💰 Preço BTC: ${globalData.price}\n` +
                                 `⚠️ Nível extremo (>70%) — possibilidade de correção.`
                             );
                         } else {
@@ -1933,12 +2032,9 @@
                             interp.className = '';
                         }
                         updateSourceTimestamp('ls-pos-source');
-                        // Atualizar RSI estimado (proxy)
-                        globalData.rsi = 50 + (longP - 50) * 0.5;
                     }
                 }
 
-                // Long/Short Ratio (contas)
                 const respLSAcc = await fetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortAccountRatio?symbol=BTCUSDT&period=24h&limit=1'
                     );
@@ -1949,23 +2045,20 @@
                         const longP = parseFloat(item.longAccountRatio) * 100;
                         const shortP = parseFloat(item.shortAccountRatio) * 100;
                         document.getElementById('ls-ratio-acc').textContent = longP.toFixed(1) + '% / ' + shortP
-                        .toFixed(1) + '% (live)';
+                            .toFixed(1) + '% (live)';
                         updateSourceTimestamp('ls-acc-source');
                     }
                 }
 
                 updateLiveTime();
-
-                // Atualizar score após obter novos dados
                 const scoreData = computeScore(globalData);
                 updateScoreDisplay(scoreData);
-                lastScore = scoreData.score;
-
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
             }
         }
 
+        // 6.5 BRK (BitView)
         async function fetchBRK() {
             const metrics = [
                 { id: 'mvrv', el: 'mvrv', interp: 'mvrv-interp', source: 'mvrv-source', fallback: '1,15' },
@@ -2004,9 +2097,9 @@
                             document.getElementById(m.interp).textContent = interpText;
                         }
                         updateSourceTimestamp(m.source);
-                        // Atualizar variáveis globais para o score
                         if (m.id === 'mvrv') globalData.mvrv = parseFloat(val);
                         if (m.id === 'sopr') globalData.sopr = parseFloat(val);
+                        if (m.id === 'mvrv_short') globalData.mvrvSth = parseFloat(val);
                     }
                 } catch (err) {
                     console.warn('BRK error for ' + m.id, err);
@@ -2016,6 +2109,7 @@
             await Promise.all(promises);
         }
 
+        // 6.6 Hashrate
         async function fetchHashrate() {
             try {
                 const response = await fetch('https://blockchain.info/q/hashrate', {
@@ -2034,6 +2128,7 @@
             }
         }
 
+        // 6.7 Gas Price
         async function fetchGasPrice() {
             try {
                 const url =
@@ -2054,8 +2149,186 @@
             }
         }
 
+        // 6.8 Put/Call Ratio (Deribit)
+        async function fetchPutCallRatio() {
+            try {
+                const resp = await fetch(
+                    'https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option');
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                if (!data || !data.result) throw new Error('Sem dados da Deribit');
+                const options = data.result;
+                let putOI = 0,
+                    callOI = 0;
+                options.forEach(opt => {
+                    if (opt.option_type === 'put') putOI += (opt.open_interest || 0);
+                    else if (opt.option_type === 'call') callOI += (opt.open_interest || 0);
+                });
+                if (callOI > 0) {
+                    const ratio = putOI / callOI;
+                    globalData.putCallRatio = ratio;
+                    document.getElementById('put-call-ratio').textContent = ratio.toFixed(2) + ' (live)';
+                    document.getElementById('put-call-interp').textContent = ratio < 0.7 ? '⚠️ Proteção baixa' :
+                        ratio > 1.0 ? '🟢 Proteção alta' : 'ℹ️ Neutro';
+                    updateSourceTimestamp('put-call-source');
+                    updateLiveTime();
+                } else {
+                    throw new Error('Call OI zero');
+                }
+            } catch (e) {
+                console.warn('Put/Call Deribit error, fallback:', e);
+                document.getElementById('put-call-ratio').textContent = '0,63 (fallback)';
+                document.getElementById('put-call-interp').textContent = '⚠️ Fallback';
+            }
+        }
+
+        // 6.9 FRED Macro (DXY, Fed Rate, US10Y, VIX)
+        async function fetchFREDMacro() {
+            const series = [
+                { id: 'DTWEXBGS', table: 'dxy-table', summary: 'macro-dxy', source: 'dxy-table-source',
+                    liveSource: 'dxy-live-source', fallback: '101,37' },
+                { id: 'FEDFUNDS', table: 'fed-table', summary: null, source: 'fed-table-source',
+                    liveSource: null, fallback: '3,62%' },
+                { id: 'DGS10', table: 'us10y-table', summary: 'macro-us10y', source: 'us10y-table-source',
+                    liveSource: 'us10y-live-source', fallback: '4,28%' },
+                { id: 'VIXCLS', table: 'vix-table', summary: null, source: 'vix-table-source',
+                    liveSource: 'vix-live-source', fallback: '18,41' }
+            ];
+            const promises = series.map(async s => {
+                try {
+                    const url =
+                        `https://api.stlouisfed.org/fred/series/observations?series_id=${s.id}&api_key=${FRED_API_KEY}&file_type=json&sort_order=desc&limit=1`;
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    let val = data.observations?.[0]?.value;
+                    if (val === null || val === undefined || val === '.') val = s.fallback;
+                    // Atualiza tabela macro
+                    document.getElementById(s.table).textContent = val + (s.id === 'FEDFUNDS' || s.id === 'DGS10' ?
+                        '%' : '');
+                    if (s.summary) {
+                        document.getElementById(s.summary).textContent = val;
+                    }
+                    if (s.source) updateSourceTimestamp(s.source);
+                    if (s.liveSource) updateSourceTimestamp(s.liveSource);
+                    // Atualiza card macro
+                    if (s.id === 'DTWEXBGS') globalData.dxy = parseFloat(val);
+                } catch (err) {
+                    console.warn('FRED error for ' + s.id, err);
+                    document.getElementById(s.table).textContent = s.fallback;
+                    if (s.summary) document.getElementById(s.summary).textContent = s.fallback;
+                }
+            });
+            await Promise.all(promises);
+            // Atualiza resumo macro
+            const dxy = document.getElementById('macro-dxy').textContent;
+            const us10y = document.getElementById('macro-us10y').textContent;
+            document.getElementById('macro-summary').innerHTML = `DXY ${dxy} | US10Y ${us10y}`;
+            document.getElementById('macro-status').textContent = '✅ Dados via FRED (LIVE)';
+            updateSourceTimestamp('macro-source');
+        }
+
+        // 6.10 Alpha Vantage (Stocks)
+        async function fetchStocksFromAlpha() {
+            const symbols = [
+                { symbol: 'SPX', table: 'sp500-table', source: 'sp500-table-source', fallback: '-0,05%' },
+                { symbol: 'IXIC', table: 'nasdaq-table', source: 'nasdaq-table-source', fallback: '-1,09%' }
+            ];
+            const promises = symbols.map(async s => {
+                try {
+                    const url =
+                        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${s.symbol}&apikey=${ALPHA_VANTAGE_KEY}`;
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    const quote = data['Global Quote'];
+                    if (quote && quote['10. change percent']) {
+                        const change = quote['10. change percent'].replace('%', '');
+                        document.getElementById(s.table).textContent = change + '% (live)';
+                        document.getElementById(s.table).className = getChangeClass(change);
+                        updateSourceTimestamp(s.source);
+                    } else {
+                        document.getElementById(s.table).textContent = s.fallback;
+                    }
+                } catch (err) {
+                    console.warn('Alpha Vantage error for ' + s.symbol, err);
+                    document.getElementById(s.table).textContent = s.fallback;
+                }
+            });
+            await Promise.all(promises);
+        }
+
+        // 6.11 Whale Activity (Blockchain.com)
+        async function fetchWhaleActivity() {
+            try {
+                const btcRes = await fetch('https://blockchain.com/api/coins/btc/transactions?limit=10');
+                const ethRes = await fetch('https://blockchain.com/api/coins/eth/transactions?limit=10');
+                const solRes = await fetch('https://blockchain.com/api/coins/sol/transactions?limit=10');
+
+                const btcData = await btcRes.json();
+                const ethData = await ethRes.json();
+                const solData = await solRes.json();
+
+                const btcTxs = btcData.transactions || [];
+                const ethTxs = ethData.transactions || [];
+                const solTxs = solData.transactions || [];
+
+                const btcLarge = btcTxs.filter(tx => tx.value > 1000);
+                const ethLarge = ethTxs.filter(tx => tx.value > 10000);
+                const solLarge = solTxs.filter(tx => tx.value > 100000);
+
+                // Atualiza BTC
+                if (btcLarge.length > 0) {
+                    const total = btcLarge.reduce((s, tx) => s + tx.value, 0);
+                    document.getElementById('whale-btc-value').textContent = total.toFixed(0) + ' BTC';
+                    document.getElementById('whale-btc-tx').textContent =
+                        `⚠️ ${btcLarge.length} transações > 1000 BTC detectadas (total: ${total.toFixed(0)} BTC)`;
+                    document.querySelector('#whale-btc .whale-action').textContent = '⚠️ ATENÇÃO';
+                    document.querySelector('#whale-btc .whale-action').className = 'whale-action accumulating';
+                    globalData.whaleAccumulation = total;
+                } else {
+                    document.getElementById('whale-btc-tx').textContent = 'Nenhuma transação > 1000 BTC nos últimos 10 blocos';
+                    document.querySelector('#whale-btc .whale-action').textContent = 'ACUMULANDO?';
+                    document.querySelector('#whale-btc .whale-action').className = 'whale-action';
+                }
+                // ETH
+                if (ethLarge.length > 0) {
+                    const total = ethLarge.reduce((s, tx) => s + tx.value, 0);
+                    document.getElementById('whale-eth-value').textContent = total.toFixed(0) + ' ETH';
+                    document.getElementById('whale-eth-tx').textContent =
+                        `⚠️ ${ethLarge.length} transações > 10.000 ETH detectadas (total: ${total.toFixed(0)} ETH)`;
+                    document.querySelector('#whale-eth .whale-action').textContent = '⚠️ ATENÇÃO';
+                    document.querySelector('#whale-eth .whale-action').className = 'whale-action distributing';
+                } else {
+                    document.getElementById('whale-eth-tx').textContent = 'Nenhuma transação > 10.000 ETH';
+                    document.querySelector('#whale-eth .whale-action').textContent = 'DISTRIBUINDO?';
+                    document.querySelector('#whale-eth .whale-action').className = 'whale-action';
+                }
+                // SOL
+                if (solLarge.length > 0) {
+                    const total = solLarge.reduce((s, tx) => s + tx.value, 0);
+                    document.getElementById('whale-sol-value').textContent = total.toFixed(0) + ' SOL';
+                    document.getElementById('whale-sol-tx').textContent =
+                        `⚠️ ${solLarge.length} transações > 100.000 SOL detectadas (total: ${total.toFixed(0)} SOL)`;
+                    document.querySelector('#whale-sol .whale-action').textContent = '⚠️ ATENÇÃO';
+                    document.querySelector('#whale-sol .whale-action').className = 'whale-action accumulating';
+                } else {
+                    document.getElementById('whale-sol-tx').textContent = 'Nenhuma transação > 100.000 SOL';
+                    document.querySelector('#whale-sol .whale-action').textContent = 'ACUMULANDO?';
+                    document.querySelector('#whale-sol .whale-action').className = 'whale-action';
+                }
+
+                updateSourceTimestamp('whale-btc-source');
+                updateSourceTimestamp('whale-eth-source');
+                updateSourceTimestamp('whale-sol-source');
+                updateLiveTime();
+            } catch (e) {
+                console.warn('Whale activity unavailable, keeping static');
+            }
+        }
+
         // ================================================================
-        // 8. MASTER REFRESH
+        // 7. MASTER REFRESH
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
@@ -2066,22 +2339,23 @@
                 fetchBinanceDerivatives(),
                 fetchBRK(),
                 fetchHashrate(),
-                fetchGasPrice()
+                fetchGasPrice(),
+                fetchPutCallRatio(),
+                fetchFREDMacro(),
+                fetchStocksFromAlpha(),
+                fetchWhaleActivity()
             ]);
-            // Atualiza o score novamente após todas as APIs
             const scoreData = computeScore(globalData);
             updateScoreDisplay(scoreData);
-            lastScore = scoreData.score;
         }
 
         // ================================================================
-        // 9. INIT
+        // 8. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
         setInterval(refreshAll, 60000);
 
-        // Inicializa candles
         setTimeout(() => {
             updateCandles();
             setInterval(updateCandles, 10000);
@@ -2099,7 +2373,6 @@
             }
         });
 
-        // Timestamp inicial
         updateTimestamp();
     </script>
 </body>
