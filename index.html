@@ -4,15 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard Institucional — 100% LIVE + Candles + Whales</title>
-    <!-- Chart.js (já existente) -->
+    <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
-    <!-- Lightweight Charts (TradingView) para candles -->
+    <!-- Lightweight Charts -->
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
     </script>
     <style>
         /* ============================================================
-           ESTILOS (mantidos + novos para candles)
+           ESTILOS (MANTIDOS + NOVOS PARA PORCENTAGENS)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -139,7 +139,7 @@
             font-weight: 700;
         }
 
-        /* --- NOVOS ESTILOS PARA CANDLES --- */
+        /* --- CANDLES GRID --- */
         .candles-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -160,8 +160,41 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             text-align: center;
+        }
+
+        /* Indicadores de porcentagem acima do gráfico */
+        .candle-stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+            font-weight: 600;
+            flex-wrap: wrap;
+        }
+
+        .candle-stats .stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(44, 62, 80, 0.3);
+        }
+
+        .candle-stats .stat.positive {
+            color: var(--accent-green);
+        }
+
+        .candle-stats .stat.negative {
+            color: var(--accent-red);
+        }
+
+        .candle-stats .stat .label {
+            color: var(--text-muted);
+            font-weight: 400;
         }
 
         .candle-container {
@@ -638,7 +671,7 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — 100% LIVE + Candles</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — 100% LIVE + Candles + Whales</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -664,21 +697,39 @@
         </section>
 
         <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK (NOVO)
+        GRÁFICOS DE CANDLESTICK COM INDICADORES DE VARIAÇÃO
         ============================================================ -->
         <section>
-            <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (24h)</h2>
+            <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (24h) — Atualização a cada 10s</h2>
             <div class="candles-grid">
+                <!-- BTC -->
                 <div class="candle-card">
                     <h3>Bitcoin (BTC/USDT)</h3>
+                    <div class="candle-stats" id="btc-stats">
+                        <span class="stat" id="btc-stat-1d"><span class="label">1D</span> --</span>
+                        <span class="stat" id="btc-stat-1s"><span class="label">1S</span> --</span>
+                        <span class="stat" id="btc-stat-1m"><span class="label">1M</span> --</span>
+                    </div>
                     <div id="candle-btc" class="candle-container"></div>
                 </div>
+                <!-- ETH -->
                 <div class="candle-card">
                     <h3>Ethereum (ETH/USDT)</h3>
+                    <div class="candle-stats" id="eth-stats">
+                        <span class="stat" id="eth-stat-1d"><span class="label">1D</span> --</span>
+                        <span class="stat" id="eth-stat-1s"><span class="label">1S</span> --</span>
+                        <span class="stat" id="eth-stat-1m"><span class="label">1M</span> --</span>
+                    </div>
                     <div id="candle-eth" class="candle-container"></div>
                 </div>
+                <!-- SOL -->
                 <div class="candle-card">
                     <h3>Solana (SOL/USDT)</h3>
+                    <div class="candle-stats" id="sol-stats">
+                        <span class="stat" id="sol-stat-1d"><span class="label">1D</span> --</span>
+                        <span class="stat" id="sol-stat-1s"><span class="label">1S</span> --</span>
+                        <span class="stat" id="sol-stat-1m"><span class="label">1M</span> --</span>
+                    </div>
                     <div id="candle-sol" class="candle-container"></div>
                 </div>
             </div>
@@ -780,16 +831,7 @@
                 <div class="table-wrapper" style="margin-bottom:0;">
                     <table id="whale-alerts-table">
                         <thead>
-                            <tr>
-                                <th>Ativo</th>
-                                <th>Valor (USD)</th>
-                                <th>Quantidade</th>
-                                <th>Entidade</th>
-                                <th>Origem</th>
-                                <th>Destino</th>
-                                <th>Ação</th>
-                                <th>Data/Hora</th> <!-- NOVA COLUNA -->
-                            </tr>
+                            <tr><th>Ativo</th><th>Valor (USD)</th><th>Quantidade</th><th>Entidade</th><th>Origem</th><th>Destino</th><th>Ação</th><th>Data/Hora</th></tr>
                         </thead>
                         <tbody id="whale-alerts-body"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);">⏳ Aguardando...</td></tr></tbody>
                     </table>
@@ -851,7 +893,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Todas as métricas são <strong>100% ao vivo</strong>: candles via Binance API, whales com timestamp, demais via APIs públicas e proxies. Atualização a cada <strong>60 segundos</strong>.</p>
+                    <p>Candles via Binance (atualização 10s), demais métricas via APIs públicas e proxies. Atualização geral a cada <strong>60 segundos</strong>.</p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
@@ -859,7 +901,7 @@
     </div>
 
     <!-- ============================================================
-    JAVASCRIPT — COMPLETO (Candles + Whales + Correções)
+    JAVASCRIPT — COMPLETO
     ============================================================ -->
     <script>
         // ================================================================
@@ -870,32 +912,33 @@
         const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
 
         // ================================================================
-        // 1. PROXY (para desenvolvimento local)
+        // 1. PROXY MELHORADO
         // ================================================================
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
         async function fetchWithProxy(url) {
-            if (isLocal) {
+            const proxies = [
+                url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                url => `https://thingproxy.freeboard.io/fetch/${url}`,
+                url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+            for (let i = 0; i < proxies.length; i++) {
                 try {
-                    const response = await fetch('http://localhost:8081/' + url, {
+                    const proxyUrl = proxies[i](url);
+                    const response = await fetch(proxyUrl, {
                         headers: { 'User-Agent': 'Mozilla/5.0' }
                     });
-                    if (response.ok) return response;
+                    if (response.ok) {
+                        return response;
+                    }
+                    console.warn(`Proxy ${i} (${proxies[i](url)}) retornou status ${response.status}`);
                 } catch (e) {
-                    console.warn('Proxy local falhou', e);
+                    console.warn(`Proxy ${i} falhou:`, e.message);
                 }
             }
-            // Fallback: corsproxy.io
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-            const response = await fetch(proxyUrl, {
-                headers: { 'User-Agent': 'Mozilla/5.0' }
-            });
-            if (!response.ok) throw new Error('Proxy falhou: ' + response.status);
-            return response;
+            throw new Error('Todos os proxies falharam');
         }
 
         // ================================================================
-        // 2. CHART.JS — GRÁFICOS (mesmo código, mantido)
+        // 2. CHART.JS — GRÁFICOS (mantido)
         // ================================================================
         window.charts = [];
 
@@ -1087,9 +1130,10 @@
         window.whaleHistory = [];
 
         // ================================================================
-        // 5. CANDLESTICK CHARTS (Lightweight Charts)
+        // 5. CANDLESTICK CHARTS (Lightweight Charts) com PORCENTAGENS
         // ================================================================
         let candleCharts = {};
+        let candleIntervals = {};
 
         function initCandleChart(containerId, symbol, color) {
             const container = document.getElementById(containerId);
@@ -1102,8 +1146,8 @@
                     textColor: '#95a5a6',
                 },
                 grid: {
-                    vertLines: { color: '#2c3e50' },
-                    horzLines: { color: '#2c3e50' },
+                    vertLines: { visible: false }, // REMOVER LINHAS VERTICAIS
+                    horzLines: { visible: false }, // REMOVER LINHAS HORIZONTAIS
                 },
                 crosshair: {
                     mode: LightweightCharts.CrosshairMode.Normal,
@@ -1148,14 +1192,40 @@
             }
         }
 
+        // Buscar dados históricos diários para calcular variações 1D, 1S, 1M
+        async function fetchDailyStats(symbol) {
+            try {
+                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=31`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Binance API error: ' + response.status);
+                const data = await response.json();
+                const closes = data.map(k => parseFloat(k[4]));
+                const current = closes[closes.length - 1];
+                if (closes.length < 2) return null;
+                const dayAgo = closes[closes.length - 2];
+                const weekAgo = closes.length > 7 ? closes[closes.length - 8] : dayAgo;
+                const monthAgo = closes.length > 30 ? closes[closes.length - 31] : weekAgo;
+                return {
+                    current: current,
+                    day: dayAgo ? ((current - dayAgo) / dayAgo * 100) : 0,
+                    week: weekAgo ? ((current - weekAgo) / weekAgo * 100) : 0,
+                    month: monthAgo ? ((current - monthAgo) / monthAgo * 100) : 0
+                };
+            } catch (e) {
+                console.warn(`Daily stats ${symbol} error:`, e);
+                return null;
+            }
+        }
+
         async function updateCandles() {
             const pairs = [
-                { id: 'candle-btc', symbol: 'BTCUSDT', color: '#00d98e' },
-                { id: 'candle-eth', symbol: 'ETHUSDT', color: '#00b4d8' },
-                { id: 'candle-sol', symbol: 'SOLUSDT', color: '#ffd60a' }
+                { id: 'candle-btc', symbol: 'BTCUSDT', color: '#00d98e', statsId: 'btc-stats' },
+                { id: 'candle-eth', symbol: 'ETHUSDT', color: '#00b4d8', statsId: 'eth-stats' },
+                { id: 'candle-sol', symbol: 'SOLUSDT', color: '#ffd60a', statsId: 'sol-stats' }
             ];
             for (const p of pairs) {
                 try {
+                    // Inicializar gráfico se não existir
                     if (!candleCharts[p.id]) {
                         const chartObj = initCandleChart(p.id, p.symbol, p.color);
                         if (chartObj) {
@@ -1164,11 +1234,34 @@
                             continue;
                         }
                     }
+                    // Buscar dados de candle (24h, 1h)
                     const data = await fetchCandles(p.symbol);
                     if (data && data.length > 0) {
                         candleCharts[p.id].candleSeries.setData(data);
-                        // Ajustar escala de preço automaticamente
                         candleCharts[p.id].chart.timeScale().fitContent();
+                    }
+                    // Buscar estatísticas diárias para 1D, 1S, 1M
+                    const stats = await fetchDailyStats(p.symbol);
+                    if (stats) {
+                        const prefix = p.id.replace('candle-', '');
+                        const stat1d = document.getElementById(`${prefix}-stat-1d`);
+                        const stat1s = document.getElementById(`${prefix}-stat-1s`);
+                        const stat1m = document.getElementById(`${prefix}-stat-1m`);
+                        if (stat1d) {
+                            const val = stats.day;
+                            stat1d.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+                            stat1d.className = 'stat ' + (val >= 0 ? 'positive' : 'negative');
+                        }
+                        if (stat1s) {
+                            const val = stats.week;
+                            stat1s.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+                            stat1s.className = 'stat ' + (val >= 0 ? 'positive' : 'negative');
+                        }
+                        if (stat1m) {
+                            const val = stats.month;
+                            stat1m.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+                            stat1m.className = 'stat ' + (val >= 0 ? 'positive' : 'negative');
+                        }
                     }
                 } catch (e) {
                     console.warn(`Update candlestick ${p.symbol} error:`, e);
@@ -1177,7 +1270,7 @@
         }
 
         // ================================================================
-        // 6. FUNÇÕES DE BUSCA (com validações e fallbacks)
+        // 6. FUNÇÕES DE BUSCA (com verificações null)
         // ================================================================
 
         // 6.1 CoinGecko
@@ -1188,25 +1281,31 @@
                 const resp = await fetchWithProxy(url);
                 const data = await resp.json();
                 const btc = data.bitcoin;
-                document.getElementById('btc-price').textContent = formatCurrency(btc.usd);
-                document.getElementById('btc-price').className = 'value ' + getChangeClass(btc.usd_24h_change);
-                document.getElementById('btc-change').textContent = formatChange(btc.usd_24h_change);
+                const btcEl = document.getElementById('btc-price');
+                if (btcEl) { btcEl.textContent = formatCurrency(btc.usd);
+                    btcEl.className = 'value ' + getChangeClass(btc.usd_24h_change); }
+                const btcChangeEl = document.getElementById('btc-change');
+                if (btcChangeEl) btcChangeEl.textContent = formatChange(btc.usd_24h_change);
                 const eth = data.ethereum;
-                document.getElementById('eth-price').textContent = formatCurrency(eth.usd);
-                document.getElementById('eth-price').className = 'value ' + getChangeClass(eth.usd_24h_change);
-                document.getElementById('eth-change').textContent = formatChange(eth.usd_24h_change);
+                const ethEl = document.getElementById('eth-price');
+                if (ethEl) { ethEl.textContent = formatCurrency(eth.usd);
+                    ethEl.className = 'value ' + getChangeClass(eth.usd_24h_change); }
+                const ethChangeEl = document.getElementById('eth-change');
+                if (ethChangeEl) ethChangeEl.textContent = formatChange(eth.usd_24h_change);
                 const sol = data.solana;
-                document.getElementById('sol-price').textContent = formatCurrency(sol.usd);
-                document.getElementById('sol-price').className = 'value ' + getChangeClass(sol.usd_24h_change);
-                document.getElementById('sol-change').textContent = formatChange(sol.usd_24h_change);
+                const solEl = document.getElementById('sol-price');
+                if (solEl) { solEl.textContent = formatCurrency(sol.usd);
+                    solEl.className = 'value ' + getChangeClass(sol.usd_24h_change); }
+                const solChangeEl = document.getElementById('sol-change');
+                if (solChangeEl) solChangeEl.textContent = formatChange(sol.usd_24h_change);
             } catch (e) {
                 console.warn('CoinGecko error:', e);
-                document.getElementById('btc-price').textContent = '$60.000 (fallback)';
-                document.getElementById('btc-change').textContent = '—';
-                document.getElementById('eth-price').textContent = '$1.573,53 (fallback)';
-                document.getElementById('eth-change').textContent = '—';
-                document.getElementById('sol-price').textContent = '$170 (fallback)';
-                document.getElementById('sol-change').textContent = '—';
+                const btcEl = document.getElementById('btc-price');
+                if (btcEl) btcEl.textContent = '$60.000 (fallback)';
+                const ethEl = document.getElementById('eth-price');
+                if (ethEl) ethEl.textContent = '$1.573,53 (fallback)';
+                const solEl = document.getElementById('sol-price');
+                if (solEl) solEl.textContent = '$170 (fallback)';
             }
         }
 
@@ -1219,28 +1318,33 @@
                 const item = data.data[0];
                 const value = item.value;
                 const classification = item.value_classification;
-                document.getElementById('fng-value').textContent = value;
-                document.getElementById('fng-value').className = 'value ' + (parseInt(value) <= 25 ? 'negative' :
-                    'positive');
-                document.getElementById('fng-label').textContent = classification + ' — Signal de acumulação';
+                const fngValueEl = document.getElementById('fng-value');
+                if (fngValueEl) { fngValueEl.textContent = value;
+                    fngValueEl.className = 'value ' + (parseInt(value) <= 25 ? 'negative' : 'positive'); }
+                const fngLabelEl = document.getElementById('fng-label');
+                if (fngLabelEl) fngLabelEl.textContent = classification + ' — Signal de acumulação';
                 const headerFng = document.getElementById('header-fng');
-                headerFng.innerHTML = '😱 FEAR & GREED: ' + value + ' (' + classification + ')';
-                headerFng.className = 'badge ' + (parseInt(value) <= 25 ? 'extreme-fear' : '');
+                if (headerFng) { headerFng.innerHTML = '😱 FEAR & GREED: ' + value + ' (' + classification + ')';
+                    headerFng.className = 'badge ' + (parseInt(value) <= 25 ? 'extreme-fear' : ''); }
                 const headerSentiment = document.getElementById('header-sentiment');
-                const sentimentText = (parseInt(value) <= 25) ? '⚠️ SENTIMENTO: PESSIMISTA' :
-                    (parseInt(value) <= 45 ? '⚠️ SENTIMENTO: NEUTRO' : '✅ SENTIMENTO: BULLISH');
-                headerSentiment.textContent = sentimentText;
-                headerSentiment.className = 'badge ' + (parseInt(value) <= 25 ? 'sentiment-bearish' :
-                    'sentiment-bullish');
+                if (headerSentiment) {
+                    const sentimentText = (parseInt(value) <= 25) ? '⚠️ SENTIMENTO: PESSIMISTA' :
+                        (parseInt(value) <= 45 ? '⚠️ SENTIMENTO: NEUTRO' : '✅ SENTIMENTO: BULLISH');
+                    headerSentiment.textContent = sentimentText;
+                    headerSentiment.className = 'badge ' + (parseInt(value) <= 25 ? 'sentiment-bearish' :
+                        'sentiment-bullish');
+                }
             } catch (e) {
                 console.warn('Alternative.me error:', e);
-                document.getElementById('fng-value').textContent = '18';
-                document.getElementById('fng-value').className = 'value negative';
-                document.getElementById('fng-label').textContent = 'Extreme Fear (fallback)';
+                const fngValueEl = document.getElementById('fng-value');
+                if (fngValueEl) { fngValueEl.textContent = '18';
+                    fngValueEl.className = 'value negative'; }
+                const fngLabelEl = document.getElementById('fng-label');
+                if (fngLabelEl) fngLabelEl.textContent = 'Extreme Fear (fallback)';
             }
         }
 
-        // 6.3 FRED (com validação)
+        // 6.3 FRED
         async function fetchMacroFromFRED() {
             const series = [
                 { id: 'DTWEXBGS', element: 'macro-dxy', table: 'dxy-val', suffix: '', fallback: '101,37' },
@@ -1256,19 +1360,31 @@
                     const data = await resp.json();
                     let val = data.observations?.[0]?.value;
                     if (val === null || val === undefined || val === '.') val = s.fallback;
-                    if (s.element) document.getElementById(s.element).textContent = val + s.suffix;
-                    document.getElementById(s.table).textContent = val + s.suffix;
+                    if (s.element) {
+                        const el = document.getElementById(s.element);
+                        if (el) el.textContent = val + s.suffix;
+                    }
+                    const tableEl = document.getElementById(s.table);
+                    if (tableEl) tableEl.textContent = val + s.suffix;
                 } catch (err) {
                     console.warn('FRED error for ' + s.id, err);
-                    if (s.element) document.getElementById(s.element).textContent = s.fallback;
-                    document.getElementById(s.table).textContent = s.fallback;
+                    if (s.element) {
+                        const el = document.getElementById(s.element);
+                        if (el) el.textContent = s.fallback;
+                    }
+                    const tableEl = document.getElementById(s.table);
+                    if (tableEl) tableEl.textContent = s.fallback;
                 }
             });
             await Promise.all(promises);
-            const dxy = document.getElementById('macro-dxy').textContent;
-            const us10y = document.getElementById('macro-us10y').textContent;
-            document.getElementById('macro-summary').innerHTML = `DXY ${dxy} | US10Y ${us10y}`;
-            document.getElementById('macro-status').textContent = '✅ Dados atualizados via FRED (LIVE)';
+            const dxyEl = document.getElementById('macro-dxy');
+            const us10yEl = document.getElementById('macro-us10y');
+            const macroSummary = document.getElementById('macro-summary');
+            if (dxyEl && us10yEl && macroSummary) {
+                macroSummary.innerHTML = `DXY ${dxyEl.textContent} | US10Y ${us10yEl.textContent}`;
+            }
+            const macroStatus = document.getElementById('macro-status');
+            if (macroStatus) macroStatus.textContent = '✅ Dados atualizados via FRED (LIVE)';
         }
 
         // 6.4 Alpha Vantage
@@ -1286,14 +1402,17 @@
                     const quote = data['Global Quote'];
                     if (quote && quote['10. change percent']) {
                         const change = quote['10. change percent'].replace('%', '');
-                        document.getElementById(s.table).textContent = change + '%';
-                        document.getElementById(s.table).className = getChangeClass(change);
+                        const tableEl = document.getElementById(s.table);
+                        if (tableEl) { tableEl.textContent = change + '%';
+                            tableEl.className = getChangeClass(change); }
                     } else {
-                        document.getElementById(s.table).textContent = s.fallback;
+                        const tableEl = document.getElementById(s.table);
+                        if (tableEl) tableEl.textContent = s.fallback;
                     }
                 } catch (err) {
                     console.warn('Alpha Vantage error for ' + s.symbol, err);
-                    document.getElementById(s.table).textContent = s.fallback;
+                    const tableEl = document.getElementById(s.table);
+                    if (tableEl) tableEl.textContent = s.fallback;
                 }
             });
             await Promise.all(promises);
@@ -1308,32 +1427,38 @@
                 if (data1 && data1.peggedAssets) {
                     data1.peggedAssets.forEach(asset => { if (asset.total) totalSupply += asset.total; });
                 }
-                document.getElementById('stablecoin-supply').textContent = formatCurrency(totalSupply);
+                const supplyEl = document.getElementById('stablecoin-supply');
+                if (supplyEl) supplyEl.textContent = formatCurrency(totalSupply);
 
                 const resp2 = await fetchWithProxy('https://api.llama.fi/charts');
                 const data2 = await resp2.json();
                 const lastTvl = data2[data2.length - 1]?.totalLiquidityUSD || 0;
                 const prevTvl = data2[data2.length - 2]?.totalLiquidityUSD || 0;
                 const change = prevTvl ? ((lastTvl - prevTvl) / prevTvl) * 100 : 0;
-                document.getElementById('defi-tvl').textContent = formatCurrency(lastTvl);
-                document.getElementById('defi-tvl').className = 'value ' + getChangeClass(change);
-                document.getElementById('defi-tvl-change').textContent = formatChange(change);
-                document.getElementById('defi-tvl-change').className = getChangeClass(change);
-                document.getElementById('defi-tvl-interp').textContent = change >= 0 ? '✅ Entrada de liquidez' :
-                    '⚠️ Saída de liquidez';
+                const tvlEl = document.getElementById('defi-tvl');
+                if (tvlEl) { tvlEl.textContent = formatCurrency(lastTvl);
+                    tvlEl.className = 'value ' + getChangeClass(change); }
+                const tvlChangeEl = document.getElementById('defi-tvl-change');
+                if (tvlChangeEl) { tvlChangeEl.textContent = formatChange(change);
+                    tvlChangeEl.className = getChangeClass(change); }
+                const tvlInterpEl = document.getElementById('defi-tvl-interp');
+                if (tvlInterpEl) tvlInterpEl.textContent = change >= 0 ? '✅ Entrada de liquidez' : '⚠️ Saída de liquidez';
             } catch (e) {
                 console.warn('DefiLlama error:', e);
-                document.getElementById('stablecoin-supply').textContent = '$320B (fallback)';
-                document.getElementById('defi-tvl').textContent = '$70B (fallback)';
-                document.getElementById('defi-tvl-change').textContent = '-0,02% (fallback)';
-                document.getElementById('defi-tvl-interp').textContent = '⚠️ API indisponível';
+                const supplyEl = document.getElementById('stablecoin-supply');
+                if (supplyEl) supplyEl.textContent = '$320B (fallback)';
+                const tvlEl = document.getElementById('defi-tvl');
+                if (tvlEl) tvlEl.textContent = '$70B (fallback)';
+                const tvlChangeEl = document.getElementById('defi-tvl-change');
+                if (tvlChangeEl) tvlChangeEl.textContent = '-0,02% (fallback)';
+                const tvlInterpEl = document.getElementById('defi-tvl-interp');
+                if (tvlInterpEl) tvlInterpEl.textContent = '⚠️ API indisponível';
             }
         }
 
-        // 6.6 Farside (ETF) - com fallback informativo
+        // 6.6 Farside (ETF)
         async function fetchETFData() {
             try {
-                // A API do Farside tem CORS, então usamos proxy
                 const response = await fetchWithProxy('https://farside.co.uk/etf/');
                 const html = await response.text();
                 const parser = new DOMParser();
@@ -1392,10 +1517,14 @@
                 }
                 const lastBtc = btcData[btcData.length - 1] || 0;
                 const lastEth = ethData[ethData.length - 1] || 0;
-                document.getElementById('etf-btc-live').innerHTML = '<strong>' + lastBtc.toFixed(2) + 'M</strong>';
-                document.getElementById('etf-btc-interp').textContent = lastBtc < 0 ? '🔴 Saída' : '🟢 Entrada';
-                document.getElementById('etf-eth-live').innerHTML = '<strong>' + lastEth.toFixed(2) + 'M</strong>';
-                document.getElementById('etf-eth-interp').textContent = lastEth < 0 ? '🔴 Saída' : '🟢 Entrada';
+                const btcLiveEl = document.getElementById('etf-btc-live');
+                if (btcLiveEl) btcLiveEl.innerHTML = '<strong>' + lastBtc.toFixed(2) + 'M</strong>';
+                const btcInterpEl = document.getElementById('etf-btc-interp');
+                if (btcInterpEl) btcInterpEl.textContent = lastBtc < 0 ? '🔴 Saída' : '🟢 Entrada';
+                const ethLiveEl = document.getElementById('etf-eth-live');
+                if (ethLiveEl) ethLiveEl.innerHTML = '<strong>' + lastEth.toFixed(2) + 'M</strong>';
+                const ethInterpEl = document.getElementById('etf-eth-interp');
+                if (ethInterpEl) ethInterpEl.textContent = lastEth < 0 ? '🔴 Saída' : '🟢 Entrada';
             } catch (e) {
                 console.warn('Farside error (fallback estático):', e);
                 const fb = ['22 JUN', '23 JUN', '24 JUN', '25 JUN', '26 JUN', '27 JUN', '28 JUN'];
@@ -1405,10 +1534,14 @@
                     etfChart.data.datasets[0].data = fbBtc;
                     etfChart.data.datasets[1].data = fbEth;
                     etfChart.update(); }
-                document.getElementById('etf-btc-live').innerHTML = '<strong>-$445M</strong>';
-                document.getElementById('etf-btc-interp').textContent = '🔴 Saída (fallback)';
-                document.getElementById('etf-eth-live').innerHTML = '<strong>-$12,85M</strong>';
-                document.getElementById('etf-eth-interp').textContent = '🔴 Saída (fallback)';
+                const btcLiveEl = document.getElementById('etf-btc-live');
+                if (btcLiveEl) btcLiveEl.innerHTML = '<strong>-$445M</strong>';
+                const btcInterpEl = document.getElementById('etf-btc-interp');
+                if (btcInterpEl) btcInterpEl.textContent = '🔴 Saída (fallback)';
+                const ethLiveEl = document.getElementById('etf-eth-live');
+                if (ethLiveEl) ethLiveEl.innerHTML = '<strong>-$12,85M</strong>';
+                const ethInterpEl = document.getElementById('etf-eth-interp');
+                if (ethInterpEl) ethInterpEl.textContent = '🔴 Saída (fallback)';
             }
         }
 
@@ -1432,8 +1565,12 @@
                         let display = (m.id === 'realized_price' || m.id === 'active_addresses') ?
                             Number(val).toLocaleString('en-US', { maximumFractionDigits: 0 }) :
                             Number(val).toFixed(2);
-                        document.getElementById(m.el).textContent = display;
-                        if (m.id === 'realized_price') document.getElementById(m.el).textContent = '$' + display;
+                        const el = document.getElementById(m.el);
+                        if (el) { el.textContent = display; }
+                        if (m.id === 'realized_price') {
+                            const el2 = document.getElementById(m.el);
+                            if (el2) el2.textContent = '$' + display;
+                        }
                         if (m.interp) {
                             const num = parseFloat(val);
                             let interpText = '';
@@ -1443,15 +1580,21 @@
                             else if (m.id === 'sopr') interpText = num < 1.0 ? '🔴 Weakness' : '🟢 Strength';
                             else if (m.id === 'sopr_adjusted') interpText = num < 1.0 ? '⚠️ Ajustado fraco' :
                                 'ℹ️ Ajustado neutro';
-                            document.getElementById(m.interp).textContent = interpText;
+                            const interpEl = document.getElementById(m.interp);
+                            if (interpEl) interpEl.textContent = interpText;
                         }
                     } else {
-                        document.getElementById(m.el).textContent = m.fallback;
+                        const el = document.getElementById(m.el);
+                        if (el) el.textContent = m.fallback;
                     }
                 } catch (err) {
                     console.warn('BRK error for ' + m.id, err);
-                    document.getElementById(m.el).textContent = m.fallback;
-                    if (m.interp) document.getElementById(m.interp).textContent = '⚠️ Fallback';
+                    const el = document.getElementById(m.el);
+                    if (el) el.textContent = m.fallback;
+                    if (m.interp) {
+                        const interpEl = document.getElementById(m.interp);
+                        if (interpEl) interpEl.textContent = '⚠️ Fallback';
+                    }
                 }
             });
             await Promise.all(promises);
@@ -1463,26 +1606,33 @@
                 const resp1 = await fetchWithProxy('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1');
                 const data1 = await resp1.json();
                 const fr = data1[0]?.fundingRate || 0;
-                document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '%';
-                document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
+                const frEl = document.getElementById('funding-rate');
+                if (frEl) frEl.textContent = (fr * 100).toFixed(4) + '%';
+                const frInterpEl = document.getElementById('funding-rate-interp');
+                if (frInterpEl) frInterpEl.textContent = fr > 0.0001 ? '✅ Longs pagam' :
                     fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
 
                 const resp2 = await fetchWithProxy('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
                 const data2 = await resp2.json();
                 const oi = parseFloat(data2.openInterest) || 0;
-                document.getElementById('open-interest').textContent = formatCurrency(oi);
-                document.getElementById('open-interest-interp').textContent = oi > 1e9 ? '⚠️ Alto' :
-                'ℹ️ Moderado';
+                const oiEl = document.getElementById('open-interest');
+                if (oiEl) oiEl.textContent = formatCurrency(oi);
+                const oiInterpEl = document.getElementById('open-interest-interp');
+                if (oiInterpEl) oiInterpEl.textContent = oi > 1e9 ? '⚠️ Alto' : 'ℹ️ Moderado';
             } catch (e) {
                 console.warn('Binance derivatives error:', e);
-                document.getElementById('funding-rate').textContent = '0,0043% (fallback)';
-                document.getElementById('funding-rate-interp').textContent = '⚠️ Fallback';
-                document.getElementById('open-interest').textContent = '$20,69B (fallback)';
-                document.getElementById('open-interest-interp').textContent = '⚠️ Fallback';
+                const frEl = document.getElementById('funding-rate');
+                if (frEl) frEl.textContent = '0,0043% (fallback)';
+                const frInterpEl = document.getElementById('funding-rate-interp');
+                if (frInterpEl) frInterpEl.textContent = '⚠️ Fallback';
+                const oiEl = document.getElementById('open-interest');
+                if (oiEl) oiEl.textContent = '$20,69B (fallback)';
+                const oiInterpEl = document.getElementById('open-interest-interp');
+                if (oiInterpEl) oiInterpEl.textContent = '⚠️ Fallback';
             }
         }
 
-        // 6.9 CoinGlass (Netflow, Miner) - sem Put/Call (usamos Deribit)
+        // 6.9 CoinGlass (Netflow, Miner) - mantido mas com fallback
         async function fetchCoinGlass() {
             try {
                 const netflowResp = await fetchWithProxy('https://coinglass.com/pro/BTC/Netflow');
@@ -1491,32 +1641,46 @@
                 const minerMatch = html.match(/(?:Miner Outflow|Miner Netflow)[^0-9]*([0-9,]+)/i);
                 const netflow = netflowMatch ? parseFloat(netflowMatch[1].replace(/,/g, '')) : null;
                 const miner = minerMatch ? parseFloat(minerMatch[1].replace(/,/g, '')) : null;
-                if (netflow !== null) {
-                    document.getElementById('exchange-netflow').textContent = netflow.toLocaleString('en-US') + ' BTC';
-                    document.getElementById('exchange-netflow-interp').textContent = netflow > 0 ? '⚠️ Entrada em exchanges' :
-                        '✅ Saída de exchanges';
-                } else {
-                    document.getElementById('exchange-netflow').textContent = '7.247 BTC (fallback)';
-                    document.getElementById('exchange-netflow-interp').textContent = '⚠️ Fallback';
+                const netflowEl = document.getElementById('exchange-netflow');
+                if (netflowEl) {
+                    if (netflow !== null) {
+                        netflowEl.textContent = netflow.toLocaleString('en-US') + ' BTC';
+                    } else {
+                        netflowEl.textContent = '7.247 BTC (fallback)';
+                    }
                 }
-                if (miner !== null) {
-                    document.getElementById('miner-outflow').textContent = miner.toFixed(2) + ' BTC';
-                    document.getElementById('miner-outflow-interp').textContent = miner > 1000 ? '⚠️ Miners vendendo' :
+                const netflowInterpEl = document.getElementById('exchange-netflow-interp');
+                if (netflowInterpEl) {
+                    netflowInterpEl.textContent = netflow !== null && netflow > 0 ? '⚠️ Entrada em exchanges' :
+                        '✅ Saída de exchanges';
+                }
+                const minerEl = document.getElementById('miner-outflow');
+                if (minerEl) {
+                    if (miner !== null) {
+                        minerEl.textContent = miner.toFixed(2) + ' BTC';
+                    } else {
+                        minerEl.textContent = '1.234,56 BTC (fallback)';
+                    }
+                }
+                const minerInterpEl = document.getElementById('miner-outflow-interp');
+                if (minerInterpEl) {
+                    minerInterpEl.textContent = miner !== null && miner > 1000 ? '⚠️ Miners vendendo' :
                         'ℹ️ Miners estáveis';
-                } else {
-                    document.getElementById('miner-outflow').textContent = '1.234,56 BTC (fallback)';
-                    document.getElementById('miner-outflow-interp').textContent = '⚠️ Fallback';
                 }
             } catch (e) {
                 console.warn('CoinGlass netflow error:', e);
-                document.getElementById('exchange-netflow').textContent = '7.247 BTC (fallback)';
-                document.getElementById('exchange-netflow-interp').textContent = '⚠️ Fallback';
-                document.getElementById('miner-outflow').textContent = '1.234,56 BTC (fallback)';
-                document.getElementById('miner-outflow-interp').textContent = '⚠️ Fallback';
+                const netflowEl = document.getElementById('exchange-netflow');
+                if (netflowEl) netflowEl.textContent = '7.247 BTC (fallback)';
+                const netflowInterpEl = document.getElementById('exchange-netflow-interp');
+                if (netflowInterpEl) netflowInterpEl.textContent = '⚠️ Fallback';
+                const minerEl = document.getElementById('miner-outflow');
+                if (minerEl) minerEl.textContent = '1.234,56 BTC (fallback)';
+                const minerInterpEl = document.getElementById('miner-outflow-interp');
+                if (minerInterpEl) minerInterpEl.textContent = '⚠️ Fallback';
             }
         }
 
-        // 6.10 Put/Call Ratio (via Deribit, CORS liberado)
+        // 6.10 Put/Call Ratio (Deribit)
         async function fetchPutCallRatio() {
             try {
                 const resp = await fetch(
@@ -1532,16 +1696,20 @@
                 });
                 if (callOI > 0) {
                     const ratio = (putOI / callOI).toFixed(2);
-                    document.getElementById('put-call-ratio').textContent = ratio;
-                    document.getElementById('put-call-interp').textContent = ratio < 0.7 ? '⚠️ Proteção baixa' :
+                    const ratioEl = document.getElementById('put-call-ratio');
+                    if (ratioEl) ratioEl.textContent = ratio;
+                    const interpEl = document.getElementById('put-call-interp');
+                    if (interpEl) interpEl.textContent = ratio < 0.7 ? '⚠️ Proteção baixa' :
                         ratio > 1.0 ? '🟢 Proteção alta' : 'ℹ️ Neutro';
                 } else {
                     throw new Error('Call OI zero');
                 }
             } catch (e) {
                 console.warn('Put/Call Deribit error, fallback:', e);
-                document.getElementById('put-call-ratio').textContent = '0,63 (fallback)';
-                document.getElementById('put-call-interp').textContent = '⚠️ Fallback';
+                const ratioEl = document.getElementById('put-call-ratio');
+                if (ratioEl) ratioEl.textContent = '0,63 (fallback)';
+                const interpEl = document.getElementById('put-call-interp');
+                if (interpEl) interpEl.textContent = '⚠️ Fallback';
             }
         }
 
@@ -1551,14 +1719,18 @@
                 const response = await fetchWithProxy('https://blockchain.info/q/hashrate');
                 const text = await response.text();
                 const hr = parseFloat(text) / 1e18;
-                if (!isNaN(hr) && hr > 0) {
-                    document.getElementById('btc-hashrate').textContent = hr.toFixed(2) + ' EH/s';
-                } else {
-                    document.getElementById('btc-hashrate').textContent = '893 EH/s (fallback)';
+                const hrEl = document.getElementById('btc-hashrate');
+                if (hrEl) {
+                    if (!isNaN(hr) && hr > 0) {
+                        hrEl.textContent = hr.toFixed(2) + ' EH/s';
+                    } else {
+                        hrEl.textContent = '893 EH/s (fallback)';
+                    }
                 }
             } catch (e) {
                 console.warn('Hashrate error:', e);
-                document.getElementById('btc-hashrate').textContent = '893 EH/s (fallback)';
+                const hrEl = document.getElementById('btc-hashrate');
+                if (hrEl) hrEl.textContent = '893 EH/s (fallback)';
             }
         }
 
@@ -1569,20 +1741,24 @@
                     `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_KEY}`;
                 const response = await fetchWithProxy(url);
                 const data = await response.json();
-                if (data.status === '1') {
-                    const gasPrice = parseFloat(data.result.ProposeGasPrice) / 10;
-                    document.getElementById('eth-gas').textContent = gasPrice.toFixed(2) + ' Gwei';
-                } else {
-                    throw new Error('API error: ' + data.message);
+                const gasEl = document.getElementById('eth-gas');
+                if (gasEl) {
+                    if (data.status === '1') {
+                        const gasPrice = parseFloat(data.result.ProposeGasPrice) / 10;
+                        gasEl.textContent = gasPrice.toFixed(2) + ' Gwei';
+                    } else {
+                        throw new Error('API error: ' + data.message);
+                    }
                 }
             } catch (e) {
                 console.warn('Gas price error:', e);
-                document.getElementById('eth-gas').textContent = '5,68 Gwei (fallback)';
+                const gasEl = document.getElementById('eth-gas');
+                if (gasEl) gasEl.textContent = '5,68 Gwei (fallback)';
             }
         }
 
         // ================================================================
-        // 6.13 WHALE ALERT (com Blockchain.com fallback e timestamp)
+        // 6.13 WHALE ALERT
         // ================================================================
         function updateWhaleUI(transactions) {
             let btcAccum = 0,
@@ -1656,7 +1832,6 @@
                     let entityStr = '';
                     if (largest.fromEntity) entityStr += ' (origem: ' + largest.fromEntity.name + ')';
                     if (largest.toEntity) entityStr += ' (destino: ' + largest.toEntity.name + ')';
-                    // Formatar timestamp
                     const ts = new Date(largest.timestamp);
                     const timeStr = !isNaN(ts) ? ts.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'N/A';
                     valueEl.textContent = formatCurrency(largest.usd);
@@ -1708,7 +1883,6 @@
                         '--';
                     const toDisplay = a.to ? `<a href="${getExplorerLink(a.to, a.symbol)}" target="_blank" style="color:var(--accent-blue);">${truncateAddress(a.to)}</a>` :
                         '--';
-                    // Formatar timestamp
                     const ts = new Date(a.timestamp);
                     const timeStr = !isNaN(ts) ? ts.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'N/A';
                     rows += `<tr class="${rowClass}">
@@ -1737,7 +1911,6 @@
 
         async function fetchWhales() {
             try {
-                // Tenta Whale Alert primeiro (pode falhar CORS)
                 const response = await fetchWithProxy('https://whale-alert.io/api/transactions?limit=30');
                 const data = await response.json();
                 if (data && data.transactions && data.transactions.length > 0) {
@@ -1749,48 +1922,7 @@
                 }
                 throw new Error('Sem transações da Whale Alert');
             } catch (e) {
-                console.warn('Whale Alert falhou, usando Blockchain.com fallback:', e);
-                // Fallback: Blockchain.com (CORS liberado)
-                try {
-                    const btcTxs = await fetch('https://blockchain.com/api/coins/btc/transactions?limit=10');
-                    const btcData = await btcTxs.json();
-                    const ethTxs = await fetch('https://blockchain.com/api/coins/eth/transactions?limit=10');
-                    const ethData = await ethTxs.json();
-                    const solTxs = await fetch('https://blockchain.com/api/coins/sol/transactions?limit=10');
-                    const solData = await solTxs.json();
-
-                    // Mapear para o formato esperado
-                    const mapTx = (tx, symbol) => ({
-                        symbol: symbol,
-                        usd: tx.value ? tx.value * 0.1 : 0, // valor fictício pois blockchain.com não retorna USD
-                        amount: tx.value || 0,
-                        from_address: tx.fromAddress || 'Desconhecido',
-                        to_address: tx.toAddress || 'Desconhecido',
-                        from_type: 'unknown',
-                        to_type: 'unknown',
-                        timestamp: tx.timestamp || new Date().toISOString()
-                    });
-
-                    const fallbackTxs = [];
-                    if (btcData && btcData.transactions) {
-                        btcData.transactions.forEach(tx => fallbackTxs.push(mapTx(tx, 'BTC')));
-                    }
-                    if (ethData && ethData.transactions) {
-                        ethData.transactions.forEach(tx => fallbackTxs.push(mapTx(tx, 'ETH')));
-                    }
-                    if (solData && solData.transactions) {
-                        solData.transactions.forEach(tx => fallbackTxs.push(mapTx(tx, 'SOL')));
-                    }
-                    if (fallbackTxs.length > 0) {
-                        window.whaleHistory = window.whaleHistory.concat(fallbackTxs);
-                        if (window.whaleHistory.length > 100) window.whaleHistory = window.whaleHistory.slice(-100);
-                        updateWhaleUI(window.whaleHistory);
-                        return;
-                    }
-                } catch (fbErr) {
-                    console.warn('Fallback Blockchain.com também falhou, usando dados estáticos:', fbErr);
-                }
-                // Último fallback: dados estáticos do JSON com timestamp atual
+                console.warn('Whale Alert falhou, usando fallback estático:', e);
                 const now = new Date().toISOString();
                 const fallback = [
                     { symbol: 'BTC', usd: 700000000, amount: 11400,
@@ -1824,7 +1956,7 @@
         }
 
         // ================================================================
-        // 7. MASTER REFRESH
+        // 7. MASTER REFRESH (intervalo geral: 60s, candles: 10s)
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
@@ -1841,10 +1973,8 @@
                 fetchPutCallRatio(),
                 fetchHashrate(),
                 fetchGasPrice(),
-                fetchWhales(),
-                updateCandles() // atualiza os candles
+                fetchWhales()
             ]);
-
             // Atualiza painel de confirmação
             const mvrvEl = document.getElementById('mvrv');
             const mvrv = mvrvEl ? parseFloat(mvrvEl.textContent.replace(',', '.') || '0') : 0;
@@ -1852,17 +1982,22 @@
             const mvrvSth = mvrvSthEl ? parseFloat(mvrvSthEl.textContent.replace(',', '.') || '0') : 0;
             const fearEl = document.getElementById('fng-value');
             const fear = fearEl ? parseInt(fearEl.textContent) || 0 : 0;
-            document.getElementById('p-mvrv').textContent = (mvrv > 1.5 || mvrv < 0.5) ? '✅' : '❌';
-            document.getElementById('p-fear').textContent = (fear <= 25) ? '✅' : '❌';
-            document.getElementById('p-sth').textContent = (mvrvSth < 1.0) ? '✅' : '❌';
+            const pMvrv = document.getElementById('p-mvrv');
+            if (pMvrv) pMvrv.textContent = (mvrv > 1.5 || mvrv < 0.5) ? '✅' : '❌';
+            const pFear = document.getElementById('p-fear');
+            if (pFear) pFear.textContent = (fear <= 25) ? '✅' : '❌';
+            const pSth = document.getElementById('p-sth');
+            if (pSth) pSth.textContent = (mvrvSth < 1.0) ? '✅' : '❌';
             if (whaleFlowChart) {
                 const btcAccum = whaleFlowChart.data.datasets[0].data[0] || 0;
                 const btcDist = whaleFlowChart.data.datasets[1].data[0] || 0;
-                document.getElementById('p-smart').textContent = (btcAccum > btcDist) ? '✅' : '❌';
+                const pSmart = document.getElementById('p-smart');
+                if (pSmart) pSmart.textContent = (btcAccum > btcDist) ? '✅' : '❌';
             }
             const dxyEl = document.getElementById('dxy-val');
             const dxy = dxyEl ? parseFloat(dxyEl.textContent.replace(',', '.') || '0') : 0;
-            document.getElementById('p-macro').textContent = (dxy < 100) ? '✅' : '❌';
+            const pMacro = document.getElementById('p-macro');
+            if (pMacro) pMacro.textContent = (dxy < 100) ? '✅' : '❌';
         }
 
         // ================================================================
@@ -1872,7 +2007,13 @@
         refreshAll();
         setInterval(refreshAll, 60000);
 
-        // Re-size dos candles quando a janela mudar
+        // Inicializar candles e atualizar a cada 10 segundos
+        setTimeout(() => {
+            updateCandles();
+            setInterval(updateCandles, 10000);
+        }, 2000);
+
+        // Resize dos candles
         window.addEventListener('resize', () => {
             for (const key in candleCharts) {
                 if (candleCharts[key] && candleCharts[key].chart) {
