@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — LIVE</title>
+    <title>Dashboard Institucional — LIVE (Proxy Público)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
@@ -128,9 +128,9 @@
         }
 
         .proxy-status {
-            background: rgba(0, 180, 216, 0.15);
-            border: 1px solid var(--accent-blue);
-            color: var(--accent-blue);
+            background: rgba(255, 214, 10, 0.15);
+            border: 1px solid var(--accent-yellow);
+            color: var(--accent-yellow);
             padding: 4px 12px;
             border-radius: 12px;
             font-size: 0.75em;
@@ -668,14 +668,14 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — 100% LIVE + Candles</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — 100% LIVE (Proxy Público)</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
                     <div class="badge extreme-fear" id="header-fng">😱 FEAR &amp; GREED: -- (---)</div>
                     <div class="badge">⚡ STATUS: MARKDOWN</div>
                     <span class="live-indicator">🔴 LIVE</span>
-                    <span class="proxy-status" id="proxy-status">🌐 PROD (Cloudflare)</span>
+                    <span class="proxy-status" id="proxy-status">🌐 PROXY PÚBLICO</span>
                 </div>
             </div>
         </header>
@@ -694,7 +694,7 @@
         </section>
 
         <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK COM INDICADORES DE VARIAÇÃO
+        GRÁFICOS DE CANDLESTICK
         ============================================================ -->
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (24h) — Atualização a cada 10s</h2>
@@ -885,7 +885,8 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Candles via Binance (atualização 10s), demais métricas via APIs públicas e proxy Cloudflare (CORS bypass). Atualização geral a cada <strong>60 segundos</strong>.</p>
+                    <p>Candles via Binance (atualização 10s), demais métricas via proxies públicos (corsproxy.io, allorigins.win, thingproxy). Atualização geral a cada <strong>60 segundos</strong>.</p>
+                    <p><strong>⚠️ Dados podem falhar devido a limitações dos proxies públicos.</strong></p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
@@ -893,66 +894,48 @@
     </div>
 
     <!-- ============================================================
-    JAVASCRIPT
+    JAVASCRIPT (com proxies públicos)
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAR AQUI A URL DO SEU WORKER
-        // ================================================================
-        // SUBSTITUA PELA URL REAL DO SEU WORKER (formato correto com ?url=)
-        const WORKER_URL = 'https://twilight-mode-7e15.felipe-eduardoroo.workers.dev/?url=';
-
-        // ================================================================
-        // 1. CHAVES DE API (mantidas)
+        // 0. CHAVES DE API
         // ================================================================
         const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
         const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
         const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
 
         // ================================================================
-        // 2. PROXY (usa o Worker do Cloudflare + fallback público)
+        // 1. PROXY (apenas públicos, sem Worker)
         // ================================================================
         async function fetchWithProxy(url) {
-            // Tenta o Worker primeiro
-            try {
-                const proxyUrl = WORKER_URL + encodeURIComponent(url);
-                console.log('Tentando Worker:', proxyUrl);
-                const response = await fetch(proxyUrl, {
-                    headers: { 'User-Agent': 'Mozilla/5.0' }
-                });
-                if (response.ok) {
-                    return response;
-                }
-                console.warn('Worker retornou status:', response.status);
-            } catch (e) {
-                console.warn('Worker falhou:', e.message);
-            }
-
-            // Fallback: proxies públicos
             const proxies = [
                 url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                 url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
                 url => `https://thingproxy.freeboard.io/fetch/${url}`
             ];
+            // Tenta cada proxy até um funcionar
             for (let i = 0; i < proxies.length; i++) {
                 try {
                     const proxyUrl = proxies[i](url);
-                    console.log(`Tentando proxy público ${i}:`, proxyUrl);
                     const response = await fetch(proxyUrl, {
-                        headers: { 'User-Agent': 'Mozilla/5.0' }
+                        headers: { 'User-Agent': 'Mozilla/5.0' },
+                        // Timeout de 10s por proxy
+                        signal: AbortSignal.timeout(10000)
                     });
                     if (response.ok) {
                         return response;
                     }
                 } catch (e) {
-                    console.warn(`Proxy público ${i} falhou:`, e.message);
+                    // Ignora erro e tenta o próximo proxy
+                    continue;
                 }
             }
+            // Se todos falharem, lança erro
             throw new Error('Todos os proxies falharam');
         }
 
         // ================================================================
-        // 3. CHART.JS E GRÁFICOS (Mantidos)
+        // 2. CHART.JS E GRÁFICOS (Mantidos)
         // ================================================================
         window.charts = [];
 
@@ -1055,7 +1038,7 @@
         }
 
         // ================================================================
-        // 4. HELPERS
+        // 3. HELPERS
         // ================================================================
         function formatCurrency(value) {
             return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1098,7 +1081,7 @@
         }
 
         // ================================================================
-        // 5. WATCHLIST
+        // 4. WATCHLIST
         // ================================================================
         const WATCHLIST = [
             { name: 'MicroStrategy', category: 'Instituição', blockchain: 'BTC',
@@ -1139,7 +1122,7 @@
         window.whaleHistory = [];
 
         // ================================================================
-        // 6. CANDLESTICK CHARTS
+        // 5. CANDLESTICK CHARTS
         // ================================================================
         let candleCharts = {};
 
@@ -1257,7 +1240,7 @@
         }
 
         // ================================================================
-        // 7. FUNÇÕES DE BUSCA (TODAS USAM fetchWithProxy)
+        // 6. FUNÇÕES DE BUSCA (TODAS USAM fetchWithProxy)
         // ================================================================
 
         async function fetchPrices() {
@@ -1643,7 +1626,7 @@
         }
 
         // ================================================================
-        // 8. WHALE ALERT (COM FALLBACK ESTÁTICO)
+        // 7. WHALE ALERT (COM FALLBACK ESTÁTICO)
         // ================================================================
         function updateWhaleUI(transactions) {
             let btcAccum = 0,
@@ -1830,7 +1813,7 @@
         }
 
         // ================================================================
-        // 9. TIMESTAMP E MASTER REFRESH
+        // 8. TIMESTAMP E MASTER REFRESH
         // ================================================================
         function updateTimestamp() {
             const now = new Date();
@@ -1878,7 +1861,7 @@
         }
 
         // ================================================================
-        // 10. INIT
+        // 9. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
