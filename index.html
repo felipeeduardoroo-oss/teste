@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Estático + Live</title>
+    <title>Dashboard Institucional — Estático + Live + Alertas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
@@ -714,6 +714,17 @@
             50% { opacity: 0.3; }
             100% { opacity: 1; }
         }
+
+        /* Badge Telegram ativo */
+        .telegram-badge {
+            background: rgba(0, 217, 142, 0.15);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -723,7 +734,7 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Estático + Live</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Estático + Live + Alertas</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -731,6 +742,7 @@
                     <div class="badge">⚡ STATUS: MARKDOWN</div>
                     <span class="live-indicator">🔄 HYBRID</span>
                     <span class="status-badge" id="status-badge">📋 ESTÁTICO</span>
+                    <span class="telegram-badge" id="telegram-badge">📨 TELEGRAM ATIVO</span>
                 </div>
             </div>
         </header>
@@ -765,7 +777,6 @@
                     <div class="subtext" id="macro-status">Referência</div>
                     <span class="source-with-time" id="macro-source">FRED • estático</span>
                 </div>
-                <!-- NOVO: TETHER PREMIUM -->
                 <div class="summary-card">
                     <h3>Tether Premium</h3>
                     <div class="value negative" id="tether-premium">-0,05%</div>
@@ -841,7 +852,6 @@
                 <table>
                     <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
                     <tbody>
-                        <!-- Métricas existentes -->
                         <tr>
                             <td><strong>MVRV (BTC)</strong></td>
                             <td id="mvrv">1,15</td>
@@ -911,7 +921,7 @@
                         <tr>
                             <td><strong>OI Delta (24h)</strong></td>
                             <td id="oi-delta">+8,5%</td>
-                            <td id="oi-delta-interp">⚠️ OI subiu 8,5%</td>
+                            <td id="oi-delta-interp">ℹ️ Variação normal</td>
                             <td><span class="data-source" id="oi-delta-source">Binance • estático</span></td>
                         </tr>
                         <tr>
@@ -923,7 +933,7 @@
                         <tr>
                             <td><strong>Long/Short Ratio (posições)</strong></td>
                             <td id="ls-ratio-pos">60% / 40%</td>
-                            <td id="ls-ratio-pos-interp">⚠️ Long dominante</td>
+                            <td id="ls-ratio-pos-interp">ℹ️ Neutro</td>
                             <td><span class="data-source" id="ls-pos-source">Binance • estático</span></td>
                         </tr>
                         <tr>
@@ -1007,7 +1017,7 @@
         </section>
 
         <!-- ============================================================
-        WHALE ACTIVITY (restaurado)
+        WHALE ACTIVITY
         ============================================================ -->
         <section>
             <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (referência)</h2>
@@ -1090,6 +1100,7 @@
                     <h4>📋 Metodologia</h4>
                     <p>Gráficos de candle: dados ao vivo da Binance (atualização a cada 10s). Demais métricas: dados estáticos de referência, com tentativas de atualização em background via APIs (CoinGecko, Alternative.me, etc.).</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
+                    <p><strong>Alertas via Telegram:</strong> Notificações enviadas quando OI Delta > 10% ou Long Ratio > 70%.</p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
@@ -1101,14 +1112,45 @@
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CHAVES DE API
+        // 0. CONFIGURAÇÃO DO TELEGRAM
+        // ================================================================
+        const TELEGRAM_TOKEN = '8643573887:AAEu1d_RPy8vKl_-XYTd9ygdvN_yD4gF5gE';
+        const TELEGRAM_CHAT_ID = '1137196768';
+
+        // ================================================================
+        // 0.1 ALERTAS VIA TELEGRAM
+        // ================================================================
+        async function sendTelegramAlert(message) {
+            try {
+                const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                if (response.ok) {
+                    console.log('✅ Alerta enviado para o Telegram');
+                } else {
+                    console.warn('❌ Falha ao enviar alerta:', await response.text());
+                }
+            } catch (error) {
+                console.warn('❌ Erro ao enviar alerta:', error);
+            }
+        }
+
+        // ================================================================
+        // 1. CHAVES DE API
         // ================================================================
         const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
         const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
         const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
 
         // ================================================================
-        // 1. CHART.JS — GRÁFICOS (ESTÁTICOS)
+        // 2. CHART.JS — GRÁFICOS (ESTÁTICOS)
         // ================================================================
         window.charts = [];
 
@@ -1243,7 +1285,7 @@
         }
 
         // ================================================================
-        // 2. HELPERS
+        // 3. HELPERS
         // ================================================================
         function formatCurrency(value) {
             return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1277,7 +1319,7 @@
         }
 
         // ================================================================
-        // 3. TIMESTAMP
+        // 4. TIMESTAMP
         // ================================================================
         function updateTimestamp() {
             const ts = getCurrentTimestamp();
@@ -1306,7 +1348,7 @@
         }
 
         // ================================================================
-        // 4. CANDLESTICK (LIVE DA BINANCE)
+        // 5. CANDLESTICK (LIVE DA BINANCE)
         // ================================================================
         let candleCharts = {};
 
@@ -1424,7 +1466,7 @@
         }
 
         // ================================================================
-        // 5. FUNÇÕES DE ATUALIZAÇÃO EM BACKGROUND (tentam APIs)
+        // 6. FUNÇÕES DE ATUALIZAÇÃO EM BACKGROUND (tentam APIs)
         // ================================================================
 
         async function fetchPrices() {
@@ -1550,30 +1592,40 @@
                 const resp2 = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
                 if (!resp2.ok) throw new Error('HTTP ' + resp2.status);
                 const data2 = await resp2.json();
-                const oi = parseFloat(data2.openInterest) || 0;
-                if (oi > 0) {
-                    document.getElementById('open-interest').textContent = formatCurrency(oi) + ' (live)';
-                    document.getElementById('open-interest-interp').textContent = oi > 1e9 ? '⚠️ Alto' :
-                    'ℹ️ Moderado';
+                const currentOI = parseFloat(data2.openInterest) || 0;
+                if (currentOI > 0) {
+                    document.getElementById('open-interest').textContent = formatCurrency(currentOI) + ' (live)';
+                    document.getElementById('open-interest-interp').textContent = currentOI > 1e9 ? '⚠️ Alto' :
+                        'ℹ️ Moderado';
                     updateSourceTimestamp('open-interest-source');
                 }
 
-                // OI Delta (usando localStorage para simular)
-                const currentOI = oi;
-                let prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : currentOI * 0.915;
-                if (prevOI === 0) prevOI = currentOI * 0.915;
-                const delta = ((currentOI - prevOI) / prevOI) * 100;
-                if (!isNaN(delta)) {
-                    document.getElementById('oi-delta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1) + '% (live)';
-                    const interp = document.getElementById('oi-delta-interp');
-                    if (delta > 10) {
-                        interp.textContent = '⚠️ OI subiu >10% — divergência!';
-                        interp.className = 'alert-divergence';
-                    } else {
-                        interp.textContent = 'ℹ️ Variação normal';
-                        interp.className = '';
+                // OI Delta (usando localStorage)
+                const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : currentOI *
+                0.915;
+                if (prevOI > 0 && currentOI > 0) {
+                    const delta = ((currentOI - prevOI) / prevOI) * 100;
+                    if (!isNaN(delta)) {
+                        document.getElementById('oi-delta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1) +
+                            '% (live)';
+                        const interp = document.getElementById('oi-delta-interp');
+                        if (delta > 10) {
+                            interp.textContent = '⚠️ OI subiu >10% — divergência!';
+                            interp.className = 'alert-divergence';
+                            // ENVIA ALERTA TELEGRAM
+                            const price = document.getElementById('btc-price')?.textContent || 'N/A';
+                            sendTelegramAlert(
+                                `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n` +
+                                `📊 OI subiu <b>${delta.toFixed(1)}%</b> em 24h!\n` +
+                                `💰 Preço BTC: ${price}\n` +
+                                `⚠️ Possível divergência de preço e OI.`
+                            );
+                        } else {
+                            interp.textContent = 'ℹ️ Variação normal';
+                            interp.className = '';
+                        }
+                        updateSourceTimestamp('oi-delta-source');
                     }
-                    updateSourceTimestamp('oi-delta-source');
                 }
                 localStorage.setItem('prevOI', currentOI);
 
@@ -1582,12 +1634,14 @@
                 if (!resp3.ok) throw new Error('HTTP ' + resp3.status);
                 const data3 = await resp3.json();
                 const perpPrice = parseFloat(data3.price) || 0;
-                const spotResp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+                const spotResp = await fetch(
+                'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
                 const spotData = await spotResp.json();
                 const spotPrice = spotData.bitcoin.usd || 0;
                 if (perpPrice > 0 && spotPrice > 0) {
                     const basis = ((perpPrice - spotPrice) / spotPrice) * 100;
-                    document.getElementById('basis').textContent = (basis >= 0 ? '+' : '') + basis.toFixed(2) + '% (live)';
+                    document.getElementById('basis').textContent = (basis >= 0 ? '+' : '') + basis.toFixed(2) +
+                        '% (live)';
                     updateSourceTimestamp('basis-source');
                 }
 
@@ -1601,12 +1655,20 @@
                     if (item) {
                         const longP = parseFloat(item.longPositionRatio) * 100;
                         const shortP = parseFloat(item.shortPositionRatio) * 100;
-                        document.getElementById('ls-ratio-pos').textContent = longP.toFixed(1) + '% / ' + shortP.toFixed(
-                        1) + '% (live)';
+                        document.getElementById('ls-ratio-pos').textContent = longP.toFixed(1) + '% / ' + shortP
+                        .toFixed(1) + '% (live)';
                         const interp = document.getElementById('ls-ratio-pos-interp');
                         if (longP > 70) {
                             interp.textContent = '⚠️ Long extremo (>70%)';
                             interp.className = 'alert-divergence';
+                            // ENVIA ALERTA TELEGRAM
+                            const price = document.getElementById('btc-price')?.textContent || 'N/A';
+                            sendTelegramAlert(
+                                `⚠️ <b>ALERTA DE SENTIMENTO EXTREMO</b>\n\n` +
+                                `📊 Long/Short Ratio: <b>${longP.toFixed(1)}%</b> de traders estão comprados.\n` +
+                                `💰 Preço BTC: ${price}\n` +
+                                `⚠️ Nível extremo (>70%) — possibilidade de correção.`
+                            );
                         } else {
                             interp.textContent = 'ℹ️ Neutro';
                             interp.className = '';
@@ -1625,8 +1687,8 @@
                     if (item) {
                         const longP = parseFloat(item.longAccountRatio) * 100;
                         const shortP = parseFloat(item.shortAccountRatio) * 100;
-                        document.getElementById('ls-ratio-acc').textContent = longP.toFixed(1) + '% / ' + shortP.toFixed(
-                        1) + '% (live)';
+                        document.getElementById('ls-ratio-acc').textContent = longP.toFixed(1) + '% / ' + shortP
+                        .toFixed(1) + '% (live)';
                         updateSourceTimestamp('ls-acc-source');
                     }
                 }
@@ -1723,7 +1785,7 @@
         }
 
         // ================================================================
-        // 6. MASTER REFRESH
+        // 7. MASTER REFRESH
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
@@ -1739,7 +1801,7 @@
         }
 
         // ================================================================
-        // 7. INIT
+        // 8. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
