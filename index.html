@@ -144,9 +144,16 @@
 
         .update-timestamp {
             color: var(--text-muted);
-            font-size: 0.85em;
-            margin-top: 5px;
+            font-size: 0.75em;
+            margin-top: 2px;
             display: block;
+        }
+
+        .source-with-time {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 2px;
         }
 
         /* CANDLES */
@@ -344,6 +351,13 @@
             color: var(--text-muted);
             display: block;
             margin-top: 4px;
+        }
+
+        .source-with-time {
+            font-size: 0.7em;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 2px;
         }
 
         .outlier {
@@ -701,30 +715,34 @@
                     <h3>Bitcoin</h3>
                     <div class="value negative" id="btc-price">$60.000</div>
                     <div class="subtext" id="btc-change">↓ 5,94% (referência)</div>
+                    <span class="source-with-time" id="btc-source">CoinGecko • estático</span>
                 </div>
                 <div class="summary-card">
                     <h3>Ethereum</h3>
                     <div class="value negative" id="eth-price">$1.573,53</div>
                     <div class="subtext" id="eth-change">↓ 0,15% (referência)</div>
+                    <span class="source-with-time" id="eth-source">CoinGecko • estático</span>
                 </div>
                 <div class="summary-card">
                     <h3>Solana</h3>
                     <div class="value negative" id="sol-price">$170,00</div>
                     <div class="subtext" id="sol-change">↓ 2,30% (referência)</div>
+                    <span class="source-with-time" id="sol-source">CoinGecko • estático</span>
                 </div>
                 <div class="summary-card">
                     <h3>Sentiment Macro</h3>
                     <div class="value negative" id="macro-summary">DXY 101,37 | US10Y 4,28%</div>
                     <div class="subtext" id="macro-status">Referência</div>
+                    <span class="source-with-time" id="macro-source">FRED • estático</span>
                 </div>
             </div>
             <div id="update-info" style="margin-top:10px; font-size:0.85em; color:var(--text-muted); text-align:right;">
-                Última atualização: <span id="last-update">--</span>
+                Última atualização geral: <span id="last-update">--</span>
             </div>
         </section>
 
         <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK (DADOS DA BINANCE)
+        GRÁFICOS DE CANDLESTICK (LIVE DA BINANCE)
         ============================================================ -->
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (LIVE)</h2>
@@ -737,6 +755,7 @@
                         <span class="stat" id="btc-stat-1m"><span class="label">1M</span> --</span>
                     </div>
                     <div id="candle-btc" class="candle-container"></div>
+                    <span class="source-with-time" id="candle-btc-source">Binance • atualização a cada 10s</span>
                 </div>
                 <div class="candle-card">
                     <h3>Ethereum (ETH/USDT)</h3>
@@ -746,6 +765,7 @@
                         <span class="stat" id="eth-stat-1m"><span class="label">1M</span> --</span>
                     </div>
                     <div id="candle-eth" class="candle-container"></div>
+                    <span class="source-with-time" id="candle-eth-source">Binance • atualização a cada 10s</span>
                 </div>
                 <div class="candle-card">
                     <h3>Solana (SOL/USDT)</h3>
@@ -755,34 +775,110 @@
                         <span class="stat" id="sol-stat-1m"><span class="label">1M</span> --</span>
                     </div>
                     <div id="candle-sol" class="candle-container"></div>
+                    <span class="source-with-time" id="candle-sol-source">Binance • atualização a cada 10s</span>
                 </div>
             </div>
         </section>
 
         <!-- ============================================================
-        ON-CHAIN ANALYSIS (DADOS ESTÁTICOS)
+        ON-CHAIN ANALYSIS
         ============================================================ -->
         <section>
-            <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS (referência)</h2>
+            <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS</h2>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
+                    <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>MVRV (BTC)</strong></td><td id="mvrv">1,15</td><td id="mvrv-interp">⚠️ Acima de 1.0</td><td><span class="data-source">BitView (estático)</span></td></tr>
-                        <tr><td><strong>MVRV STH (BTC)</strong></td><td id="mvrv-sth">0,84</td><td id="mvrv-sth-interp">✅ STH em perda</td><td><span class="data-source">BitView (estático)</span></td></tr>
-                        <tr><td><strong>SOPR</strong></td><td id="sopr">0,80</td><td id="sopr-interp">🔴 Weakness</td><td><span class="data-source">BitView (estático)</span></td></tr>
-                        <tr><td><strong>aSOPR 7D</strong></td><td id="asopr">0,99</td><td id="asopr-interp">⚠️ Ajustado fraco</td><td><span class="data-source">BitView (estático)</span></td></tr>
-                        <tr><td><strong>Realized Price (BTC)</strong></td><td id="realized-price">$53.600</td><td>ℹ️ Preço médio de custo</td><td><span class="data-source">BitView (estático)</span></td></tr>
-                        <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etf-btc-live"><strong>-$445M</strong></td><td id="etf-btc-interp">🔴 Saída</td><td><span class="data-source">Farside (estático)</span></td></tr>
-                        <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etf-eth-live"><strong>-$12,85M</strong></td><td id="etf-eth-interp">🔴 Saída</td><td><span class="data-source">Farside (estático)</span></td></tr>
-                        <tr><td><strong>Exchange Netflow</strong></td><td id="exchange-netflow">7.247 BTC</td><td id="exchange-netflow-interp">⚠️ Entrada em exchanges</td><td><span class="data-source">CoinGlass (estático)</span></td></tr>
-                        <tr><td><strong>Funding Rate</strong></td><td id="funding-rate">0,0043%</td><td id="funding-rate-interp">ℹ️ Neutro</td><td><span class="data-source">Binance (estático)</span></td></tr>
-                        <tr><td><strong>Open Interest</strong></td><td id="open-interest">$20,69B</td><td id="open-interest-interp">ℹ️ Moderado</td><td><span class="data-source">Binance (estático)</span></td></tr>
-                        <tr><td><strong>BTC Put/Call Ratio</strong></td><td id="put-call-ratio">0,63</td><td id="put-call-interp">⚠️ Proteção baixa</td><td><span class="data-source">Deribit (estático)</span></td></tr>
-                        <tr><td><strong>BTC Hashrate</strong></td><td id="btc-hashrate">893 EH/s</td><td>✅ Elevado</td><td><span class="data-source">Blockchain.com (estático)</span></td></tr>
-                        <tr><td><strong>Miner Outflow</strong></td><td id="miner-outflow">1.234,56 BTC</td><td id="miner-outflow-interp">⚠️ Miners vendendo</td><td><span class="data-source">CoinGlass (estático)</span></td></tr>
-                        <tr><td><strong>Active Addresses</strong></td><td id="active-addresses">605.298</td><td>ℹ️ Moderado</td><td><span class="data-source">BitView (estático)</span></td></tr>
-                        <tr><td><strong>ETH Gas Price</strong></td><td id="eth-gas">5,68 Gwei</td><td>✅ Baixo</td><td><span class="data-source">Etherscan (estático)</span></td></tr>
+                        <tr>
+                            <td><strong>MVRV (BTC)</strong></td>
+                            <td id="mvrv">1,15</td>
+                            <td id="mvrv-interp">⚠️ Acima de 1.0</td>
+                            <td><span class="data-source" id="mvrv-source">BitView • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>MVRV STH (BTC)</strong></td>
+                            <td id="mvrv-sth">0,84</td>
+                            <td id="mvrv-sth-interp">✅ STH em perda</td>
+                            <td><span class="data-source" id="mvrv-sth-source">BitView • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>SOPR</strong></td>
+                            <td id="sopr">0,80</td>
+                            <td id="sopr-interp">🔴 Weakness</td>
+                            <td><span class="data-source" id="sopr-source">BitView • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>aSOPR 7D</strong></td>
+                            <td id="asopr">0,99</td>
+                            <td id="asopr-interp">⚠️ Ajustado fraco</td>
+                            <td><span class="data-source" id="asopr-source">BitView • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Realized Price (BTC)</strong></td>
+                            <td id="realized-price">$53.600</td>
+                            <td>ℹ️ Preço médio de custo</td>
+                            <td><span class="data-source" id="realized-price-source">BitView • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>ETF Flows (BTC)</strong></td>
+                            <td id="etf-btc-live"><strong>-$445M</strong></td>
+                            <td id="etf-btc-interp">🔴 Saída</td>
+                            <td><span class="data-source" id="etf-btc-source">Farside • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>ETF Flows (ETH)</strong></td>
+                            <td id="etf-eth-live"><strong>-$12,85M</strong></td>
+                            <td id="etf-eth-interp">🔴 Saída</td>
+                            <td><span class="data-source" id="etf-eth-source">Farside • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exchange Netflow</strong></td>
+                            <td id="exchange-netflow">7.247 BTC</td>
+                            <td id="exchange-netflow-interp">⚠️ Entrada em exchanges</td>
+                            <td><span class="data-source" id="exchange-netflow-source">CoinGlass • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Funding Rate</strong></td>
+                            <td id="funding-rate">0,0043%</td>
+                            <td id="funding-rate-interp">ℹ️ Neutro</td>
+                            <td><span class="data-source" id="funding-rate-source">Binance • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Open Interest</strong></td>
+                            <td id="open-interest">$20,69B</td>
+                            <td id="open-interest-interp">ℹ️ Moderado</td>
+                            <td><span class="data-source" id="open-interest-source">Binance • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>BTC Put/Call Ratio</strong></td>
+                            <td id="put-call-ratio">0,63</td>
+                            <td id="put-call-interp">⚠️ Proteção baixa</td>
+                            <td><span class="data-source" id="put-call-source">Deribit • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>BTC Hashrate</strong></td>
+                            <td id="btc-hashrate">893 EH/s</td>
+                            <td>✅ Elevado</td>
+                            <td><span class="data-source" id="hashrate-source">Blockchain.com • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Miner Outflow</strong></td>
+                            <td id="miner-outflow">1.234,56 BTC</td>
+                            <td id="miner-outflow-interp">⚠️ Miners vendendo</td>
+                            <td><span class="data-source" id="miner-outflow-source">CoinGlass • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Active Addresses</strong></td>
+                            <td id="active-addresses">605.298</td>
+                            <td>ℹ️ Moderado</td>
+                            <td><span class="data-source" id="active-addresses-source">BitView • estático</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>ETH Gas Price</strong></td>
+                            <td id="eth-gas">5,68 Gwei</td>
+                            <td>✅ Baixo</td>
+                            <td><span class="data-source" id="gas-source">Etherscan • estático</span></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -790,7 +886,7 @@
         </section>
 
         <!-- ============================================================
-        PAINEL DE CONFIRMAÇÃO (ESTÁTICO)
+        PAINEL DE CONFIRMAÇÃO
         ============================================================ -->
         <section>
             <h2 class="section-title">✅ PAINEL DE CONFIRMAÇÃO DE FUNDO</h2>
@@ -807,20 +903,20 @@
         </section>
 
         <!-- ============================================================
-        MACRO INDICADORES (ESTÁTICO)
+        MACRO INDICADORES
         ============================================================ -->
         <section>
             <h2 class="section-title">🌍 INDICADORES MACROECONÔMICOS (referência)</h2>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Indicador</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
+                    <thead><tr><th>Indicador</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>DXY</strong></td><td>101,37</td><td>🔴 USD Forte</td><td><span class="data-source">FRED (estático)</span></td></tr>
-                        <tr><td><strong>Fed Rate</strong></td><td>3,62%</td><td>⚠️ Juros restritivos</td><td><span class="data-source">FRED (estático)</span></td></tr>
-                        <tr><td><strong>US 10Y Yield</strong></td><td>4,28%</td><td>⚠️ Yields elevados</td><td><span class="data-source">FRED (estático)</span></td></tr>
-                        <tr><td><strong>VIX</strong></td><td>18,41</td><td>ℹ️ Estresse do mercado</td><td><span class="data-source">FRED (estático)</span></td></tr>
-                        <tr><td><strong>NASDAQ % (24h)</strong></td><td>-1,09%</td><td>🔴 Tech</td><td><span class="data-source">Alpha Vantage (estático)</span></td></tr>
-                        <tr><td><strong>S&amp;P 500 % (24h)</strong></td><td>-0,05%</td><td>ℹ️ Broad market</td><td><span class="data-source">Alpha Vantage (estático)</span></td></tr>
+                        <tr><td><strong>DXY</strong></td><td>101,37</td><td>🔴 USD Forte</td><td><span class="data-source" id="dxy-source">FRED • estático</span></td></tr>
+                        <tr><td><strong>Fed Rate</strong></td><td>3,62%</td><td>⚠️ Juros restritivos</td><td><span class="data-source" id="fed-source">FRED • estático</span></td></tr>
+                        <tr><td><strong>US 10Y Yield</strong></td><td>4,28%</td><td>⚠️ Yields elevados</td><td><span class="data-source" id="us10y-source">FRED • estático</span></td></tr>
+                        <tr><td><strong>VIX</strong></td><td>18,41</td><td>ℹ️ Estresse do mercado</td><td><span class="data-source" id="vix-source">FRED • estático</span></td></tr>
+                        <tr><td><strong>NASDAQ % (24h)</strong></td><td>-1,09%</td><td>🔴 Tech</td><td><span class="data-source" id="nasdaq-source">Alpha Vantage • estático</span></td></tr>
+                        <tr><td><strong>S&amp;P 500 % (24h)</strong></td><td>-0,05%</td><td>ℹ️ Broad market</td><td><span class="data-source" id="sp500-source">Alpha Vantage • estático</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -828,7 +924,7 @@
         </section>
 
         <!-- ============================================================
-        WHALE ACTIVITY (ESTÁTICO)
+        WHALE ACTIVITY
         ============================================================ -->
         <section>
             <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (referência)</h2>
@@ -837,16 +933,19 @@
                     <div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action accumulating">ACUMULANDO</span></div>
                     <div class="whale-value">US$ 700 Milhões</div>
                     <div class="whale-transaction">✅ Retirada de 11.400+ BTC para cold storage</div>
+                    <span class="source-with-time" id="whale-btc-source">Whale Alert • estático</span>
                 </div>
                 <div class="whale-card" id="whale-eth">
                     <div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action distributing">DISTRIBUINDO</span></div>
                     <div class="whale-value">US$ 27,4 Milhões</div>
                     <div class="whale-transaction">🔴 Venda após 8 anos de hodl</div>
+                    <span class="source-with-time" id="whale-eth-source">Whale Alert • estático</span>
                 </div>
                 <div class="whale-card" id="whale-sol">
                     <div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action accumulating">ACUMULANDO</span></div>
                     <div class="whale-value">US$ 445,56 Milhões</div>
                     <div class="whale-transaction">🔥 Transferência de 6,27M SOL da Binance</div>
+                    <span class="source-with-time" id="whale-sol-source">Whale Alert • estático</span>
                 </div>
             </div>
             <div class="chart-wrapper"><canvas id="chart_whale_flow"></canvas></div>
@@ -854,17 +953,17 @@
         </section>
 
         <!-- ============================================================
-        STABLECOINS & DEFI (ESTÁTICO)
+        STABLECOINS & DEFI
         ============================================================ -->
         <section>
             <h2 class="section-title">💰 STABLECOINS &amp; DEFI (referência)</h2>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
+                    <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Total Stablecoin Supply</strong></td><td id="stablecoin-supply">$320B</td><td>✅ Liquidez disponível</td><td><span class="data-source">DefiLlama (estático)</span></td></tr>
-                        <tr><td><strong>DeFi TVL</strong></td><td id="defi-tvl">$70B</td><td id="defi-tvl-interp">⚠️ Comprimido</td><td><span class="data-source">DefiLlama (estático)</span></td></tr>
-                        <tr><td><strong>DeFi TVL Change (24h)</strong></td><td id="defi-tvl-change">-0,02%</td><td>ℹ️ Estável</td><td><span class="data-source">DefiLlama (estático)</span></td></tr>
+                        <tr><td><strong>Total Stablecoin Supply</strong></td><td id="stablecoin-supply">$320B</td><td>✅ Liquidez disponível</td><td><span class="data-source" id="stablecoin-source">DefiLlama • estático</span></td></tr>
+                        <tr><td><strong>DeFi TVL</strong></td><td id="defi-tvl">$70B</td><td id="defi-tvl-interp">⚠️ Comprimido</td><td><span class="data-source" id="defi-tvl-source">DefiLlama • estático</span></td></tr>
+                        <tr><td><strong>DeFi TVL Change (24h)</strong></td><td id="defi-tvl-change">-0,02%</td><td>ℹ️ Estável</td><td><span class="data-source" id="defi-change-source">DefiLlama • estático</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1087,26 +1186,41 @@
             return value.toFixed(2);
         }
 
+        function getCurrentTimestamp() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                second: '2-digit', timeZone: 'America/Sao_Paulo' };
+            return now.toLocaleString('pt-BR', options);
+        }
+
         // ================================================================
         // 3. TIMESTAMP
         // ================================================================
         function updateTimestamp() {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                second: '2-digit', timeZone: 'America/Sao_Paulo' };
-            const ts = now.toLocaleString('pt-BR', options);
+            const ts = getCurrentTimestamp();
             document.getElementById('header-timestamp').textContent = '📅 ' + ts + ' UTC-3';
             document.getElementById('last-update').textContent = ts;
         }
 
         function updateLiveTime() {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                second: '2-digit', timeZone: 'America/Sao_Paulo' };
-            document.getElementById('live-update-time').textContent = now.toLocaleString('pt-BR', options);
+            const ts = getCurrentTimestamp();
+            document.getElementById('live-update-time').textContent = ts;
             const badge = document.getElementById('status-badge');
             badge.textContent = '✅ LIVE';
             badge.className = 'status-badge live';
+        }
+
+        function updateSourceTimestamp(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                const currentText = el.textContent;
+                // Se já tiver timestamp, atualiza; senão, adiciona
+                if (currentText.includes('•')) {
+                    el.textContent = currentText.replace(/•.*$/, '• ' + getCurrentTimestamp());
+                } else {
+                    el.textContent = currentText + ' • ' + getCurrentTimestamp();
+                }
+            }
         }
 
         // ================================================================
@@ -1242,14 +1356,17 @@
                 document.getElementById('btc-price').textContent = formatCurrency(btc.usd);
                 document.getElementById('btc-price').className = 'value ' + getChangeClass(btc.usd_24h_change);
                 document.getElementById('btc-change').textContent = formatChange(btc.usd_24h_change) + ' (live)';
+                updateSourceTimestamp('btc-source');
                 const eth = data.ethereum;
                 document.getElementById('eth-price').textContent = formatCurrency(eth.usd);
                 document.getElementById('eth-price').className = 'value ' + getChangeClass(eth.usd_24h_change);
                 document.getElementById('eth-change').textContent = formatChange(eth.usd_24h_change) + ' (live)';
+                updateSourceTimestamp('eth-source');
                 const sol = data.solana;
                 document.getElementById('sol-price').textContent = formatCurrency(sol.usd);
                 document.getElementById('sol-price').className = 'value ' + getChangeClass(sol.usd_24h_change);
                 document.getElementById('sol-change').textContent = formatChange(sol.usd_24h_change) + ' (live)';
+                updateSourceTimestamp('sol-source');
                 updateLiveTime();
             } catch (e) {
                 console.warn('Prices (live) unavailable, keeping static');
@@ -1286,6 +1403,7 @@
 
         async function fetchDeFiData() {
             try {
+                // Stablecoin Supply
                 const resp1 = await fetch('https://stablecoins.llama.fi/stablecoins');
                 if (!resp1.ok) throw new Error('HTTP ' + resp1.status);
                 const data1 = await resp1.json();
@@ -1293,19 +1411,28 @@
                 if (data1 && data1.peggedAssets) {
                     data1.peggedAssets.forEach(asset => { if (asset.total) totalSupply += asset.total; });
                 }
-                document.getElementById('stablecoin-supply').textContent = formatCurrency(totalSupply) + ' (live)';
+                if (totalSupply > 0) {
+                    document.getElementById('stablecoin-supply').textContent = formatCurrency(totalSupply) + ' (live)';
+                    updateSourceTimestamp('stablecoin-source');
+                }
+
+                // DeFi TVL
                 const resp2 = await fetch('https://api.llama.fi/charts');
                 if (!resp2.ok) throw new Error('HTTP ' + resp2.status);
                 const data2 = await resp2.json();
                 const lastTvl = data2[data2.length - 1]?.totalLiquidityUSD || 0;
                 const prevTvl = data2[data2.length - 2]?.totalLiquidityUSD || 0;
-                const change = prevTvl ? ((lastTvl - prevTvl) / prevTvl) * 100 : 0;
-                document.getElementById('defi-tvl').textContent = formatCurrency(lastTvl) + ' (live)';
-                document.getElementById('defi-tvl').className = 'value ' + getChangeClass(change);
-                document.getElementById('defi-tvl-change').textContent = formatChange(change) + ' (live)';
-                document.getElementById('defi-tvl-change').className = getChangeClass(change);
-                document.getElementById('defi-tvl-interp').textContent = change >= 0 ? '✅ Entrada de liquidez' :
-                    '⚠️ Saída de liquidez';
+                if (lastTvl > 0) {
+                    const change = prevTvl ? ((lastTvl - prevTvl) / prevTvl) * 100 : 0;
+                    document.getElementById('defi-tvl').textContent = formatCurrency(lastTvl) + ' (live)';
+                    document.getElementById('defi-tvl').className = 'value ' + getChangeClass(change);
+                    document.getElementById('defi-tvl-change').textContent = formatChange(change) + ' (live)';
+                    document.getElementById('defi-tvl-change').className = getChangeClass(change);
+                    document.getElementById('defi-tvl-interp').textContent = change >= 0 ? '✅ Entrada de liquidez' :
+                        '⚠️ Saída de liquidez';
+                    updateSourceTimestamp('defi-tvl-source');
+                    updateSourceTimestamp('defi-change-source');
+                }
                 updateLiveTime();
             } catch (e) {
                 console.warn('DeFi data unavailable, keeping static');
@@ -1318,16 +1445,22 @@
                 if (!resp1.ok) throw new Error('HTTP ' + resp1.status);
                 const data1 = await resp1.json();
                 const fr = data1[0]?.fundingRate || 0;
-                document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '% (live)';
-                document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
-                    fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
+                if (fr) {
+                    document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '% (live)';
+                    document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
+                        fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
+                    updateSourceTimestamp('funding-rate-source');
+                }
                 const resp2 = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
                 if (!resp2.ok) throw new Error('HTTP ' + resp2.status);
                 const data2 = await resp2.json();
                 const oi = parseFloat(data2.openInterest) || 0;
-                document.getElementById('open-interest').textContent = formatCurrency(oi) + ' (live)';
-                document.getElementById('open-interest-interp').textContent = oi > 1e9 ? '⚠️ Alto' :
-                'ℹ️ Moderado';
+                if (oi > 0) {
+                    document.getElementById('open-interest').textContent = formatCurrency(oi) + ' (live)';
+                    document.getElementById('open-interest-interp').textContent = oi > 1e9 ? '⚠️ Alto' :
+                    'ℹ️ Moderado';
+                    updateSourceTimestamp('open-interest-source');
+                }
                 updateLiveTime();
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
@@ -1336,12 +1469,15 @@
 
         async function fetchBRK() {
             const metrics = [
-                { id: 'mvrv', el: 'mvrv', interp: 'mvrv-interp', fallback: '1,15' },
-                { id: 'mvrv_short', el: 'mvrv-sth', interp: 'mvrv-sth-interp', fallback: '0,84' },
-                { id: 'sopr', el: 'sopr', interp: 'sopr-interp', fallback: '0,80' },
-                { id: 'sopr_adjusted', el: 'asopr', interp: 'asopr-interp', fallback: '0,99' },
-                { id: 'realized_price', el: 'realized-price', interp: null, fallback: '53600' },
-                { id: 'active_addresses', el: 'active-addresses', interp: null, fallback: '605298' }
+                { id: 'mvrv', el: 'mvrv', interp: 'mvrv-interp', source: 'mvrv-source', fallback: '1,15' },
+                { id: 'mvrv_short', el: 'mvrv-sth', interp: 'mvrv-sth-interp', source: 'mvrv-sth-source',
+                fallback: '0,84' },
+                { id: 'sopr', el: 'sopr', interp: 'sopr-interp', source: 'sopr-source', fallback: '0,80' },
+                { id: 'sopr_adjusted', el: 'asopr', interp: 'asopr-interp', source: 'asopr-source', fallback: '0,99' },
+                { id: 'realized_price', el: 'realized-price', interp: null, source: 'realized-price-source',
+                    fallback: '53600' },
+                { id: 'active_addresses', el: 'active-addresses', interp: null, source: 'active-addresses-source',
+                    fallback: '605298' }
             ];
             const promises = metrics.map(async m => {
                 try {
@@ -1368,8 +1504,7 @@
                                 'ℹ️ Ajustado neutro';
                             document.getElementById(m.interp).textContent = interpText;
                         }
-                    } else {
-                        document.getElementById(m.el).textContent = m.fallback;
+                        updateSourceTimestamp(m.source);
                     }
                 } catch (err) {
                     console.warn('BRK error for ' + m.id, err);
@@ -1387,9 +1522,11 @@
                 if (!response.ok) throw new Error('HTTP ' + response.status);
                 const text = await response.text();
                 const hr = parseFloat(text) / 1e18;
-                document.getElementById('btc-hashrate').textContent = (!isNaN(hr) && hr > 0) ? hr.toFixed(2) + ' EH/s (live)' :
-                    '893 EH/s (fallback)';
-                updateLiveTime();
+                if (!isNaN(hr) && hr > 0) {
+                    document.getElementById('btc-hashrate').textContent = hr.toFixed(2) + ' EH/s (live)';
+                    updateSourceTimestamp('hashrate-source');
+                    updateLiveTime();
+                }
             } catch (e) {
                 console.warn('Hashrate unavailable, keeping static');
             }
@@ -1405,6 +1542,7 @@
                 if (data.status === '1') {
                     const gasPrice = parseFloat(data.result.ProposeGasPrice) / 10;
                     document.getElementById('eth-gas').textContent = gasPrice.toFixed(2) + ' Gwei (live)';
+                    updateSourceTimestamp('gas-source');
                     updateLiveTime();
                 } else {
                     throw new Error('API error: ' + data.message);
@@ -1459,4 +1597,4 @@
         updateTimestamp();
     </script>
 </body>
-</html>
+    </html>
