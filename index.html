@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — LIVE</title>
+    <title>Dashboard Institucional — 100% LIVE + Candles + Whales</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
@@ -226,7 +226,7 @@
             }
         }
 
-        /* DEMIAS ESTILOS */
+        /* DEMAIS ESTILOS */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -675,7 +675,7 @@
                     <div class="badge extreme-fear" id="header-fng">😱 FEAR &amp; GREED: -- (---)</div>
                     <div class="badge">⚡ STATUS: MARKDOWN</div>
                     <span class="live-indicator">🔴 LIVE</span>
-                    <span class="proxy-status" id="proxy-status">🌐 PROD (Cloudflare)</span>
+                    <span class="proxy-status">🌐 PROD (público)</span>
                 </div>
             </div>
         </header>
@@ -694,7 +694,7 @@
         </section>
 
         <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK COM INDICADORES DE VARIAÇÃO
+        GRÁFICOS DE CANDLESTICK
         ============================================================ -->
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (24h) — Atualização a cada 10s</h2>
@@ -885,7 +885,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Candles via Binance (atualização 10s), demais métricas via APIs públicas e proxy Cloudflare (CORS bypass). Atualização geral a cada <strong>60 segundos</strong>.</p>
+                    <p>Candles via Binance (atualização 10s), demais métricas via APIs públicas com fallback estático. Atualização geral a cada <strong>60 segundos</strong>.</p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
@@ -897,35 +897,38 @@
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAR AQUI A URL DO SEU WORKER
-        // ================================================================
-        const WORKER_URL = 'https://cors-proxy.seuusuario.workers.dev?url='; // <--- SUBSTITUA
-
-        // ================================================================
-        // 1. CHAVES DE API (mantidas)
+        // 0. CHAVES DE API
         // ================================================================
         const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
         const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
         const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
 
         // ================================================================
-        // 2. PROXY (usa o Worker do Cloudflare + fallback)
+        // 1. PROXY (apenas públicos, sem dependência de Worker)
         // ================================================================
         async function fetchWithProxy(url) {
-            try {
-                const response = await fetch(WORKER_URL + encodeURIComponent(url));
-                if (response.ok) return response;
-                // Se o Worker falhar, tenta proxy público (fallback)
-                const fallback = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-                if (fallback.ok) return fallback;
-                throw new Error('Todos os proxies falharam');
-            } catch (e) {
-                throw new Error('Proxy error: ' + e.message);
+            const proxies = [
+                url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                url => `https://thingproxy.freeboard.io/fetch/${url}`
+            ];
+            for (let i = 0; i < proxies.length; i++) {
+                try {
+                    const response = await fetch(proxies[i](url), {
+                        headers: { 'User-Agent': 'Mozilla/5.0' }
+                    });
+                    if (response.ok) {
+                        return response;
+                    }
+                } catch (e) {
+                    console.warn(`Proxy ${i} falhou:`, e.message);
+                }
             }
+            throw new Error('Todos os proxies falharam');
         }
 
         // ================================================================
-        // 3. CHART.JS E GRÁFICOS (Mantidos)
+        // 2. CHART.JS E GRÁFICOS
         // ================================================================
         window.charts = [];
 
@@ -1028,7 +1031,7 @@
         }
 
         // ================================================================
-        // 4. HELPERS
+        // 3. HELPERS
         // ================================================================
         function formatCurrency(value) {
             return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1071,7 +1074,7 @@
         }
 
         // ================================================================
-        // 5. WATCHLIST
+        // 4. WATCHLIST
         // ================================================================
         const WATCHLIST = [
             { name: 'MicroStrategy', category: 'Instituição', blockchain: 'BTC',
@@ -1112,7 +1115,7 @@
         window.whaleHistory = [];
 
         // ================================================================
-        // 6. CANDLESTICK CHARTS
+        // 5. CANDLESTICK CHARTS
         // ================================================================
         let candleCharts = {};
 
@@ -1230,7 +1233,7 @@
         }
 
         // ================================================================
-        // 7. FUNÇÕES DE BUSCA (TODAS USAM fetchWithProxy)
+        // 6. FUNÇÕES DE BUSCA (com fallback seguro)
         // ================================================================
 
         async function fetchPrices() {
@@ -1616,7 +1619,7 @@
         }
 
         // ================================================================
-        // 8. WHALE ALERT (COM FALLBACK ESTÁTICO)
+        // 7. WHALE ALERT (com fallback estático)
         // ================================================================
         function updateWhaleUI(transactions) {
             let btcAccum = 0,
@@ -1803,7 +1806,7 @@
         }
 
         // ================================================================
-        // 9. TIMESTAMP E MASTER REFRESH
+        // 8. TIMESTAMP E MASTER REFRESH
         // ================================================================
         function updateTimestamp() {
             const now = new Date();
@@ -1851,7 +1854,7 @@
         }
 
         // ================================================================
-        // 10. INIT
+        // 9. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
