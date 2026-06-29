@@ -10,7 +10,7 @@
     </script>
     <style>
         /* ============================================================
-           ESTILOS (MANTIDOS – NENHUMA ALTERAÇÃO)
+           ESTILOS (MANTIDOS E EXPANDIDOS)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -157,7 +157,7 @@
             color: var(--accent-red);
         }
 
-        /* SCORE CARD */
+        /* SCORE CARD (MANTIDO E EXPANDIDO) */
         .score-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -218,6 +218,40 @@
         .score-detail-item .value {
             font-weight: 700;
             color: var(--text-light);
+        }
+
+        /* NOVO: Score Avançado (Z-Score) */
+        .advanced-score-section {
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .advanced-score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .advanced-score-item {
+            background: var(--primary);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .advanced-score-item .label {
+            color: var(--text-muted);
+            display: block;
+            font-size: 0.7em;
+            text-transform: uppercase;
+        }
+
+        .advanced-score-item .value {
+            font-weight: 700;
         }
 
         /* CANDLES */
@@ -983,7 +1017,7 @@
 <body>
     <div class="container">
         <!-- ============================================================
-        HEADER
+        HEADER (MANTIDO)
         ============================================================ -->
         <header>
             <div class="header-content">
@@ -1003,11 +1037,11 @@
         </header>
 
         <!-- ============================================================
-        SCORE CARD
+        SCORE CARD (MANTIDO E EXPANDIDO)
         ============================================================ -->
         <section>
             <div class="score-card">
-                <div class="score-label">Score Institucional</div>
+                <div class="score-label">Score Institucional (Clássico)</div>
                 <div class="score-value" id="score-value" style="color: var(--accent-yellow);">50</div>
                 <div class="score-bar-container">
                     <div class="score-bar-fill" id="score-bar" style="width: 50%; background: var(--accent-yellow);"></div>
@@ -1025,11 +1059,31 @@
                     <div class="score-detail-item"><span class="label">Volume</span> <span class="value" id="score-volume">--</span></div>
                     <div class="score-detail-item"><span class="label">OI Delta</span> <span class="value" id="score-oi">--</span></div>
                 </div>
+
+                <!-- ============================================================
+                NOVO: SCORE AVANÇADO (Z-SCORE PINE)
+                ============================================================ -->
+                <div class="advanced-score-section">
+                    <div class="score-label" style="font-size:0.9em; color:var(--accent-blue);">Score Avançado (Z-Score)</div>
+                    <div class="score-value" id="adv-score-value" style="font-size:3em; color: var(--accent-yellow);">--</div>
+                    <div class="score-bar-container">
+                        <div class="score-bar-fill" id="adv-score-bar" style="width:50%; background:var(--accent-yellow);"></div>
+                    </div>
+                    <div class="advanced-score-grid">
+                        <div class="advanced-score-item"><span class="label">Intermercado</span><span class="value" id="adv-im">--</span></div>
+                        <div class="advanced-score-item"><span class="label">On‑Chain</span><span class="value" id="adv-oc">--</span></div>
+                        <div class="advanced-score-item"><span class="label">Técnicos</span><span class="value" id="adv-tc">--</span></div>
+                        <div class="advanced-score-item"><span class="label">Macro</span><span class="value" id="adv-macro">--</span></div>
+                        <div class="advanced-score-item"><span class="label">Derivativos</span><span class="value" id="adv-der">--</span></div>
+                        <div class="advanced-score-item"><span class="label">Fluxo Inst.</span><span class="value" id="adv-inst">--</span></div>
+                    </div>
+                    <div style="margin-top:8px; font-size:0.8em; color:var(--text-muted);" id="adv-signal-desc">Aguardando dados...</div>
+                </div>
             </div>
         </section>
 
         <!-- ============================================================
-        RESUMO EXECUTIVO
+        RESUMO EXECUTIVO (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">📌 RESUMO EXECUTIVO</h2>
@@ -1071,7 +1125,7 @@
         </section>
 
         <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK
+        GRÁFICOS DE CANDLESTICK (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (LIVE)</h2>
@@ -1125,7 +1179,7 @@
         </section>
 
         <!-- ============================================================
-        ON-CHAIN ANALYSIS
+        ON-CHAIN ANALYSIS (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS</h2>
@@ -1260,7 +1314,7 @@
         </section>
 
         <!-- ============================================================
-        PAINEL DE CONFIRMAÇÃO
+        PAINEL DE CONFIRMAÇÃO (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">✅ PAINEL DE CONFIRMAÇÃO DE FUNDO</h2>
@@ -1277,7 +1331,7 @@
         </section>
 
         <!-- ============================================================
-        MACRO INDICADORES
+        MACRO INDICADORES (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">🌍 INDICADORES MACROECONÔMICOS (referência)</h2>
@@ -1298,7 +1352,7 @@
         </section>
 
         <!-- ============================================================
-        WHALE ACTIVITY
+        WHALE ACTIVITY (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (referência)</h2>
@@ -1327,7 +1381,7 @@
         </section>
 
         <!-- ============================================================
-        STABLECOINS & DEFI
+        STABLECOINS & DEFI (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">💰 STABLECOINS &amp; DEFI (referência)</h2>
@@ -1344,7 +1398,7 @@
         </section>
 
         <!-- ============================================================
-        SCORES (ESTÁTICO)
+        SCORES (ESTÁTICO - MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">📈 SCORES DE ANÁLISE</h2>
@@ -1364,7 +1418,7 @@
         </section>
 
         <!-- ============================================================
-        CENÁRIOS & ALLOCATION
+        CENÁRIOS & ALLOCATION (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">🎯 CENÁRIOS &amp; MATRIZ DE APORTE</h2>
@@ -1373,7 +1427,7 @@
         </section>
 
         <!-- ============================================================
-        BACKTEST 30 DIAS
+        BACKTEST 30 DIAS (MANTIDO)
         ============================================================ -->
         <section>
             <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS</h2>
@@ -1395,13 +1449,13 @@
         </section>
 
         <!-- ============================================================
-        FOOTER
+        FOOTER (MANTIDO)
         ============================================================ -->
         <footer>
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Alertas Telegram para condições extremas. Backtest com dados dos últimos 30 dias (Binance).</p>
+                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Score Avançado baseado no modelo Z-Score do Pine Script v9.4, com ponderação adaptativa. Alertas Telegram para condições extremas. Backtest com dados dos últimos 30 dias (Binance).</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
@@ -1411,24 +1465,24 @@
     </div>
 
     <!-- ============================================================
-    BOTÃO FLUTUANTE — TESTAR TELEGRAM
+    BOTÃO FLUTUANTE — TESTAR TELEGRAM (MANTIDO)
     ============================================================ -->
     <button class="telegram-test-btn" id="test-telegram-btn">
         <span id="test-btn-label">📨 Testar Alerta</span>
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT COMPLETO
+    JAVASCRIPT COMPLETO (MANTIDO E EXPANDIDO)
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAÇÃO DO TELEGRAM (ATUALIZADO)
+        // 0. CONFIGURAÇÃO DO TELEGRAM (MANTIDO)
         // ================================================================
         const TELEGRAM_TOKEN = '8670184440:AAFBfhFFTMnUWsgIFyRh0huBYbL-Q_vhT5k';
         const TELEGRAM_CHAT_ID = '1137196768';
 
         // ================================================================
-        // 0.1 VARIÁVEIS DE CONTROLE DE ALERTAS
+        // 0.1 VARIÁVEIS DE CONTROLE DE ALERTAS (MANTIDAS)
         // ================================================================
         let lastAlertScore = 50;
         let lastAlertTime = 0;
@@ -1437,7 +1491,7 @@
         let telegramStatus = 'online';
 
         // ================================================================
-        // 0.2 FUNÇÕES DE ENVIO
+        // 0.2 FUNÇÕES DE ENVIO (MANTIDAS)
         // ================================================================
         async function sendTelegramAlert(message) {
             try {
@@ -1472,7 +1526,7 @@
         }
 
         // ================================================================
-        // 0.3 ALERTA ESTRUTURADO
+        // 0.3 ALERTA ESTRUTURADO (MANTIDO)
         // ================================================================
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale, components) {
             const emojis = { long: '🟢', short: '🔴' };
@@ -1514,7 +1568,7 @@
         }
 
         // ================================================================
-        // 0.4 FUNÇÃO DE TESTE
+        // 0.4 FUNÇÃO DE TESTE (MANTIDA)
         // ================================================================
         async function sendTestAlert() {
             const score = document.getElementById('score-value')?.textContent || '50';
@@ -1531,7 +1585,7 @@
         }
 
         // ================================================================
-        // 0.5 STATUS DO TELEGRAM
+        // 0.5 STATUS DO TELEGRAM (MANTIDO)
         // ================================================================
         function updateTelegramStatus() {
             const dot = document.getElementById('telegram-status-dot');
@@ -1549,7 +1603,7 @@
         }
 
         // ================================================================
-        // 0.6 ALERTAS ADICIONAIS
+        // 0.6 ALERTAS ADICIONAIS (MANTIDOS)
         // ================================================================
         let previousScore = 50;
 
@@ -1603,14 +1657,14 @@
         }
 
         // ================================================================
-        // 1. CHAVES DE API
+        // 1. CHAVES DE API (MANTIDAS)
         // ================================================================
         const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
         const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
         const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
 
         // ================================================================
-        // 2. CHART.JS — GRÁFICOS
+        // 2. CHART.JS — GRÁFICOS (MANTIDOS)
         // ================================================================
         window.charts = [];
 
@@ -1745,7 +1799,7 @@
         }
 
         // ================================================================
-        // 3. HELPERS
+        // 3. HELPERS (MANTIDOS)
         // ================================================================
         function formatCurrency(value) {
             return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1783,7 +1837,7 @@
         }
 
         // ================================================================
-        // 4. TIMESTAMP
+        // 4. TIMESTAMP (MANTIDO)
         // ================================================================
         function updateTimestamp() {
             const ts = getCurrentTimestamp();
@@ -1812,8 +1866,9 @@
         }
 
         // ================================================================
-        // 5. FUNÇÕES DE CÁLCULO (GLOBAIS)
+        // 5. FUNÇÕES DE CÁLCULO (GLOBAIS - MANTIDAS E NOVAS)
         // ================================================================
+        // --- Funções já existentes ---
         function calculateEMA(data, period) {
             if (!data || data.length < period) return null;
             const multiplier = 2 / (period + 1);
@@ -1850,8 +1905,35 @@
             return 100 - (100 / (1 + rs));
         }
 
+        // --- NOVAS FUNÇÕES PARA Z-SCORE ROBUSTO (PINE) ---
+        function median(arr) {
+            if (!arr || arr.length === 0) return 0;
+            const sorted = [...arr].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+        }
+
+        function mad(arr) {
+            if (!arr || arr.length === 0) return 1;
+            const med = median(arr);
+            const deviations = arr.map(v => Math.abs(v - med));
+            return median(deviations) * 1.4826;
+        }
+
+        function robustZscore(value, history) {
+            if (!history || history.length < 10) return 0;
+            const med = median(history);
+            const madVal = mad(history);
+            if (madVal === 0) return 0;
+            const z = (value - med) / madVal;
+            // soft clipping
+            const zAbs = Math.abs(z);
+            if (zAbs <= 3) return z;
+            return Math.sign(z) * (3 + Math.log(zAbs - 3 + 1));
+        }
+
         // ================================================================
-        // 6. CANDLESTICK
+        // 6. CANDLESTICK (MANTIDO)
         // ================================================================
         let candleCharts = {};
 
@@ -1969,7 +2051,7 @@
         }
 
         // ================================================================
-        // 7. SCORE INSTITUCIONAL
+        // 7. SCORE CLÁSSICO (MANTIDO)
         // ================================================================
         let globalData = {
             price: 60000,
@@ -2048,72 +2130,166 @@
             return { score: Math.round(finalScore), components };
         }
 
-        function updateScoreDisplay(scoreData) {
-            const score = scoreData.score;
-            const components = scoreData.components;
+        // ================================================================
+        // 7.1 SCORE AVANÇADO (Z-SCORE PINE)
+        // ================================================================
+        // Armazenar históricos para Z-Score
+        let histData = {
+            price: [],
+            dxy: [],
+            ndx: [],
+            vix: [],
+            us10y: [],
+            realYield: [],
+            stableFlow: [],
+            mvrv: [],
+            sopr: [],
+            macd: [],
+            obv: [],
+            rsi: [],
+            funding: [],
+            oi: []
+        };
+        const MAX_HIST = 200;
 
-            const scoreValue = document.getElementById('score-value');
-            const scoreBar = document.getElementById('score-bar');
+        function updateHistory(key, value) {
+            if (!histData[key]) histData[key] = [];
+            histData[key].push(value);
+            if (histData[key].length > MAX_HIST) histData[key].shift();
+        }
 
-            if (scoreValue) {
-                scoreValue.textContent = score;
-                if (score >= 75) {
-                    scoreValue.style.color = 'var(--accent-green)';
-                    scoreBar.style.background = 'var(--accent-green)';
-                } else if (score <= 25) {
-                    scoreValue.style.color = 'var(--accent-red)';
-                    scoreBar.style.background = 'var(--accent-red)';
-                } else {
-                    scoreValue.style.color = 'var(--accent-yellow)';
-                    scoreBar.style.background = 'var(--accent-yellow)';
-                }
+        function computeAdvancedScore(current) {
+            // Coletar valores atuais
+            const price = current.price || 60000;
+            const dxy = current.dxy || 101.37;
+            const ndx = current.ndx || -1.09; // variação % NASDAQ
+            const vix = current.vix || 18.41;
+            const us10y = current.us10y || 4.28;
+            const realYield = current.realYield || 1.78; // aprox US10Y - inflação
+            const stableFlow = current.stableFlow || 0.001; // variação % stablecoin cap
+            const mvrv = current.mvrv || 1.2;
+            const sopr = current.sopr || 0.95;
+            const macd = current.macd || 0.0;
+            const obv = current.obv || 0.0;
+            const rsi = current.rsi || 50;
+            const funding = current.funding || 0.0043;
+            const oi = current.oi || 0.0;
+            const adx = current.adx || 25;
+            const atrPct = current.atrPct || 1.0;
+
+            // Atualizar históricos
+            updateHistory('price', price);
+            updateHistory('dxy', dxy);
+            updateHistory('ndx', ndx);
+            updateHistory('vix', vix);
+            updateHistory('us10y', us10y);
+            updateHistory('realYield', realYield);
+            updateHistory('stableFlow', stableFlow);
+            updateHistory('mvrv', mvrv);
+            updateHistory('sopr', sopr);
+            updateHistory('macd', macd);
+            updateHistory('obv', obv);
+            updateHistory('rsi', rsi);
+            updateHistory('funding', funding);
+            updateHistory('oi', oi);
+
+            // Parâmetros
+            const zscore_len = 90;
+            const tech_boost = 1.0;
+            // Modo transição: se atrPct > 2 * desvio padrão do ATR, reduzir janela pela metade
+            let modo_transicao = false;
+            if (histData.price.length > 30) {
+                const atrHistory = histData.price.map((p, i) => i > 0 ? Math.abs(p - histData.price[i - 1]) : 0);
+                const atrMean = atrHistory.reduce((a, b) => a + b, 0) / atrHistory.length;
+                const atrStd = Math.sqrt(atrHistory.reduce((a, b) => a + Math.pow(b - atrMean, 2), 0) / atrHistory.length);
+                if (atrPct > 2 * (atrStd / (price || 1)) * 100) modo_transicao = true;
             }
-            if (scoreBar) {
-                scoreBar.style.width = score + '%';
+            const zscore_eff = modo_transicao ? Math.max(30, Math.floor(zscore_len / 2)) : zscore_len;
+
+            // Calcular Z-scores robustos para cada métrica
+            const z_btc = robustZscore(price, histData.price.slice(-zscore_eff));
+            const z_dxy = robustZscore(dxy, histData.dxy.slice(-zscore_eff));
+            const z_ndx = robustZscore(ndx, histData.ndx.slice(-zscore_eff));
+            const z_vix = robustZscore(vix, histData.vix.slice(-zscore_eff));
+            const z_ry = robustZscore(realYield, histData.realYield.slice(-zscore_eff));
+            const z_stable = robustZscore(stableFlow, histData.stableFlow.slice(-zscore_eff));
+            const z_mvrv = robustZscore(mvrv, histData.mvrv.slice(-zscore_eff));
+            const z_sopr = robustZscore(sopr, histData.sopr.slice(-zscore_eff));
+            const z_macd = robustZscore(macd, histData.macd.slice(-zscore_eff));
+            const z_obv = robustZscore(obv, histData.obv.slice(-zscore_eff));
+            const z_rsi = robustZscore(rsi, histData.rsi.slice(-zscore_eff));
+            const z_funding = robustZscore(funding, histData.funding.slice(-zscore_eff));
+            const z_oi = robustZscore(oi, histData.oi.slice(-zscore_eff));
+
+            // Fatores de alinhamento (igual ao Pine)
+            const rsi_dir = rsi > 50 ? 1 : -1;
+            const macd_dir = macd > 0 ? 1 : -1;
+            const alinhamento = rsi_dir === macd_dir ? 1.0 : 0.4;
+
+            // Grupos (conforme Pine)
+            const z_im = (-z_dxy + (z_ndx * tech_boost) - z_vix + z_stable - z_ry) / (4.0 + tech_boost);
+            const z_oc = z_mvrv * 0.70 + z_sopr * 0.30;
+            const z_tc = z_obv * 0.70 + z_rsi * 0.05 * alinhamento + z_macd * 0.03 * alinhamento + (z_btc * 0.22); // proxy vol_dir
+            const z_mac = (-z_ry) * 0.70 + z_stable * 0.30; // z_m2 proxy
+            const z_der = (-z_funding) * 0.70 + z_oi * 0.30;
+
+            // Fluxo Institucional
+            const inst_flow = z_stable * 0.6 + (z_obv - (histData.obv.length > 10 ? robustZscore(histData.obv[histData.obv
+                .length - 11] || 0, histData.obv.slice(-zscore_eff)) : 0)) * 0.4;
+
+            // Ponderação adaptativa
+            let w_im = 0.15,
+                w_oc = 0.30,
+                w_tc = 0.15,
+                w_mc = 0.15,
+                w_dv = 0.22;
+            if (true) { // adaptive_weight
+                const vol_ratio = atrPct / (histData.price.length > 90 ? calculateEMA(histData.price.slice(-90).map((p, i) =>
+                    i > 0 ? Math.abs(p - histData.price[i - 1]) / (p || 1) * 100 : 0), 90) || atrPct : atrPct);
+                const blend = clamp((vol_ratio - 0.7) / (1.5 - 0.7), 0, 1);
+                w_im = 0.20 - blend * 0.05;
+                w_oc = 0.30;
+                w_mc = 0.15 - blend * 0.05;
+                w_tc = adx < 25 ? 0.05 + blend * 0.05 : 0.10 + blend * 0.10;
+                w_dv = Math.min(0.22, 0.20 + blend * 0.05);
             }
 
-            document.getElementById('score-trend').textContent = components.trend;
-            document.getElementById('score-momentum').textContent = components.momentum;
-            document.getElementById('score-structure').textContent = components.structure;
-            document.getElementById('score-onchain').textContent = components.onchain;
-            document.getElementById('score-volume').textContent = components.volume;
-            document.getElementById('score-oi').textContent = components.oi;
+            const soma = w_im + w_oc + w_tc + w_mc + w_dv;
+            const z_comp = (z_im * w_im + z_oc * w_oc + z_tc * w_tc + z_mac * w_mc + z_der * w_dv) / soma;
 
-            const now = Date.now();
-            if (now - lastAlertTime > ALERT_COOLDOWN) {
-                const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
-                if (score >= 75) {
-                    const stop = price * 0.98;
-                    const targets = [
-                        { price: price * 1.02, rr: 1.0 },
-                        { price: price * 1.05, rr: 2.5 }
-                    ];
-                    sendStructuredAlert('long', score, price, stop, targets,
-                        'Golden Cross + RSI > 50, MVRV baixo, SOPR > 1, funding rate negativo.',
-                        components
-                    );
-                    lastAlertTime = now;
-                    lastAlertScore = score;
-                } else if (score <= 25) {
-                    const stop = price * 1.02;
-                    const targets = [
-                        { price: price * 0.98, rr: 1.0 },
-                        { price: price * 0.95, rr: 2.5 }
-                    ];
-                    sendStructuredAlert('short', score, price, stop, targets,
-                        'RSI > 70, resistência quebrada, OI em alta, overbought extremo.',
-                        components
-                    );
-                    lastAlertTime = now;
-                    lastAlertScore = score;
-                }
+            // Suavização (EMA de 1, 2 ou 3 conforme ADX)
+            let scoreZ;
+            if (adx > 30) {
+                scoreZ = z_comp;
+            } else if (adx < 25) {
+                // EMA3
+                const ema3 = (z_comp + (window._ema3_prev || z_comp) * 2) / 3;
+                window._ema3_prev = ema3;
+                scoreZ = ema3;
+            } else {
+                const ema2 = (z_comp + (window._ema2_prev || z_comp)) / 2;
+                window._ema2_prev = ema2;
+                scoreZ = ema2;
             }
 
-            checkAdditionalAlerts(score, components);
+            // Converter para 0-100
+            const scoreFinal = clamp((scoreZ + 3) / 6 * 100, 0, 100);
+
+            return {
+                score: Math.round(scoreFinal),
+                zIm: z_im,
+                zOc: z_oc,
+                zTc: z_tc,
+                zMacro: z_mac,
+                zDer: z_der,
+                zInst: inst_flow,
+                scoreZ: scoreZ,
+                modo_transicao: modo_transicao
+            };
         }
 
         // ================================================================
-        // 8. FUNÇÕES DE ATUALIZAÇÃO (APIs)
+        // 8. FUNÇÕES DE ATUALIZAÇÃO (MANTIDAS E EXPANDIDAS)
         // ================================================================
         async function fetchPrices() {
             try {
@@ -2180,6 +2356,16 @@
                 if (totalSupply > 0) {
                     document.getElementById('stablecoin-supply').textContent = formatCurrency(totalSupply) + ' (live)';
                     updateSourceTimestamp('stablecoin-source');
+                    // Atualizar stableFlow para o Z-Score
+                    const prev = localStorage.getItem('prevStableSupply');
+                    if (prev) {
+                        const prevVal = parseFloat(prev);
+                        const flow = prevVal > 0 ? (totalSupply - prevVal) / prevVal : 0;
+                        globalData.stableFlow = flow;
+                        document.getElementById('stable-flow').textContent = (flow * 100).toFixed(2) + '% (live)';
+                        updateSourceTimestamp('stable-flow-source');
+                    }
+                    localStorage.setItem('prevStableSupply', totalSupply);
                 }
 
                 const resp2 = await fetch('https://api.llama.fi/charts');
@@ -2215,6 +2401,7 @@
                     document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
                         fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
                     updateSourceTimestamp('funding-rate-source');
+                    globalData.funding = fr;
                 }
 
                 const respAvg = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8');
@@ -2236,6 +2423,7 @@
                     document.getElementById('open-interest-interp').textContent = currentOI > 1e9 ? '⚠️ Alto' :
                         'ℹ️ Moderado';
                     updateSourceTimestamp('open-interest-source');
+                    globalData.oi = currentOI;
                 }
 
                 const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : currentOI *
@@ -2329,9 +2517,14 @@
                 }
 
                 updateLiveTime();
+                // Atualizar score clássico
                 const scoreData = computeScore(globalData);
                 updateScoreDisplay(scoreData);
                 lastScore = scoreData.score;
+
+                // Atualizar score avançado
+                const advData = computeAdvancedScore(globalData);
+                updateAdvancedScoreDisplay(advData);
 
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
@@ -2376,8 +2569,8 @@
                             document.getElementById(m.interp).textContent = interpText;
                         }
                         updateSourceTimestamp(m.source);
-                        if (m.id === 'mvrv') globalData.mvrv = parseFloat(val);
-                        if (m.id === 'sopr') globalData.sopr = parseFloat(val);
+                        if (m.id === 'mvrv') { globalData.mvrv = parseFloat(val); }
+                        if (m.id === 'sopr') { globalData.sopr = parseFloat(val); }
                     }
                 } catch (err) {
                     console.warn('BRK error for ' + m.id, err);
@@ -2425,7 +2618,7 @@
         }
 
         // ================================================================
-        // 9. MASTER REFRESH
+        // 9. MASTER REFRESH (MANTIDO E EXPANDIDO)
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
@@ -2438,13 +2631,135 @@
                 fetchHashrate(),
                 fetchGasPrice()
             ]);
+            // Atualizar scores novamente após todas as APIs
             const scoreData = computeScore(globalData);
             updateScoreDisplay(scoreData);
             lastScore = scoreData.score;
+            const advData = computeAdvancedScore(globalData);
+            updateAdvancedScoreDisplay(advData);
         }
 
         // ================================================================
-        // 10. BACKTEST 30 DIAS (CORRIGIDO)
+        // 10. DISPLAY FUNCTIONS (MANTIDAS E NOVAS)
+        // ================================================================
+        function updateScoreDisplay(scoreData) {
+            const score = scoreData.score;
+            const components = scoreData.components;
+
+            const scoreValue = document.getElementById('score-value');
+            const scoreBar = document.getElementById('score-bar');
+
+            if (scoreValue) {
+                scoreValue.textContent = score;
+                if (score >= 75) {
+                    scoreValue.style.color = 'var(--accent-green)';
+                    scoreBar.style.background = 'var(--accent-green)';
+                } else if (score <= 25) {
+                    scoreValue.style.color = 'var(--accent-red)';
+                    scoreBar.style.background = 'var(--accent-red)';
+                } else {
+                    scoreValue.style.color = 'var(--accent-yellow)';
+                    scoreBar.style.background = 'var(--accent-yellow)';
+                }
+            }
+            if (scoreBar) {
+                scoreBar.style.width = score + '%';
+            }
+
+            document.getElementById('score-trend').textContent = components.trend;
+            document.getElementById('score-momentum').textContent = components.momentum;
+            document.getElementById('score-structure').textContent = components.structure;
+            document.getElementById('score-onchain').textContent = components.onchain;
+            document.getElementById('score-volume').textContent = components.volume;
+            document.getElementById('score-oi').textContent = components.oi;
+
+            // Alertas (usando score clássico)
+            const now = Date.now();
+            if (now - lastAlertTime > ALERT_COOLDOWN) {
+                const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
+                if (score >= 75) {
+                    const stop = price * 0.98;
+                    const targets = [
+                        { price: price * 1.02, rr: 1.0 },
+                        { price: price * 1.05, rr: 2.5 }
+                    ];
+                    sendStructuredAlert('long', score, price, stop, targets,
+                        'Golden Cross + RSI > 50, MVRV baixo, SOPR > 1, funding rate negativo.',
+                        components
+                    );
+                    lastAlertTime = now;
+                    lastAlertScore = score;
+                } else if (score <= 25) {
+                    const stop = price * 1.02;
+                    const targets = [
+                        { price: price * 0.98, rr: 1.0 },
+                        { price: price * 0.95, rr: 2.5 }
+                    ];
+                    sendStructuredAlert('short', score, price, stop, targets,
+                        'RSI > 70, resistência quebrada, OI em alta, overbought extremo.',
+                        components
+                    );
+                    lastAlertTime = now;
+                    lastAlertScore = score;
+                }
+            }
+
+            checkAdditionalAlerts(score, components);
+        }
+
+        // NOVA FUNÇÃO para exibir o Score Avançado
+        function updateAdvancedScoreDisplay(advData) {
+            const score = advData.score;
+            const el = document.getElementById('adv-score-value');
+            const bar = document.getElementById('adv-score-bar');
+            if (el) {
+                el.textContent = score;
+                if (score >= 75) {
+                    el.style.color = 'var(--accent-green)';
+                    bar.style.background = 'var(--accent-green)';
+                } else if (score <= 25) {
+                    el.style.color = 'var(--accent-red)';
+                    bar.style.background = 'var(--accent-red)';
+                } else {
+                    el.style.color = 'var(--accent-yellow)';
+                    bar.style.background = 'var(--accent-yellow)';
+                }
+            }
+            if (bar) bar.style.width = score + '%';
+
+            // Componentes
+            const map = {
+                'adv-im': advData.zIm,
+                'adv-oc': advData.zOc,
+                'adv-tc': advData.zTc,
+                'adv-macro': advData.zMacro,
+                'adv-der': advData.zDer,
+                'adv-inst': advData.zInst
+            };
+            for (const [id, val] of Object.entries(map)) {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    const display = typeof val === 'number' ? val.toFixed(2) : '--';
+                    elem.textContent = display;
+                    elem.style.color = val > 0 ? 'var(--accent-green)' : val < 0 ? 'var(--accent-red)' :
+                        'var(--accent-yellow)';
+                }
+            }
+
+            const desc = document.getElementById('adv-signal-desc');
+            if (desc) {
+                let signal = 'NEUTRAL';
+                if (score >= 70) signal = 'LONG';
+                else if (score <= 30) signal = 'SHORT';
+                const transicao = advData.modo_transicao ? ' (Modo Transição ativo)' : '';
+                desc.textContent = `Sinal: ${signal} | Z-Score Composto: ${advData.scoreZ.toFixed(2)}${transicao}`;
+                desc.style.color = score >= 70 ? 'var(--accent-green)' : score <= 30 ? 'var(--accent-red)' :
+                    'var(--text-muted)';
+            }
+        }
+
+        // ================================================================
+        // 11. BACKTEST 30 DIAS (MANTIDO)
         // ================================================================
         let backtestRunning = false;
 
@@ -2464,7 +2779,6 @@
             `;
 
             try {
-                // Buscar dados diários
                 const now = Date.now();
                 const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
                 const response = await fetch(
@@ -2765,7 +3079,7 @@
         }
 
         // ================================================================
-        // 11. INICIALIZAÇÃO
+        // 12. INICIALIZAÇÃO
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
@@ -2789,7 +3103,7 @@
         });
 
         // ================================================================
-        // 12. EVENTOS
+        // 13. EVENTOS
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             // Botão testar Telegram
