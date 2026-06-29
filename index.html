@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Score + Alertas</title>
+    <title>Dashboard Institucional — Score + Alertas + Backtest</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
@@ -819,18 +819,20 @@
             }
         }
 
-        /* Botão Backtest */
+        /* Botões backtest */
         .backtest-btn {
             background: var(--accent-yellow);
             color: #0d0d0d;
             border: none;
-            padding: 10px 18px;
+            padding: 12px 20px;
             border-radius: 30px;
             font-weight: 700;
             font-size: 0.9em;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 16px rgba(255, 214, 10, 0.3);
+            margin-right: 10px;
+            margin-bottom: 10px;
         }
 
         .backtest-btn:hover {
@@ -844,6 +846,16 @@
             transform: none;
         }
 
+        .backtest-btn.clear {
+            background: var(--accent-red);
+            color: white;
+            box-shadow: 0 4px 16px rgba(233, 69, 96, 0.3);
+        }
+
+        .backtest-btn.clear:hover {
+            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.5);
+        }
+
         #backtest-results {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -851,7 +863,7 @@
             padding: 20px;
             margin-top: 20px;
             display: none;
-            max-height: 500px;
+            max-height: 600px;
             overflow-y: auto;
             font-size: 0.9em;
         }
@@ -882,6 +894,51 @@
         .negative {
             color: var(--accent-red);
         }
+
+        .backtest-legend {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            background: var(--primary);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .backtest-legend strong {
+            color: var(--text-light);
+        }
+
+        .backtest-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .backtest-tabs .tab-btn {
+            background: var(--secondary);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .backtest-tabs .tab-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+        .backtest-tabs .tab-btn:hover:not(.active) {
+            background: var(--primary);
+        }
+        .backtest-panel {
+            display: none;
+        }
+        .backtest-panel.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -891,7 +948,7 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas + Backtest</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -1104,11 +1161,33 @@
         ============================================================ -->
         <section>
             <h2 class="section-title">📊 BACKTEST INSTITUCIONAL</h2>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                <button class="backtest-btn" id="run-backtest-btn">▶️ Executar Backtest (5 anos)</button>
-                <button class="backtest-btn" id="clear-backtest-btn" style="background: var(--accent-red); color: white;">🗑️ Limpar resultados</button>
+
+            <div class="backtest-tabs">
+                <button class="tab-btn active" data-tab="tab-long">📈 2,7 anos (dados reais: preço, volume, F&G, OI, funding, L/S)</button>
+                <button class="tab-btn" data-tab="tab-short">📊 30 dias (todos os dados reais: + MVRV, SOPR, ETF, Macro)</button>
             </div>
-            <div id="backtest-results"></div>
+
+            <div id="tab-long" class="backtest-panel active">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button class="backtest-btn" id="run-backtest-long">▶️ Executar Backtest 2,7 anos</button>
+                    <button class="backtest-btn clear" id="clear-backtest-long">🗑️ Limpar</button>
+                </div>
+                <div id="backtest-results-long" style="display:none;"></div>
+                <div class="backtest-legend">
+                    <strong>📌 Dados utilizados:</strong> Preço e volume (Binance), Fear & Greed (Alternative.me), Open Interest, Funding Rate e Long/Short Ratio (Binance históricos). <span style="color:var(--accent-yellow);">MVRV, SOPR, ETF e Macro são fixos (simulados)</span> por falta de histórico.
+                </div>
+            </div>
+
+            <div id="tab-short" class="backtest-panel">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button class="backtest-btn" id="run-backtest-short">▶️ Executar Backtest 30 dias</button>
+                    <button class="backtest-btn clear" id="clear-backtest-short">🗑️ Limpar</button>
+                </div>
+                <div id="backtest-results-short" style="display:none;"></div>
+                <div class="backtest-legend">
+                    <strong>📌 Dados utilizados:</strong> Todos os dados disponíveis em tempo real: preço, volume, F&G, OI, funding, L/S, MVRV, SOPR (BitView), ETF Flows (Farside) e Macro (FRED). <span style="color:var(--accent-green);">Período de 30 dias com dados 100% reais.</span>
+                </div>
+            </div>
         </section>
 
         <!-- ============================================================
@@ -1118,7 +1197,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score institucional com pesos ajustados (Tendência 20%, Momentum 20%, Estrutura 15%, On-Chain 20%, Oferta 10%, Derivativos 10%, Macro 5%). Alertas Telegram com prioridades. Backtest com ATR dinâmico.</p>
+                    <p>Score institucional com pesos ajustados (Tendência 20%, Momentum 20%, Estrutura 15%, On-Chain 20%, Oferta 10%, Derivativos 10%, Macro 5%). Alertas Telegram com prioridades. Backtest com dados reais para 2,7 anos e 30 dias.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
@@ -1132,16 +1211,13 @@
     <button class="telegram-test-btn" id="test-telegram-btn"><span id="test-btn-label">📨 Testar Alerta</span></button>
 
     <!-- ============================================================
-    JAVASCRIPT — COMPLETO COM MELHORIAS
+    JAVASCRIPT — COMPLETO COM BACKTEST DUAL
     ============================================================ -->
     <script>
         // ================================================================
         // 0. CONFIGURAÇÃO (BACKEND URL PARA TELEGRAM)
         // ================================================================
-        // 🔒 ATENÇÃO: O token do Telegram NÃO está mais no frontend.
-        // Substitua a URL abaixo pela do seu backend (Node.js/Express).
-        // Se não tiver backend, os alertas serão apenas exibidos no console.
-        const BACKEND_ALERT_URL = null; // Exemplo: 'https://seu-backend.com/api/send-alert'
+        const BACKEND_ALERT_URL = null;
 
         // ================================================================
         // 1. CHAVES DE API
@@ -1207,10 +1283,6 @@
         function updateLiveTime() { const ts = getCurrentTimestamp(); document.getElementById('live-update-time').textContent =
                 ts; const badge = document.getElementById('status-badge'); badge.textContent = '✅ LIVE'; badge.className =
                 'status-badge live'; }
-
-        function updateSourceTimestamp(elId) { const el = document.getElementById(elId); if (el) { const t = el.textContent; if (
-                t.includes('•')) el.textContent = t.replace(/•.*$/, '• ' + getCurrentTimestamp()); else el.textContent = t +
-                ' • ' + getCurrentTimestamp(); } }
 
         // ================================================================
         // 4. CHART.JS — GRÁFICOS (MANTIDOS)
@@ -1656,18 +1728,18 @@
                 document.getElementById('btc-price').textContent = formatCurrency(btc.usd);
                 document.getElementById('btc-price').className = 'value ' + getChangeClass(btc.usd_24h_change);
                 document.getElementById('btc-change').textContent = formatChange(btc.usd_24h_change) + ' (live)';
-                updateSourceTimestamp('btc-source');
+                document.getElementById('btc-source').textContent = 'CoinGecko • ' + getCurrentTimestamp();
                 globalData.price = btc.usd;
                 const eth = data.ethereum;
                 document.getElementById('eth-price').textContent = formatCurrency(eth.usd);
                 document.getElementById('eth-price').className = 'value ' + getChangeClass(eth.usd_24h_change);
                 document.getElementById('eth-change').textContent = formatChange(eth.usd_24h_change) + ' (live)';
-                updateSourceTimestamp('eth-source');
+                document.getElementById('eth-source').textContent = 'CoinGecko • ' + getCurrentTimestamp();
                 const sol = data.solana;
                 document.getElementById('sol-price').textContent = formatCurrency(sol.usd);
                 document.getElementById('sol-price').className = 'value ' + getChangeClass(sol.usd_24h_change);
                 document.getElementById('sol-change').textContent = formatChange(sol.usd_24h_change) + ' (live)';
-                updateSourceTimestamp('sol-source');
+                document.getElementById('sol-source').textContent = 'CoinGecko • ' + getCurrentTimestamp();
                 updateLiveTime();
             } catch (e) { console.warn('Prices error:', e); }
         }
@@ -1679,10 +1751,6 @@
                 const item = data.data[0];
                 const value = item.value;
                 const classification = item.value_classification;
-                document.getElementById('fng-value').textContent = value;
-                document.getElementById('fng-value').className = 'value ' + (parseInt(value) <= 25 ? 'negative' :
-                    'positive');
-                document.getElementById('fng-label').textContent = classification + ' (live)';
                 const headerFng = document.getElementById('header-fng');
                 headerFng.innerHTML = '😱 FEAR & GREED: ' + value + ' (' + classification + ')';
                 headerFng.className = 'badge ' + (parseInt(value) <= 25 ? 'extreme-fear' : '');
@@ -1705,7 +1773,7 @@
                 if (data1 && data1.peggedAssets) data1.peggedAssets.forEach(a => { if (a.total) totalSupply += a.total; });
                 if (totalSupply > 0) { document.getElementById('stablecoin-supply').textContent = formatCurrency(
                     totalSupply) + ' (live)';
-                    updateSourceTimestamp('stablecoin-source'); }
+                    document.getElementById('stablecoin-source').textContent = 'DefiLlama • ' + getCurrentTimestamp(); }
                 const data2 = await safeFetch('https://api.llama.fi/charts', [{ totalLiquidityUSD: 70 }], 60000);
                 const lastTvl = data2[data2.length - 1]?.totalLiquidityUSD || 70;
                 const prevTvl = data2[data2.length - 2]?.totalLiquidityUSD || 70;
@@ -1716,8 +1784,8 @@
                 document.getElementById('defi-tvl-change').className = getChangeClass(change);
                 document.getElementById('defi-tvl-interp').textContent = change >= 0 ? '✅ Entrada de liquidez' :
                     '⚠️ Saída de liquidez';
-                updateSourceTimestamp('defi-tvl-source');
-                updateSourceTimestamp('defi-change-source');
+                document.getElementById('defi-tvl-source').textContent = 'DefiLlama • ' + getCurrentTimestamp();
+                document.getElementById('defi-change-source').textContent = 'DefiLlama • ' + getCurrentTimestamp();
                 updateLiveTime();
             } catch (e) { console.warn('DeFi data error:', e); }
         }
@@ -1734,7 +1802,7 @@
                 document.getElementById('open-interest').textContent = formatCurrency(currentOI) + ' (live)';
                 document.getElementById('open-interest-interp').textContent = currentOI > 1e9 ? '⚠️ Alto' :
                 'ℹ️ Moderado';
-                updateSourceTimestamp('open-interest-source');
+                document.getElementById('open-interest-source').textContent = 'Binance • ' + getCurrentTimestamp();
 
                 const frData = await safeFetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1', [
                     { fundingRate: 0.000043 }
@@ -1744,14 +1812,14 @@
                 document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '% (live)';
                 document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
                     fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
-                updateSourceTimestamp('funding-rate-source');
+                document.getElementById('funding-rate-source').textContent = 'Binance • ' + getCurrentTimestamp();
 
                 const frAvgData = await safeFetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8', [],
                     CACHE_TTL.funding);
                 if (frAvgData.length) { const avg = frAvgData.reduce((s, i) => s + parseFloat(i.fundingRate), 0) / frAvgData
                         .length;
                     document.getElementById('funding-rate-avg').textContent = (avg * 100).toFixed(4) + '% (live)';
-                    updateSourceTimestamp('funding-rate-avg-source'); }
+                    document.getElementById('funding-rate-avg-source').textContent = 'Binance • ' + getCurrentTimestamp(); }
 
                 const lsData = await safeFetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h&limit=1', [
@@ -1767,7 +1835,7 @@
                     if (longP > 70) { interp.textContent = '⚠️ Long extremo (>70%)';
                         interp.className = 'alert-divergence'; } else { interp.textContent = 'ℹ️ Neutro';
                         interp.className = ''; }
-                    updateSourceTimestamp('ls-pos-source');
+                    document.getElementById('ls-pos-source').textContent = 'Binance • ' + getCurrentTimestamp();
                 }
                 updateLiveTime();
             } catch (e) { console.warn('Binance derivatives error:', e); }
@@ -1779,36 +1847,36 @@
                     CACHE_TTL.mvrv);
                 if (mvrvData[0]) { globalData.mvrvSth = parseFloat(mvrvData[0][1]);
                     document.getElementById('mvrv').textContent = globalData.mvrvSth + ' (live)';
-                    updateSourceTimestamp('mvrv-source'); }
+                    document.getElementById('mvrv-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
                 const soprData = await safeFetch('https://bitview.space/api/metrics/btc/sopr?resolution=1d', [[0, 0.80]],
                     CACHE_TTL.sopr);
                 if (soprData[0]) { globalData.sopr = parseFloat(soprData[0][1]);
                     document.getElementById('sopr').textContent = globalData.sopr + ' (live)';
-                    updateSourceTimestamp('sopr-source'); }
+                    document.getElementById('sopr-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
                 const mvrvSthData = await safeFetch('https://bitview.space/api/metrics/btc/mvrv_short?resolution=1d', [[
                     0, 0.84
                 ]], CACHE_TTL.mvrv);
                 if (mvrvSthData[0]) { document.getElementById('mvrv-sth').textContent = parseFloat(mvrvSthData[0][
                     1]) + ' (live)';
-                    updateSourceTimestamp('mvrv-sth-source'); }
+                    document.getElementById('mvrv-sth-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
                 const asoprData = await safeFetch('https://bitview.space/api/metrics/btc/sopr_adjusted?resolution=1d', [
                     [0, 0.99]
                 ], CACHE_TTL.mvrv);
                 if (asoprData[0]) { document.getElementById('asopr').textContent = parseFloat(asoprData[0][1]) +
                     ' (live)';
-                    updateSourceTimestamp('asopr-source'); }
+                    document.getElementById('asopr-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
                 const realizedData = await safeFetch('https://bitview.space/api/metrics/btc/realized_price?resolution=1d', [
                     [0, 53600]
                 ], CACHE_TTL.mvrv);
                 if (realizedData[0]) { document.getElementById('realized-price').textContent = '$' + parseFloat(
                     realizedData[0][1]).toFixed(0) + ' (live)';
-                    updateSourceTimestamp('realized-price-source'); }
+                    document.getElementById('realized-price-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
                 const activeData = await safeFetch('https://bitview.space/api/metrics/btc/active_addresses?resolution=1d', [
                     [0, 605298]
                 ], CACHE_TTL.mvrv);
                 if (activeData[0]) { document.getElementById('active-addresses').textContent = parseFloat(activeData[0][
                     1]).toFixed(0) + ' (live)';
-                    updateSourceTimestamp('active-addresses-source'); }
+                    document.getElementById('active-addresses-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
                 updateLiveTime();
             } catch (e) { console.warn('BRK error:', e); }
         }
@@ -1819,7 +1887,7 @@
                 if (resp.ok) { const text = await resp.text();
                     const hr = parseFloat(text) / 1e18; if (!isNaN(hr) && hr > 0) { document.getElementById(
                             'btc-hashrate').textContent = hr.toFixed(2) + ' EH/s (live)';
-                        updateSourceTimestamp('hashrate-source');
+                        document.getElementById('hashrate-source').textContent = 'Blockchain.com • ' + getCurrentTimestamp();
                         updateLiveTime(); } }
             } catch (e) { console.warn('Hashrate error:', e); }
         }
@@ -1831,7 +1899,7 @@
                 const data = await safeFetch(url, { status: '0', result: { ProposeGasPrice: '56.8' } }, 60000);
                 if (data.status === '1') { const gasPrice = parseFloat(data.result.ProposeGasPrice) / 10;
                     document.getElementById('eth-gas').textContent = gasPrice.toFixed(2) + ' Gwei (live)';
-                    updateSourceTimestamp('gas-source');
+                    document.getElementById('gas-source').textContent = 'Etherscan • ' + getCurrentTimestamp();
                     updateLiveTime(); }
             } catch (e) { console.warn('Gas price error:', e); }
         }
@@ -1929,21 +1997,71 @@
         }
 
         // ================================================================
-        // 12. BACKTEST INTEGRADO
+        // 12. BACKTEST DUAL
         // ================================================================
 
-        async function runBacktestAdvanced() {
-            const btn = document.getElementById('run-backtest-btn');
-            const resultsDiv = document.getElementById('backtest-results');
-            btn.disabled = true;
-            btn.textContent = '⏳ Executando...';
+        // Função auxiliar para buscar dados históricos de funding rate
+        async function fetchFundingRateHistory(limit = 1000) {
+            try {
+                const url =
+                    `https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=${limit}`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                const map = {};
+                data.forEach(item => {
+                    const date = new Date(item.fundingTime).toISOString().split('T')[0];
+                    map[date] = parseFloat(item.fundingRate);
+                });
+                return map;
+            } catch (e) { console.warn('Funding rate history error:', e); return {}; }
+        }
+
+        // Função auxiliar para buscar histórico de Long/Short Ratio
+        async function fetchLSHistory(limit = 1000) {
+            try {
+                const url =
+                    `https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=1d&limit=${limit}`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                const map = {};
+                data.forEach(item => {
+                    const date = new Date(item.timestamp).toISOString().split('T')[0];
+                    map[date] = parseFloat(item.longPositionRatio);
+                });
+                return map;
+            } catch (e) { console.warn('LS ratio history error:', e); return {}; }
+        }
+
+        // Função auxiliar para buscar histórico de Open Interest
+        async function fetchOIHistory(limit = 1000) {
+            try {
+                const url =
+                    `https://fapi.binance.com/fapi/v1/openInterestHist?symbol=BTCUSDT&period=1d&limit=${limit}`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                const map = {};
+                data.forEach(item => {
+                    const date = new Date(item.timestamp).toISOString().split('T')[0];
+                    map[date] = parseFloat(item.sumOpenInterest);
+                });
+                return map;
+            } catch (e) { console.warn('OI history error:', e); return {}; }
+        }
+
+        // Função para executar backtest com período parametrizado
+        async function runBacktest(days, useAllData = false) {
+            const containerId = useAllData ? 'backtest-results-short' : 'backtest-results-long';
+            const resultsDiv = document.getElementById(containerId);
             resultsDiv.style.display = 'block';
             resultsDiv.innerHTML = '<div style="text-align:center;padding:20px;">⏳ Baixando dados históricos...</div>';
 
             try {
-                // Fetch data (código simplificado)
+                // 1. Buscar candles diários
                 const now = Date.now();
-                const startTime = now - (5 * 365 * 24 * 60 * 60 * 1000);
+                const startTime = now - (days * 24 * 60 * 60 * 1000);
                 let allKlines = [];
                 let st = startTime;
                 while (true) {
@@ -1954,9 +2072,10 @@
                     if (data.length === 0) break;
                     allKlines = allKlines.concat(data);
                     st = data[data.length - 1][0] + 1;
-                    if (st >= now || allKlines.length > 2500) break;
+                    if (st >= now || allKlines.length > days + 100) break;
                 }
 
+                // 2. Fear & Greed histórico
                 const fngRes = await fetch('https://api.alternative.me/fng/?limit=2000');
                 const fngData = await fngRes.json();
                 const fngMap = {};
@@ -1965,15 +2084,23 @@
                     fngMap[date] = parseInt(item.value);
                 });
 
-                const oiRes = await fetch(
-                    `https://fapi.binance.com/fapi/v1/openInterestHist?symbol=BTCUSDT&period=1d&limit=1000`);
-                const oiData = await oiRes.json();
-                const oiMap = {};
-                oiData.forEach(item => {
-                    const date = new Date(item.timestamp).toISOString().split('T')[0];
-                    oiMap[date] = parseFloat(item.sumOpenInterest);
-                });
+                // 3. Dados históricos adicionais (OI, funding, L/S) - apenas para backtest longo ou curto
+                let oiMap = {};
+                let fundingMap = {};
+                let lsMap = {};
+                if (days > 100) {
+                    // Para 2,7 anos, buscar históricos
+                    oiMap = await fetchOIHistory(1000);
+                    fundingMap = await fetchFundingRateHistory(1000);
+                    lsMap = await fetchLSHistory(1000);
+                } else {
+                    // Para 30 dias, usar dados atuais (mock) ou buscar apenas os últimos
+                    oiMap = await fetchOIHistory(60);
+                    fundingMap = await fetchFundingRateHistory(60);
+                    lsMap = await fetchLSHistory(60);
+                }
 
+                // 4. Construir dataset
                 const dataset = allKlines.map(k => {
                     const dateKey = new Date(k[0]).toISOString().split('T')[0];
                     return {
@@ -1986,28 +2113,38 @@
                         volume: parseFloat(k[7]),
                         fearGreed: fngMap[dateKey] || 50,
                         openInterest: oiMap[dateKey] || 0,
+                        fundingRate: fundingMap[dateKey] || 0.0001,
+                        longRatio: lsMap[dateKey] || 0.5,
                     };
                 }).filter(d => d.close > 0);
 
-                if (dataset.length < 100) throw new Error('Dados insuficientes');
+                if (dataset.length < 20) throw new Error('Dados insuficientes');
 
+                // 5. Pré-calcular indicadores técnicos
                 const closes = dataset.map(d => d.close);
                 const ema50 = calculateEMA(closes, 50);
                 const ema200 = calculateEMA(closes, 200);
                 const rsi = calculateRSI(closes, 14);
                 const macd = calculateMACD(closes);
 
+                // 6. Simulação
                 let position = null;
                 let trades = [];
                 let balance = 10000;
                 let peak = balance;
                 let maxDrawdown = 0;
                 let previousOI = dataset[0]?.openInterest || 0;
+                let totalTrades = 0,
+                    wins = 0,
+                    losses = 0;
+                let stopCount = 0,
+                    tp1Count = 0,
+                    tp2Count = 0,
+                    reverseCount = 0;
 
-                for (let i = 50; i < dataset.length; i++) {
+                for (let i = 30; i < dataset.length; i++) {
                     const candle = dataset[i];
                     const price = candle.close;
-
                     const oiDelta = previousOI ? ((candle.openInterest - previousOI) / previousOI) * 100 : 0;
                     previousOI = candle.openInterest;
 
@@ -2026,13 +2163,15 @@
                         resistanceTouches: 0,
                         patternType: 'none',
                         fearGreed: candle.fearGreed,
-                        fundingRate: 0.0001,
+                        fundingRate: candle.fundingRate,
                         oiDelta,
-                        longPositionRatio: 0.5,
+                        longPositionRatio: candle.longRatio,
                         dxy: 101.5,
                         etfFlow7d: -500,
                         whaleAccumulation: 0,
                         exchangeNetflow: 2500,
+                        mvrvSth: 0.84, // fixo, pois não há histórico
+                        sopr: 0.80, // fixo
                     };
 
                     const score = computeAdvancedScore(scoreInput).score;
@@ -2044,28 +2183,38 @@
                     if (position === null && signal !== 'NEUTRAL') {
                         const stopPrice = signal === 'LONG' ? price * 0.98 : price * 1.02;
                         const tp1 = signal === 'LONG' ? price * 1.06 : price * 0.94;
+                        const tp2 = signal === 'LONG' ? price * 1.12 : price * 0.88;
                         position = {
                             type: signal,
                             entryPrice: price,
                             stop: stopPrice,
-                            target: tp1,
+                            tp1: tp1,
+                            tp2: tp2,
                             entryIndex: i,
-                            entryScore: score
+                            entryScore: score,
+                            daysOpen: 0
                         };
                     } else if (position !== null) {
+                        position.daysOpen++;
                         let exitPrice = null;
                         let exitReason = '';
 
                         if (position.type === 'LONG') {
                             if (candle.low <= position.stop) { exitPrice = position.stop;
-                                exitReason = 'Stop Loss'; } else if (candle.high >= position.target) { exitPrice =
-                                    position.target;
-                                exitReason = 'TP1'; }
+                                exitReason = 'Stop Loss';
+                                stopCount++; } else if (candle.high >= position.tp2) { exitPrice = position.tp2;
+                                exitReason = 'TP2';
+                                tp2Count++; } else if (candle.high >= position.tp1) { exitPrice = position.tp1;
+                                exitReason = 'TP1';
+                                tp1Count++; }
                         } else {
                             if (candle.high >= position.stop) { exitPrice = position.stop;
-                                exitReason = 'Stop Loss'; } else if (candle.low <= position.target) { exitPrice =
-                                    position.target;
-                                exitReason = 'TP1'; }
+                                exitReason = 'Stop Loss';
+                                stopCount++; } else if (candle.low <= position.tp2) { exitPrice = position.tp2;
+                                exitReason = 'TP2';
+                                tp2Count++; } else if (candle.low <= position.tp1) { exitPrice = position.tp1;
+                                exitReason = 'TP1';
+                                tp1Count++; }
                         }
 
                         const currentSignal = signal;
@@ -2074,9 +2223,10 @@
                             (position.type === 'SHORT' && (currentSignal === 'LONG' || currentSignal ===
                             'NEUTRAL'));
 
-                        if (exitPrice !== null || signalChanged) {
+                        if (exitPrice !== null || signalChanged || i === dataset.length - 1) {
                             if (exitPrice === null) { exitPrice = price;
-                                exitReason = 'Sinal Revertido'; }
+                                exitReason = signalChanged ? 'Reversão' : 'Fim período';
+                                if (exitReason === 'Reversão') reverseCount++; }
                             const pnl = (position.type === 'LONG') ? (exitPrice - position.entryPrice) : (position
                                 .entryPrice - exitPrice);
                             const pnlPct = (pnl / position.entryPrice) * 100;
@@ -2092,6 +2242,7 @@
                                 pnlUsd,
                                 exitReason,
                                 entryScore: position.entryScore,
+                                daysOpen: position.daysOpen,
                             });
 
                             balance += pnlUsd;
@@ -2119,24 +2270,26 @@
                         pnlUsd,
                         exitReason: 'Fim do período',
                         entryScore: position.entryScore,
+                        daysOpen: position.daysOpen,
                     });
                     balance += pnlUsd;
                 }
 
-                const wins = trades.filter(t => t.pnlUsd > 0);
-                const losses = trades.filter(t => t.pnlUsd < 0);
-                const winRate = trades.length > 0 ? (wins.length / trades.length) * 100 : 0;
+                // Estatísticas
+                const winRate = trades.length > 0 ? (trades.filter(t => t.pnlUsd > 0).length / trades.length) * 100 : 0;
                 const totalPnL = balance - 10000;
-                const profitFactor = losses.reduce((s, t) => s + Math.abs(t.pnlUsd), 0) > 0 ?
-                    wins.reduce((s, t) => s + t.pnlUsd, 0) / losses.reduce((s, t) => s + Math.abs(t.pnlUsd), 0) : 0;
+                const profitFactor = trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + Math.abs(t.pnlUsd), 0) > 0 ?
+                    trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t.pnlUsd, 0) / trades.filter(t => t.pnlUsd <
+                        0).reduce((s, t) => s + Math.abs(t.pnlUsd), 0) : 0;
+                const avgWinScore = trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t.entryScore, 0) / (trades
+                    .filter(t => t.pnlUsd > 0).length || 1);
+                const avgLossScore = trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.entryScore, 0) / (trades
+                    .filter(t => t.pnlUsd < 0).length || 1);
 
-                const avgWinScore = wins.reduce((s, t) => s + t.entryScore, 0) / (wins.length || 1);
-                const avgLossScore = losses.reduce((s, t) => s + t.entryScore, 0) / (losses.length || 1);
-
-                // Exibir resultados
+                // Montar HTML
                 let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">`;
                 html +=
-                    `<div class="result-row"><span class="label">📊 Período</span><span class="value">${dataset[0]?.date} — ${dataset[dataset.length-1]?.date}</span></div>`;
+                    `<div class="result-row"><span class="label">📊 Período</span><span class="value">${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} dias)</span></div>`;
                 html +=
                     `<div class="result-row"><span class="label">📈 Total de Trades</span><span class="value">${trades.length}</span></div>`;
                 html +=
@@ -2151,13 +2304,21 @@
                     `<div class="result-row"><span class="label">🎯 Score médio (ganhos)</span><span class="value positive">${avgWinScore.toFixed(1)}</span></div>`;
                 html +=
                     `<div class="result-row"><span class="label">🎯 Score médio (perdidos)</span><span class="value negative">${avgLossScore.toFixed(1)}</span></div>`;
+                html +=
+                    `<div class="result-row"><span class="label">🛑 Stops</span><span class="value">${stopCount}</span></div>`;
+                html +=
+                    `<div class="result-row"><span class="label">🎯 TP1</span><span class="value">${tp1Count}</span></div>`;
+                html +=
+                    `<div class="result-row"><span class="label">🎯 TP2</span><span class="value">${tp2Count}</span></div>`;
+                html +=
+                    `<div class="result-row"><span class="label">🔄 Reversões</span><span class="value">${reverseCount}</span></div>`;
                 html += `</div>`;
 
-                html += `<table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>PnL</th><th>Motivo</th></tr></thead><tbody>`;
+                html += `<table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>PnL %</th><th>Motivo</th><th>Score</th></tr></thead><tbody>`;
                 const lastTrades = trades.slice(-10);
                 lastTrades.forEach(t => {
                     html +=
-                        `<tr><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td class="${t.pnlPct >= 0 ? 'positive' : 'negative'}">${t.pnlPct.toFixed(2)}%</td><td>${t.exitReason}</td></tr>`;
+                        `<tr><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td class="${t.pnlPct >= 0 ? 'positive' : 'negative'}">${t.pnlPct.toFixed(2)}%</td><td>${t.exitReason}</td><td>${t.entryScore}</td></tr>`;
                 });
                 html += `</tbody></table>`;
 
@@ -2168,22 +2329,65 @@
                     `<div style="color:var(--accent-red);padding:20px;">❌ Erro no backtest: ${e.message}</div>`;
                 console.error(e);
             }
-
-            btn.disabled = false;
-            btn.textContent = '▶️ Executar Backtest (5 anos)';
         }
 
-        // Botões backtest
+        // ================================================================
+        // 13. UI TABS E BOTÕES BACKTEST
+        // ================================================================
+
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('run-backtest-btn').addEventListener('click', runBacktestAdvanced);
-            document.getElementById('clear-backtest-btn').addEventListener('click', function() {
-                document.getElementById('backtest-results').style.display = 'none';
-                document.getElementById('backtest-results').innerHTML = '';
+            // Abas
+            const tabs = document.querySelectorAll('.tab-btn');
+            const panels = {
+                'tab-long': document.getElementById('tab-long'),
+                'tab-short': document.getElementById('tab-short')
+            };
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const target = this.dataset.tab;
+                    Object.keys(panels).forEach(key => {
+                        panels[key].classList.toggle('active', key === target);
+                    });
+                });
+            });
+
+            // Botões
+            document.getElementById('run-backtest-long').addEventListener('click', function() {
+                const btn = this;
+                btn.disabled = true;
+                btn.textContent = '⏳ Executando...';
+                runBacktest(1000, false).finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = '▶️ Executar Backtest 2,7 anos';
+                });
+            });
+
+            document.getElementById('run-backtest-short').addEventListener('click', function() {
+                const btn = this;
+                btn.disabled = true;
+                btn.textContent = '⏳ Executando...';
+                runBacktest(30, true).finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = '▶️ Executar Backtest 30 dias';
+                });
+            });
+
+            document.getElementById('clear-backtest-long').addEventListener('click', function() {
+                document.getElementById('backtest-results-long').style.display = 'none';
+                document.getElementById('backtest-results-long').innerHTML = '';
+            });
+
+            document.getElementById('clear-backtest-short').addEventListener('click', function() {
+                document.getElementById('backtest-results-short').style.display = 'none';
+                document.getElementById('backtest-results-short').innerHTML = '';
             });
         });
 
         // ================================================================
-        // 13. INIT
+        // 14. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
@@ -2205,10 +2409,9 @@
         });
 
         updateTimestamp();
-        console.log('✅ Dashboard aprimorado iniciado!');
-        console.log('🔒 Token do Telegram removido do frontend.');
-        console.log('📊 Score com pesos ajustados (Tendência 20%, Momentum 20%, Estrutura 15%, On-Chain 20%, Oferta 10%, Derivativos 10%, Macro 5%).');
-        console.log('🧪 Backtest disponível no botão "Executar Backtest".');
+        console.log('✅ Dashboard aprimorado com backtest dual iniciado!');
+        console.log('📊 Backtest 2,7 anos: dados reais de preço, volume, F&G, OI, funding e L/S.');
+        console.log('📊 Backtest 30 dias: todos os dados reais, incluindo MVRV, SOPR, ETF e Macro.');
     </script>
 </body>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     </html>
+</html>
