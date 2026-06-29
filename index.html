@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Score + Alertas</title>
+    <title>Dashboard Institucional — Score + Alertas + Backtest</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
     </script>
     <style>
         /* ============================================================
-           ESTILOS (MANTIDOS)
+           ESTILOS EXISTENTES (mantidos)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -817,6 +817,196 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* ============================================================
+           NOVOS ESTILOS PARA BACKTEST
+           ============================================================ */
+
+        .btn-backtest {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .btn-backtest:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0, 180, 216, 0.4);
+        }
+
+        /* Modal do Backtest */
+        .backtest-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        .backtest-modal.open {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .backtest-content {
+            background: var(--bg-card);
+            margin: 40px auto;
+            padding: 30px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 1200px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .backtest-content h2 {
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .backtest-content .close-btn {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .backtest-content .close-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .backtest-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--primary);
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .stat-card .stat-value.positive { color: var(--accent-green); }
+        .stat-card .stat-value.negative { color: var(--accent-red); }
+        .stat-card .stat-value.neutral { color: var(--accent-yellow); }
+
+        .backtest-table-wrap {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .backtest-table-wrap table {
+            margin-bottom: 0;
+            font-size: 0.85em;
+        }
+
+        .backtest-table-wrap thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .backtest-table-wrap th {
+            background: var(--secondary);
+            color: var(--text-light);
+        }
+
+        .backtest-table-wrap td {
+            padding: 8px 12px;
+        }
+
+        .backtest-table-wrap .row-win {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .backtest-table-wrap .row-loss {
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .backtest-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .backtest-loading .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--accent-blue);
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .no-trades {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .backtest-content {
+                margin: 20px auto;
+                padding: 20px;
+                width: 98%;
+            }
+            .backtest-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .backtest-table-wrap {
+                max-height: 300px;
+            }
+            .btn-backtest {
+                font-size: 0.75em;
+                padding: 6px 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -826,7 +1016,7 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas + Backtest</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -835,6 +1025,7 @@
                     <span class="live-indicator">🔄 HYBRID</span>
                     <span class="status-badge" id="status-badge">📋 ESTÁTICO</span>
                     <span class="telegram-badge" id="telegram-badge">📨 TELEGRAM ATIVO</span>
+                    <button class="btn-backtest" id="openBacktestBtn">📊 Backtest</button>
                 </div>
             </div>
         </header>
@@ -1219,12 +1410,30 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Alertas Telegram para condições extremas.</p>
+                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Alertas Telegram para condições extremas. Backtest com dados dos últimos 30 dias.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
         </footer>
+    </div>
+
+    <!-- ============================================================
+    BACKTEST MODAL
+    ============================================================ -->
+    <div id="backtestModal" class="backtest-modal">
+        <div class="backtest-content">
+            <h2>
+                📊 Backtest — Últimos 30 dias
+                <button class="close-btn" id="closeBacktestBtn">✕ Fechar</button>
+            </h2>
+            <div id="backtestBody">
+                <div class="backtest-loading">
+                    <div class="spinner"></div>
+                    <p>Carregando dados e executando backtest...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ============================================================
@@ -1235,7 +1444,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT — COMPLETO COM MELHORIAS
+    JAVASCRIPT — COMPLETO (incluindo Backtest)
     ============================================================ -->
     <script>
         // ================================================================
@@ -1932,7 +2141,368 @@
         const logger = new MarketDataLogger();
 
         // ================================================================
-        // 9. FUNÇÃO DE ATUALIZAÇÃO MELHORADA
+        // 9. BACKTEST ENGINE (INTEGRADO)
+        // ================================================================
+
+        async function runBacktest() {
+            const modalBody = document.getElementById('backtestBody');
+            modalBody.innerHTML = `
+                <div class="backtest-loading">
+                    <div class="spinner"></div>
+                    <p>Baixando dados dos últimos 30 dias...</p>
+                </div>
+            `;
+
+            try {
+                // Baixar dados dos últimos 30 dias
+                const now = Date.now();
+                const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+
+                const klinesRes = await fetch(
+                    `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${thirtyDaysAgo}&limit=40`
+                    );
+                const klines = await klinesRes.json();
+
+                const fngRes = await fetch('https://api.alternative.me/fng/?limit=40');
+                const fngData = await fngRes.json();
+                const fngMap = {};
+                fngData.data.forEach(item => {
+                    const date = new Date(item.timestamp * 1000).toISOString().split('T')[0];
+                    fngMap[date] = parseInt(item.value);
+                });
+
+                const frRes = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=40');
+                const frData = await frRes.json();
+                const frMap = {};
+                frData.forEach(item => {
+                    const date = new Date(item.fundingTime).toISOString().split('T')[0];
+                    frMap[date] = parseFloat(item.fundingRate);
+                });
+
+                const oiRes = await fetch(
+                    `https://fapi.binance.com/fapi/v1/openInterestHist?symbol=BTCUSDT&period=1d&limit=40`);
+                const oiData = await oiRes.json();
+                const oiMap = {};
+                oiData.forEach(item => {
+                    const date = new Date(item.timestamp).toISOString().split('T')[0];
+                    oiMap[date] = parseFloat(item.sumOpenInterest);
+                });
+
+                const dataset = klines.map(k => {
+                    const dateKey = new Date(k[0]).toISOString().split('T')[0];
+                    return {
+                        date: dateKey,
+                        open: parseFloat(k[1]),
+                        high: parseFloat(k[2]),
+                        low: parseFloat(k[3]),
+                        close: parseFloat(k[4]),
+                        volume: parseFloat(k[7]),
+                        fearGreed: fngMap[dateKey] || 50,
+                        fundingRate: frMap[dateKey] || 0.0001,
+                        openInterest: oiMap[dateKey] || 0,
+                    };
+                }).filter(d => d.close > 0);
+
+                if (dataset.length < 10) {
+                    modalBody.innerHTML = `
+                        <div class="no-trades">
+                            <p>⚠️ Dados insuficientes para backtest (${dataset.length} dias).</p>
+                            <p>Colete mais dados ou aguarde novos dias.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                modalBody.innerHTML = `
+                    <div class="backtest-loading">
+                        <div class="spinner"></div>
+                        <p>Executando backtest...</p>
+                    </div>
+                `;
+
+                // Executar backtest (lógica do score)
+                const closes = dataset.map(d => d.close);
+                const ema50Arr = calculateEMA(dataset.map(d => d), 50) || [];
+                const ema200Arr = calculateEMA(dataset.map(d => d), 200) || [];
+                const rsiArr = calculateRSI(closes, 14);
+                const macd = calculateMACD(closes);
+                const dataLength = dataset.length;
+
+                let position = null;
+                let trades = [];
+                let balance = 10000;
+                let peak = balance;
+                let maxDrawdown = 0;
+                let previousOI = dataset[0]?.openInterest || 0;
+                let totalTrades = 0,
+                    wins = 0,
+                    losses = 0;
+                let totalPnL = 0;
+                let stopCount = 0,
+                    tp1Count = 0,
+                    tp2Count = 0,
+                    reverseCount = 0;
+                let totalDaysInTrade = 0;
+
+                const stopLossPct = 0.02;
+                const takeProfitPct = 0.06;
+
+                for (let i = 15; i < dataLength; i++) {
+                    const candle = dataset[i];
+                    const price = candle.close;
+                    const oiDelta = previousOI ? ((candle.openInterest - previousOI) / previousOI) * 100 : 0;
+                    previousOI = candle.openInterest;
+
+                    const ema50Val = ema50Arr[i] || 65000;
+                    const ema200Val = ema200Arr[i] || 62000;
+                    const rsiVal = rsiArr[i] || 50;
+                    const macdVal = macd.macd || 0;
+                    const macdSignalVal = macd.signal || 0;
+
+                    const score = computeInstitutionalScore({
+                        price,
+                        ema50: ema50Val,
+                        ema200: ema200Val,
+                        ma200: ema200Val,
+                        rsi: rsiVal,
+                        macd: macdVal,
+                        macdSignal: macdSignalVal,
+                        roc: 0,
+                        support: 58000,
+                        resistance: 70000,
+                        priceInFvg: false,
+                        resistanceTouches: 0,
+                        fearGreed: candle.fearGreed,
+                        mvrvSth: 0.84,
+                        sopr: 0.80,
+                        whaleAccumulation: 0,
+                        exchangeNetflow: 0,
+                        oiDelta: oiDelta,
+                        fundingRate: candle.fundingRate,
+                        longPositionRatio: 0.5,
+                        dxy: 101.37,
+                        etfFlow7d: -500,
+                        volumeRel: 1,
+                        patternType: 'none'
+                    }).score;
+
+                    let signal = 'NEUTRAL';
+                    if (score >= 70 && candle.fearGreed < 40) signal = 'LONG';
+                    else if (score <= 30 && candle.fearGreed > 60) signal = 'SHORT';
+
+                    if (position === null && signal !== 'NEUTRAL') {
+                        const stopPrice = signal === 'LONG' ? price * (1 - stopLossPct) : price * (1 + stopLossPct);
+                        const tp1Price = signal === 'LONG' ? price * (1 + takeProfitPct) : price * (1 - takeProfitPct);
+                        position = {
+                            type: signal,
+                            entryPrice: price,
+                            stop: stopPrice,
+                            tp1: tp1Price,
+                            tp2: signal === 'LONG' ? price * (1 + 0.12) : price * (1 - 0.12),
+                            entryIndex: i,
+                            entryScore: score,
+                            daysOpen: 0
+                        };
+                    } else if (position !== null) {
+                        position.daysOpen++;
+                        let exitPrice = null;
+                        let exitReason = '';
+
+                        if (position.type === 'LONG') {
+                            if (candle.low <= position.stop) { exitPrice = position.stop;
+                                exitReason = 'Stop'; stopCount++; } else if (candle.high >= position.tp2) { exitPrice =
+                                    position.tp2;
+                                exitReason = 'TP2'; tp2Count++; } else if (candle.high >= position.tp1) { exitPrice =
+                                    position.tp1;
+                                exitReason = 'TP1'; tp1Count++; }
+                        } else {
+                            if (candle.high >= position.stop) { exitPrice = position.stop;
+                                exitReason = 'Stop'; stopCount++; } else if (candle.low <= position.tp2) { exitPrice =
+                                    position.tp2;
+                                exitReason = 'TP2'; tp2Count++; } else if (candle.low <= position.tp1) { exitPrice =
+                                    position.tp1;
+                                exitReason = 'TP1'; tp1Count++; }
+                        }
+
+                        const currentSignal = signal;
+                        const signalChanged = (position.type === 'LONG' && (currentSignal === 'SHORT' || currentSignal ===
+                            'NEUTRAL')) ||
+                            (position.type === 'SHORT' && (currentSignal === 'LONG' || currentSignal === 'NEUTRAL'));
+
+                        if (exitPrice !== null || signalChanged || i === dataLength - 1) {
+                            if (exitPrice === null) {
+                                exitPrice = price;
+                                exitReason = signalChanged ? 'Reversão' : 'Fim período';
+                                if (exitReason === 'Reversão') reverseCount++;
+                            }
+
+                            const pnl = (position.type === 'LONG') ? (exitPrice - position.entryPrice) : (position
+                            .entryPrice - exitPrice);
+                            const pnlPct = (pnl / position.entryPrice) * 100;
+                            const pnlUsd = (pnl / position.entryPrice) * balance;
+
+                            trades.push({
+                                entryDate: dataset[position.entryIndex].date,
+                                exitDate: candle.date,
+                                type: position.type,
+                                entryPrice: position.entryPrice,
+                                exitPrice: exitPrice,
+                                pnlPct: pnlPct,
+                                pnlUsd: pnlUsd,
+                                exitReason: exitReason,
+                                daysOpen: position.daysOpen,
+                                entryScore: position.entryScore,
+                            });
+
+                            balance += pnlUsd;
+                            totalPnL += pnlUsd;
+                            totalTrades++;
+                            if (pnlUsd > 0) wins++;
+                            else losses++;
+                            totalDaysInTrade += position.daysOpen;
+
+                            if (balance > peak) peak = balance;
+                            const drawdown = (peak - balance) / peak;
+                            if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+
+                            position = null;
+                        }
+                    }
+                }
+
+                // Estatísticas
+                const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+                const profitFactor = losses > 0 ? (wins > 0 ? (trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t
+                    .pnlUsd, 0) / Math.abs(trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.pnlUsd, 0))) : 0) :
+                0;
+                const avgDays = totalTrades > 0 ? totalDaysInTrade / totalTrades : 0;
+                const totalReturn = ((balance - 10000) / 10000) * 100;
+
+                // Renderizar resultados
+                modalBody.innerHTML = `
+                    <div class="backtest-stats">
+                        <div class="stat-card">
+                            <div class="stat-value ${winRate >= 60 ? 'positive' : 'negative'}">${winRate.toFixed(1)}%</div>
+                            <div class="stat-label">Win Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value ${totalReturn >= 0 ? 'positive' : 'negative'}">${totalReturn.toFixed(1)}%</div>
+                            <div class="stat-label">Retorno Total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${totalTrades}</div>
+                            <div class="stat-label">Total Trades</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value ${profitFactor >= 1.5 ? 'positive' : 'neutral'}">${profitFactor.toFixed(2)}</div>
+                            <div class="stat-label">Profit Factor</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${wins} / ${losses}</div>
+                            <div class="stat-label">Wins / Losses</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${(maxDrawdown * 100).toFixed(1)}%</div>
+                            <div class="stat-label">Max Drawdown</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${stopCount}</div>
+                            <div class="stat-label">Stops</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${tp1Count}</div>
+                            <div class="stat-label">TP1</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${tp2Count}</div>
+                            <div class="stat-label">TP2</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${reverseCount}</div>
+                            <div class="stat-label">Reversões</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${avgDays.toFixed(1)}</div>
+                            <div class="stat-label">Dias médios em trade</div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: var(--text-light); margin-top: 20px; margin-bottom: 10px;">📋 Histórico de Trades</h3>
+                    ${trades.length === 0 ? '<div class="no-trades"><p>Nenhum trade gerado no período.</p></div>' : `
+                    <div class="backtest-table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Entrada</th>
+                                    <th>Saída</th>
+                                    <th>Tipo</th>
+                                    <th>Entrada</th>
+                                    <th>Saída</th>
+                                    <th>PnL %</th>
+                                    <th>Dias</th>
+                                    <th>Motivo</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${trades.slice().reverse().map(t => `
+                                    <tr class="${t.pnlUsd > 0 ? 'row-win' : 'row-loss'}">
+                                        <td>${t.entryDate}</td>
+                                        <td>${t.exitDate}</td>
+                                        <td>${t.type}</td>
+                                        <td>$${t.entryPrice.toFixed(0)}</td>
+                                        <td>$${t.exitPrice.toFixed(0)}</td>
+                                        <td style="color: ${t.pnlUsd > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td>
+                                        <td>${t.daysOpen}</td>
+                                        <td>${t.exitReason}</td>
+                                        <td>${t.entryScore}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    `}
+                    <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 12px;">
+                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} dias)
+                    </p>
+                `;
+
+            } catch (err) {
+                console.error('Backtest error:', err);
+                modalBody.innerHTML = `
+                    <div class="no-trades">
+                        <p>❌ Erro ao executar backtest: ${err.message}</p>
+                        <p>Verifique sua conexão e tente novamente.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ================================================================
+        // 10. BACKTEST UI
+        // ================================================================
+
+        const modal = document.getElementById('backtestModal');
+        const openBtn = document.getElementById('openBacktestBtn');
+        const closeBtn = document.getElementById('closeBacktestBtn');
+
+        openBtn.addEventListener('click', () => {
+            modal.classList.add('open');
+            runBacktest();
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('open');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('open');
+            }
+        });
+
+        // ================================================================
+        // 11. FUNÇÃO DE ATUALIZAÇÃO MELHORADA
         // ================================================================
 
         async function fetchAndCalculateTechnicals() {
@@ -1984,7 +2554,7 @@
         }
 
         // ================================================================
-        // 10. MULTI-CONFIRMAÇÃO
+        // 12. MULTI-CONFIRMAÇÃO
         // ================================================================
 
         function validateSignalConfirmation(signal_type, data) {
@@ -2013,7 +2583,7 @@
         }
 
         // ================================================================
-        // 11. MASTER REFRESH
+        // 13. MASTER REFRESH
         // ================================================================
 
         async function refreshAllImproved() {
@@ -2202,7 +2772,7 @@
         }
 
         // ================================================================
-        // 12. UPDATE DISPLAY
+        // 14. UPDATE DISPLAY
         // ================================================================
 
         function updateScoreDisplay(scoreData) {
@@ -2241,7 +2811,7 @@
         }
 
         // ================================================================
-        // 13. INIT
+        // 15. INIT
         // ================================================================
         initWhaleFlowChart();
         refreshAllImproved();
@@ -2267,6 +2837,7 @@
         updateTimestamp();
         console.log('✅ Dashboard iniciado. Token Telegram configurado.');
         console.log('ℹ️ Limiares de alerta: LONG >= 65, SHORT <= 35 (modo teste).');
+        console.log('📊 Clique em "Backtest" no header para ver o histórico.');
     </script>
 </body>
-</html>
+    </html>
