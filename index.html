@@ -1235,7 +1235,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT
+    JAVASCRIPT — COMPLETO
     ============================================================ -->
     <script>
         // ================================================================
@@ -1247,30 +1247,35 @@
         const ALERT_COOLDOWN = 3600000; // 1 hora
 
         // ================================================================
-        // 0.1 FUNÇÃO DE ENVIO (compartilhada)
+        // 0.1 FUNÇÃO DE ENVIO (com logs detalhados)
         // ================================================================
         async function sendTelegramAlert(message) {
+            console.log('📤 Tentando enviar alerta para o Telegram...');
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+                const payload = {
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                    parse_mode: 'HTML'
+                };
+                console.log('📦 Payload:', payload);
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: message,
-                        parse_mode: 'HTML'
-                    })
+                    body: JSON.stringify(payload)
                 });
+                const responseText = await response.text();
+                console.log('📨 Resposta da API do Telegram:', response.status, responseText);
+
                 if (response.ok) {
-                    console.log('✅ Alerta enviado para o Telegram');
+                    console.log('✅ Alerta enviado com sucesso!');
                     return { success: true };
                 } else {
-                    const errorText = await response.text();
-                    console.warn('❌ Falha ao enviar alerta:', errorText);
-                    return { success: false, error: errorText };
+                    console.warn('❌ Falha ao enviar alerta:', responseText);
+                    return { success: false, error: responseText };
                 }
             } catch (error) {
-                console.warn('❌ Erro ao enviar alerta:', error);
+                console.error('❌ Erro ao enviar alerta:', error);
                 return { success: false, error: error.message };
             }
         }
@@ -1278,47 +1283,53 @@
         // ================================================================
         // 0.2 BOTÃO DE TESTE — TELEGRAM
         // ================================================================
-        document.getElementById('test-telegram-btn')?.addEventListener('click', async function() {
-            const btn = this;
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('test-telegram-btn');
             const label = document.getElementById('test-btn-label');
 
-            const score = document.getElementById('score-value')?.textContent || '--';
-            const price = document.getElementById('btc-price')?.textContent || '--';
-            const timestamp = getCurrentTimestamp();
-
-            const testMessage = `
-🔔 <b>TESTE DE ALERTA</b>
-
-Este é um alerta de teste do seu dashboard.
-Se você está vendo esta mensagem, a integração com o Telegram está funcionando perfeitamente!
-
-✅ Status: CONECTADO
-📊 Score atual: ${score}
-💰 Preço BTC: ${price}
-
-⏰ Enviado em: ${timestamp}
-            `.trim();
-
-            // Feedback visual
-            label.innerHTML = '<span class="spinner"></span> Enviando...';
-            btn.disabled = true;
-
-            const result = await sendTelegramAlert(testMessage);
-
-            if (result.success) {
-                label.textContent = '✅ Enviado!';
-                setTimeout(() => {
-                    label.textContent = '📨 Testar Alerta';
-                    btn.disabled = false;
-                }, 2500);
-            } else {
-                label.textContent = '❌ Falha';
-                console.error('Erro detalhado:', result.error);
-                setTimeout(() => {
-                    label.textContent = '📨 Testar Alerta';
-                    btn.disabled = false;
-                }, 3000);
+            if (!btn) {
+                console.warn('⚠️ Botão de teste não encontrado.');
+                return;
             }
+
+            btn.addEventListener('click', async function() {
+                const score = document.getElementById('score-value')?.textContent || '--';
+                const price = document.getElementById('btc-price')?.textContent || '--';
+                const timestamp = getCurrentTimestamp();
+
+                const testMessage = `
+        🔔 <b>TESTE DE ALERTA</b>
+
+        Este é um alerta de teste do seu dashboard.
+        Se você está vendo esta mensagem, a integração com o Telegram está funcionando perfeitamente!
+
+        ✅ Status: CONECTADO
+        📊 Score atual: ${score}
+        💰 Preço BTC: ${price}
+
+        ⏰ Enviado em: ${timestamp}
+                `.trim();
+
+                label.innerHTML = '<span class="spinner"></span> Enviando...';
+                btn.disabled = true;
+
+                const result = await sendTelegramAlert(testMessage);
+
+                if (result.success) {
+                    label.textContent = '✅ Enviado!';
+                    setTimeout(() => {
+                        label.textContent = '📨 Testar Alerta';
+                        btn.disabled = false;
+                    }, 2500);
+                } else {
+                    label.textContent = '❌ Falha';
+                    console.error('Erro detalhado:', result.error);
+                    setTimeout(() => {
+                        label.textContent = '📨 Testar Alerta';
+                        btn.disabled = false;
+                    }, 3000);
+                }
+            });
         });
 
         // ================================================================
@@ -1903,11 +1914,11 @@ Se você está vendo esta mensagem, a integração com o Telegram está funciona
             const now = Date.now();
             const { score, signal_type } = scoreData;
 
-            // ⚠️ Limiares ajustados para facilitar o teste:
-            // - LONG: score >= 65 (antes era 75)
-            // - SHORT: score <= 35 (antes era 25)
-            // Depois de testar, você pode reverter para 75/25.
-            if (now - lastAlertTime < ALERT_COOLDOWN) return;
+            if (now - lastAlertTime < ALERT_COOLDOWN) {
+                console.log('⏳ Cooldown ativo. Próximo alerta em ' + Math.round((ALERT_COOLDOWN - (now - lastAlertTime)) /
+                    60000) + ' min.');
+                return;
+            }
 
             const price = globalData.price || 60000;
 
@@ -2324,4 +2335,4 @@ Se você está vendo esta mensagem, a integração com o Telegram está funciona
         console.log('ℹ️ Limiares de alerta: LONG >= 65, SHORT <= 35 (modo teste).');
     </script>
 </body>
-</html>
+    </html>
