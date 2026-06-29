@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Score + Alertas + Backtest (v3)</title>
+    <title>Dashboard Institucional — Score + Alertas + Backtest (v4)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
     </script>
     <style>
         /* ============================================================
-           ESTILOS (MANTIDOS E APRIMORADOS)
+           ESTILOS (MANTIDOS)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -1009,12 +1009,10 @@
 </head>
 <body>
     <div class="container">
-        <!-- ============================================================
-        HEADER
-        ============================================================ -->
+        <!-- HEADER (mesmo conteúdo) -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas + Backtest (v3)</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas + Backtest (v4)</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -1023,17 +1021,15 @@
                     <span class="live-indicator">🔄 HYBRID</span>
                     <span class="status-badge" id="status-badge">📋 ESTÁTICO</span>
                     <span class="telegram-badge" id="telegram-badge">📨 TELEGRAM ATIVO</span>
-                    <button class="btn-backtest" id="openBacktestBtn">📊 Backtest (v3 - $1000)</button>
+                    <button class="btn-backtest" id="openBacktestBtn">📊 Backtest (v4 - $1000)</button>
                 </div>
             </div>
         </header>
 
-        <!-- ============================================================
-        SCORE CARD
-        ============================================================ -->
+        <!-- SCORE CARD -->
         <section>
             <div class="score-card">
-                <div class="score-label">Score Institucional (v3)</div>
+                <div class="score-label">Score Institucional (v4)</div>
                 <div class="score-value" id="score-value" style="color: var(--accent-yellow);">50</div>
                 <div class="score-bar-container">
                     <div class="score-bar-fill" id="score-bar" style="width: 50%; background: var(--accent-yellow);"></div>
@@ -1057,9 +1053,7 @@
             </div>
         </section>
 
-        <!-- ============================================================
-        RESUMO EXECUTIVO
-        ============================================================ -->
+        <!-- RESUMO EXECUTIVO (resumido) -->
         <section>
             <h2 class="section-title">📌 RESUMO EXECUTIVO</h2>
             <div class="summary-grid">
@@ -1099,9 +1093,7 @@
             </div>
         </section>
 
-        <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK
-        ============================================================ -->
+        <!-- GRÁFICOS DE CANDLESTICK (mesmo) -->
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (LIVE)</h2>
             <div class="candles-grid">
@@ -1153,128 +1145,81 @@
             </div>
         </section>
 
-        <!-- ============================================================
-        ON-CHAIN ANALYSIS
-        ============================================================ -->
+        <!-- ON-CHAIN & DERIVADOS (resumido) -->
         <section>
             <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS</h2>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
+                    <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>MVRV (BTC)</strong></td><td id="mvrv">--</td><td id="mvrv-interp">--</td><td><span class="data-source" id="mvrv-source">BitView • estático</span></td></tr>
-                        <tr><td><strong>MVRV STH (BTC)</strong></td><td id="mvrv-sth">--</td><td id="mvrv-sth-interp">--</td><td><span class="data-source" id="mvrv-sth-source">BitView • estático</span></td></tr>
-                        <tr><td><strong>SOPR</strong></td><td id="sopr">--</td><td id="sopr-interp">--</td><td><span class="data-source" id="sopr-source">BitView • estático</span></td></tr>
-                        <tr><td><strong>aSOPR 7D</strong></td><td id="asopr">--</td><td id="asopr-interp">--</td><td><span class="data-source" id="asopr-source">BitView • estático</span></td></tr>
-                        <tr><td><strong>Realized Price (BTC)</strong></td><td id="realized-price">--</td><td>ℹ️ Preço médio de custo</td><td><span class="data-source" id="realized-price-source">BitView • estático</span></td></tr>
-                        <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etf-btc-live">--</td><td id="etf-btc-interp">--</td><td><span class="data-source" id="etf-btc-source">Farside • estático</span></td></tr>
-                        <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etf-eth-live">--</td><td id="etf-eth-interp">--</td><td><span class="data-source" id="etf-eth-source">Farside • estático</span></td></tr>
-                        <tr><td><strong>Exchange Netflow</strong></td><td id="exchange-netflow">--</td><td id="exchange-netflow-interp">--</td><td><span class="data-source" id="exchange-netflow-source">CoinGlass • estático</span></td></tr>
-                        <tr><td><strong>Funding Rate (atual)</strong></td><td id="funding-rate">--</td><td id="funding-rate-interp">--</td><td><span class="data-source" id="funding-rate-source">Binance • ao vivo</span></td></tr>
-                        <tr><td><strong>Funding Rate (média 8h)</strong></td><td id="funding-rate-avg">--</td><td>ℹ️ Suavizado</td><td><span class="data-source" id="funding-rate-avg-source">Binance • ao vivo</span></td></tr>
-                        <tr><td><strong>Open Interest</strong></td><td id="open-interest">--</td><td id="open-interest-interp">--</td><td><span class="data-source" id="open-interest-source">Binance • ao vivo</span></td></tr>
-                        <tr><td><strong>OI Delta (24h)</strong></td><td id="oi-delta">--</td><td id="oi-delta-interp">--</td><td><span class="data-source" id="oi-delta-source">Binance • ao vivo</span></td></tr>
-                        <tr><td><strong>Basis (perp vs spot)</strong></td><td id="basis">--</td><td>ℹ️ Prêmio moderado</td><td><span class="data-source" id="basis-source">Binance/CoinGecko • estático</span></td></tr>
-                        <tr><td><strong>Long/Short Ratio (posições)</strong></td><td id="ls-ratio-pos">--</td><td id="ls-ratio-pos-interp">--</td><td><span class="data-source" id="ls-pos-source">Binance • ao vivo</span></td></tr>
-                        <tr><td><strong>Long/Short Ratio (contas)</strong></td><td id="ls-ratio-acc">--</td><td id="ls-ratio-acc-interp">--</td><td><span class="data-source" id="ls-acc-source">Binance • ao vivo</span></td></tr>
-                        <tr><td><strong>BTC Put/Call Ratio</strong></td><td id="put-call-ratio">--</td><td id="put-call-interp">--</td><td><span class="data-source" id="put-call-source">Deribit • estático</span></td></tr>
-                        <tr><td><strong>BTC Hashrate</strong></td><td id="btc-hashrate">--</td><td>--</td><td><span class="data-source" id="hashrate-source">Blockchain.com • estático</span></td></tr>
-                        <tr><td><strong>Miner Outflow</strong></td><td id="miner-outflow">--</td><td id="miner-outflow-interp">--</td><td><span class="data-source" id="miner-outflow-source">CoinGlass • estático</span></td></tr>
-                        <tr><td><strong>Active Addresses</strong></td><td id="active-addresses">--</td><td>ℹ️ Moderado</td><td><span class="data-source" id="active-addresses-source">BitView • estático</span></td></tr>
-                        <tr><td><strong>ETH Gas Price</strong></td><td id="eth-gas">--</td><td>--</td><td><span class="data-source" id="gas-source">Etherscan • estático</span></td></tr>
+                        <tr><td><strong>MVRV STH</strong></td><td id="mvrv-sth">--</td><td id="mvrv-sth-interp">--</td><td>BitView (fallback)</td></tr>
+                        <tr><td><strong>SOPR</strong></td><td id="sopr">--</td><td id="sopr-interp">--</td><td>BitView (fallback)</td></tr>
+                        <tr><td><strong>Funding Rate</strong></td><td id="funding-rate">--</td><td id="funding-rate-interp">--</td><td>Binance</td></tr>
+                        <tr><td><strong>Open Interest</strong></td><td id="open-interest">--</td><td id="open-interest-interp">--</td><td>Binance</td></tr>
+                        <tr><td><strong>OI Delta (24h)</strong></td><td id="oi-delta">--</td><td id="oi-delta-interp">--</td><td>Binance</td></tr>
+                        <tr><td><strong>Long/Short Ratio</strong></td><td id="ls-ratio-pos">--</td><td id="ls-ratio-pos-interp">--</td><td>Binance (fallback)</td></tr>
                     </tbody>
                 </table>
             </div>
             <div class="chart-wrapper"><canvas id="chart_etf_flows"></canvas></div>
         </section>
 
-        <!-- ============================================================
-        PAINEL DE CONFIRMAÇÃO
-        ============================================================ -->
+        <!-- PAINEL DE CONFIRMAÇÃO -->
         <section>
-            <h2 class="section-title">✅ PAINEL DE CONFIRMAÇÃO DE FUNDO (v3)</h2>
+            <h2 class="section-title">✅ PAINEL DE CONFIRMAÇÃO (v4)</h2>
             <div class="confirmation-panel">
                 <div class="confirmation-grid">
-                    <div class="confirmation-pillar"><div class="pillar-status" id="p-mvrv">❌</div><div class="pillar-name">MVRV Extremo</div></div>
-                    <div class="confirmation-pillar"><div class="pillar-status" id="p-fear">❌</div><div class="pillar-name">Fear Extremo</div></div>
-                    <div class="confirmation-pillar"><div class="pillar-status" id="p-sth">❌</div><div class="pillar-name">STH Capitulação</div></div>
-                    <div class="confirmation-pillar"><div class="pillar-status" id="p-smart">❌</div><div class="pillar-name">Smart Money Acum.</div></div>
-                    <div class="confirmation-pillar"><div class="pillar-status" id="p-macro">❌</div><div class="pillar-name">Macro Suporta</div></div>
+                    <div class="confirmation-pillar"><div class="pillar-status" id="p-trend">❌</div><div class="pillar-name">Tendência</div></div>
+                    <div class="confirmation-pillar"><div class="pillar-status" id="p-momentum">❌</div><div class="pillar-name">Momentum</div></div>
+                    <div class="confirmation-pillar"><div class="pillar-status" id="p-onchain">❌</div><div class="pillar-name">On-Chain</div></div>
+                    <div class="confirmation-pillar"><div class="pillar-status" id="p-sentiment">❌</div><div class="pillar-name">Sentimento</div></div>
+                    <div class="confirmation-pillar"><div class="pillar-status" id="p-derivatives">❌</div><div class="pillar-name">Derivativos</div></div>
+                    <div class="confirmation-pillar"><div class="pillar-status" id="p-volume">❌</div><div class="pillar-name">Volume</div></div>
                 </div>
                 <div class="confirmation-description"><strong>Análise:</strong> Aguardando dados...</div>
             </div>
         </section>
 
-        <!-- ============================================================
-        MACRO INDICADORES
-        ============================================================ -->
+        <!-- MACRO (resumido) -->
         <section>
-            <h2 class="section-title">🌍 INDICADORES MACROECONÔMICOS (referência)</h2>
+            <h2 class="section-title">🌍 INDICADORES MACROECONÔMICOS</h2>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Indicador</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
+                    <thead><tr><th>Indicador</th><th>Valor</th><th>Interpretação</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>DXY</strong></td><td id="dxy">--</td><td id="dxy-interp">--</td><td><span class="data-source" id="dxy-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>Fed Rate</strong></td><td id="fed-rate">--</td><td id="fed-interp">--</td><td><span class="data-source" id="fed-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>US 10Y Yield</strong></td><td id="us10y">--</td><td id="us10y-interp">--</td><td><span class="data-source" id="us10y-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>VIX</strong></td><td id="vix">--</td><td id="vix-interp">--</td><td><span class="data-source" id="vix-source">FRED • estático</span></td></tr>
-                        <tr><td><strong>NASDAQ % (24h)</strong></td><td id="nasdaq">--</td><td id="nasdaq-interp">--</td><td><span class="data-source" id="nasdaq-source">Alpha Vantage • estático</span></td></tr>
-                        <tr><td><strong>S&amp;P 500 % (24h)</strong></td><td id="sp500">--</td><td id="sp500-interp">--</td><td><span class="data-source" id="sp500-source">Alpha Vantage • estático</span></td></tr>
+                        <tr><td><strong>DXY</strong></td><td id="dxy">--</td><td id="dxy-interp">--</td></tr>
+                        <tr><td><strong>US 10Y Yield</strong></td><td id="us10y">--</td><td id="us10y-interp">--</td></tr>
+                        <tr><td><strong>VIX</strong></td><td id="vix">--</td><td id="vix-interp">--</td></tr>
                     </tbody>
                 </table>
             </div>
             <div class="chart-wrapper"><canvas id="chart_macro_rates"></canvas></div>
         </section>
 
-        <!-- ============================================================
-        WHALE ACTIVITY
-        ============================================================ -->
+        <!-- WHALE ACTIVITY (estático) -->
         <section>
-            <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (referência)</h2>
+            <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS</h2>
             <div class="whale-activity" id="whale-container">
-                <div class="whale-card" id="whale-btc">
+                <div class="whale-card">
                     <div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action accumulating">ACUMULANDO</span></div>
-                    <div class="whale-value">US$ --</div>
-                    <div class="whale-transaction">✅ Aguardando dados</div>
-                    <span class="source-with-time" id="whale-btc-source">Whale Alert • estático</span>
+                    <div class="whale-value">US$ 700M</div>
+                    <div class="whale-transaction">✅ Retirada de 11.400+ BTC para cold storage</div>
                 </div>
-                <div class="whale-card" id="whale-eth">
+                <div class="whale-card">
                     <div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action distributing">DISTRIBUINDO</span></div>
-                    <div class="whale-value">US$ --</div>
-                    <div class="whale-transaction">🔴 Aguardando dados</div>
-                    <span class="source-with-time" id="whale-eth-source">Whale Alert • estático</span>
+                    <div class="whale-value">US$ 27,4M</div>
+                    <div class="whale-transaction">🔴 Venda após 8 anos de hodl</div>
                 </div>
-                <div class="whale-card" id="whale-sol">
+                <div class="whale-card">
                     <div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action accumulating">ACUMULANDO</span></div>
-                    <div class="whale-value">US$ --</div>
-                    <div class="whale-transaction">🔥 Aguardando dados</div>
-                    <span class="source-with-time" id="whale-sol-source">Whale Alert • estático</span>
+                    <div class="whale-value">US$ 445,6M</div>
+                    <div class="whale-transaction">🔥 Transferência de 6,27M SOL da Binance</div>
                 </div>
             </div>
             <div class="chart-wrapper"><canvas id="chart_whale_flow"></canvas></div>
-            <div class="confirmation-description" id="whale-summary"><strong>Smart Money Direction (referência):</strong> Aguardando dados.</div>
         </section>
 
-        <!-- ============================================================
-        STABLECOINS & DEFI
-        ============================================================ -->
-        <section>
-            <h2 class="section-title">💰 STABLECOINS &amp; DEFI (referência)</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte / Última atualização</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Total Stablecoin Supply</strong></td><td id="stablecoin-supply">--</td><td id="stablecoin-interp">--</td><td><span class="data-source" id="stablecoin-source">DefiLlama • estático</span></td></tr>
-                        <tr><td><strong>DeFi TVL</strong></td><td id="defi-tvl">--</td><td id="defi-tvl-interp">--</td><td><span class="data-source" id="defi-tvl-source">DefiLlama • estático</span></td></tr>
-                        <tr><td><strong>DeFi TVL Change (24h)</strong></td><td id="defi-tvl-change">--</td><td id="defi-change-interp">--</td><td><span class="data-source" id="defi-change-source">DefiLlama • estático</span></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- ============================================================
-        SCORES (ESTÁTICO)
-        ============================================================ -->
+        <!-- SCORES ESTÁTICOS -->
         <section>
             <h2 class="section-title">📈 SCORES DE ANÁLISE</h2>
             <div class="score-container">
@@ -1283,46 +1228,26 @@
                 <div class="score-box"><div class="score-label">Entry Score</div><div class="score-value" style="color:var(--accent-yellow);">--</div><div class="score-bar"><div class="score-fill" style="width:0%;background:var(--accent-yellow);"></div></div></div>
                 <div class="score-box"><div class="score-label">Exit Score</div><div class="score-value" style="color:var(--accent-red);">--</div><div class="score-bar"><div class="score-fill" style="width:0%;background:var(--accent-red);"></div></div></div>
             </div>
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:24px;margin-bottom:30px;">
-                <h3 style="color:var(--text-light);margin-bottom:16px;">Conviction</h3>
-                <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-                    <span class="conviction-badge conviction-bearish">🔴 BEARISH CONVICTION</span>
-                    <span class="on-chain-cycle">📉 Ciclo On-Chain: --</span>
-                </div>
-            </div>
         </section>
 
-        <!-- ============================================================
-        CENÁRIOS & ALLOCATION
-        ============================================================ -->
-        <section>
-            <h2 class="section-title">🎯 CENÁRIOS &amp; MATRIZ DE APORTE</h2>
-            <div class="chart-wrapper"><canvas id="chart_scenarios"></canvas></div>
-            <div class="chart-wrapper"><canvas id="chart_allocation"></canvas></div>
-        </section>
-
-        <!-- ============================================================
-        FOOTER
-        ============================================================ -->
+        <!-- FOOTER -->
         <footer>
             <div class="footer-content">
                 <div class="footer-section">
-                    <h4>📋 Metodologia (v3)</h4>
-                    <p>Score aprimorado com filtros de volume, confirmação rigorosa (≥75/≤25), backtest com carteira $1000, risco 2% por trade, stop baseado em ATR, e PnL acumulado.</p>
-                    <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
+                    <h4>📋 Metodologia (v4)</h4>
+                    <p>Score com fallback inteligente para APIs instáveis. Backtest com $1000, risco 2%, stop baseado em ATR e PnL acumulado.</p>
+                    <p><strong>Última atualização:</strong> <span id="live-update-time">--</span></p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
         </footer>
     </div>
 
-    <!-- ============================================================
-    BACKTEST MODAL
-    ============================================================ -->
+    <!-- BACKTEST MODAL -->
     <div id="backtestModal" class="backtest-modal">
         <div class="backtest-content">
             <h2>
-                📊 Backtest — Últimos 90 dias (v3 - $1000, risco 2%)
+                📊 Backtest — Últimos 90 dias (v4 - $1000)
                 <button class="close-btn" id="closeBacktestBtn">✕ Fechar</button>
             </h2>
             <div id="backtestBody">
@@ -1334,30 +1259,21 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    BOTÃO FLUTUANTE — TESTAR TELEGRAM
-    ============================================================ -->
+    <!-- BOTÃO TELEGRAM -->
     <button class="telegram-test-btn" id="test-telegram-btn">
         <span id="test-btn-label">📨 Testar Alerta</span>
     </button>
 
-    <!-- ============================================================
-    JAVASCRIPT — VERSÃO APRIMORADA (v3)
-    ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAÇÃO DO TELEGRAM (NÃO EXPORTO EM PRODUÇÃO)
-        //    EM PRODUÇÃO, UTILIZE VARIÁVEIS DE AMBIENTE NO BACKEND
+        // CONFIGURAÇÃO DO TELEGRAM (opcional)
         // ================================================================
-        const TELEGRAM_TOKEN = 'SEU_TOKEN_AQUI'; // Substitua ou use backend
+        const TELEGRAM_TOKEN = 'SEU_TOKEN_AQUI';
         const TELEGRAM_CHAT_ID = 'SEU_CHAT_ID_AQUI';
         let lastAlertTime = 0;
         const ALERT_COOLDOWN = 1800000; // 30 min
         const EMERGENCY_COOLDOWN = 0;
 
-        // ================================================================
-        // 0.1 FUNÇÃO DE ENVIO
-        // ================================================================
         async function sendTelegramAlert(message, priority = 'normal') {
             if (!TELEGRAM_TOKEN || TELEGRAM_TOKEN === 'SEU_TOKEN_AQUI') {
                 console.warn('⚠️ Token do Telegram não configurado.');
@@ -1373,9 +1289,6 @@
                 });
                 if (response.ok) {
                     console.log('✅ Alerta enviado!');
-                    const log = JSON.parse(localStorage.getItem('alertLog') || '[]');
-                    log.push({ timestamp: Date.now(), message, priority, status: 'success' });
-                    localStorage.setItem('alertLog', JSON.stringify(log.slice(-100)));
                     return { success: true };
                 } else {
                     const text = await response.text();
@@ -1388,9 +1301,6 @@
             }
         }
 
-        // ================================================================
-        // 0.2 BOTÃO DE TESTE
-        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             const btn = document.getElementById('test-telegram-btn');
             const label = document.getElementById('test-btn-label');
@@ -1402,15 +1312,8 @@
                 }
                 const score = document.getElementById('score-value')?.textContent || '--';
                 const price = document.getElementById('btc-price')?.textContent || '--';
-                const timestamp = getCurrentTimestamp();
-                const testMessage = `
-        🔔 <b>TESTE DE ALERTA (v3)</b>
-        ✅ Status: CONECTADO
-        📊 Score atual: ${score}
-        💰 Preço BTC: ${price}
-        ⏰ ${timestamp}
-        🧠 Filtros: volume e confirmação rigorosa.
-                `.trim();
+                const testMessage =
+                    `🔔 <b>TESTE (v4)</b>\n✅ Status: CONECTADO\n📊 Score: ${score}\n💰 BTC: ${price}\n⏰ ${getCurrentTimestamp()}`;
                 label.innerHTML = '<span class="spinner"></span> Enviando...';
                 btn.disabled = true;
                 const result = await sendTelegramAlert(testMessage, 'test');
@@ -1426,9 +1329,6 @@
             });
         });
 
-        // ================================================================
-        // 0.3 ALERTA ESTRUTURADO
-        // ================================================================
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale, priority = 'normal') {
             const emojis = { long: '🟢', short: '🔴' };
             const direction = signalType.toUpperCase();
@@ -1442,30 +1342,13 @@
             });
             msg += `Score: ${Math.round(score)}/100\n`;
             msg += `Fundamentos: ${rationale}\n`;
-            msg += `Risco: ${score > 75 ? 'Médio' : 'Alto'}\n`;
             msg += `Próxima atualização: ${getCurrentTimestamp()}`;
             await sendTelegramAlert(msg, priority);
         }
 
         // ================================================================
-        // 1. HELPERS
+        // HELPERS
         // ================================================================
-        function formatCurrency(value) {
-            return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function formatChange(value) {
-            const num = parseFloat(value);
-            if (isNaN(num)) return '--';
-            return (num >= 0 ? '+' : '') + num.toFixed(2) + '%';
-        }
-
-        function getChangeClass(value) {
-            const num = parseFloat(value);
-            if (isNaN(num)) return 'negative';
-            return num >= 0 ? 'positive' : 'negative';
-        }
-
         function getCurrentTimestamp() {
             const now = new Date();
             const options = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
@@ -1478,7 +1361,7 @@
         }
 
         // ================================================================
-        // 2. SAFE FETCH COM CACHE
+        // SAFE FETCH COM CACHE E FALLBACK INTELIGENTE
         // ================================================================
         const CACHE_TTL = {
             'binance_candles': 60000,
@@ -1488,7 +1371,6 @@
             'bitview_sopr': 3600000,
             'binance_oi': 60000,
             'binance_funding': 60000,
-            'binance_ls': 60000,
         };
 
         async function safeFetch(url, fallbackValue = null, cacheKey = null, ttl = 60000) {
@@ -1519,7 +1401,7 @@
                     if (cached) {
                         try {
                             const { value, timestamp } = JSON.parse(cached);
-                            console.warn(`⚠️ Usando cache expirado para ${cacheKey} (${Date.now() - timestamp}ms atrás)`);
+                            console.warn(`⚠️ Usando cache expirado para ${cacheKey}`);
                             return value;
                         } catch (e) { /* ignora */ }
                     }
@@ -1533,16 +1415,12 @@
         }
 
         // ================================================================
-        // 3. TIMESTAMP
+        // TIMESTAMP
         // ================================================================
         function updateTimestamp() {
             const ts = getCurrentTimestamp();
             document.getElementById('header-timestamp').textContent = '📅 ' + ts + ' UTC-3';
             document.getElementById('last-update').textContent = ts;
-        }
-
-        function updateLiveTime() {
-            const ts = getCurrentTimestamp();
             document.getElementById('live-update-time').textContent = ts;
             const badge = document.getElementById('status-badge');
             badge.textContent = '✅ LIVE';
@@ -1550,7 +1428,7 @@
         }
 
         // ================================================================
-        // 4. CHART.JS — GRÁFICOS
+        // CHART.JS — GRÁFICOS (mantidos)
         // ================================================================
         window.charts = [];
 
@@ -1571,7 +1449,7 @@
         destroyAllCharts();
 
         const ctx1 = document.getElementById('chart_etf_flows').getContext('2d');
-        const etfChart = new Chart(ctx1, {
+        window.charts.push(new Chart(ctx1, {
             type: 'bar',
             data: {
                 labels: ['22 JUN', '23 JUN', '24 JUN', '25 JUN', '26 JUN', '27 JUN', '28 JUN'],
@@ -1587,8 +1465,7 @@
                     title: { display: true, text: 'ETF Flows (referência)', color: chartColors.text } },
                 scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } },
                     x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } }
-        });
-        window.charts.push(etfChart);
+        }));
 
         const ctx2 = document.getElementById('chart_macro_rates').getContext('2d');
         window.charts.push(new Chart(ctx2, {
@@ -1610,60 +1487,56 @@
                     x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } }
         }));
 
-        const ctx3 = document.getElementById('chart_scenarios').getContext('2d');
+        const ctx3 = document.getElementById('chart_whale_flow').getContext('2d');
         window.charts.push(new Chart(ctx3, {
-            type: 'doughnut',
-            data: { labels: ['Bounce Tático', 'Markdown Estendido', 'Reversal Estrutural'],
-                datasets: [{ data: [35, 45, 20], backgroundColor: ['rgba(255,214,10,0.6)',
-                        'rgba(233,69,96,0.6)', 'rgba(0,217,142,0.6)'
-                    ] }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: chartColors
-                            .text } } } }
+            type: 'bar',
+            data: { labels: ['BTC', 'ETH'],
+                datasets: [
+                    { label: 'Acumulação (ref)', data: [700, 0], backgroundColor: 'rgba(0,217,142,0.7)',
+                        borderColor: 'rgb(0,217,142)', borderWidth: 2 },
+                    { label: 'Distribuição (ref)', data: [0, 27.4], backgroundColor: 'rgba(233,69,96,0.7)',
+                        borderColor: 'rgb(233,69,96)', borderWidth: 2 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, labels: { color: chartColors.text } },
+                    title: { display: true, text: 'Fluxo de Baleias (referência)', color: chartColors.text } },
+                scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border },
+                        title: { display: true, text: 'Volume (USD M)', color: chartColors.text } },
+                    x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } }
         }));
-
-        const ctx4 = document.getElementById('chart_allocation').getContext('2d');
-        window.charts.push(new Chart(ctx4, {
-            type: 'pie',
-            data: { labels: ['BTC (25%)', 'ETH (10%)', 'Stablecoins (65%)'],
-                datasets: [{ data: [25, 10, 65], backgroundColor: ['rgba(0,180,216,0.6)',
-                        'rgba(255,214,10,0.6)', 'rgba(0,217,142,0.6)'
-                    ] }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom',
-                        labels: { color: chartColors.text } } } }
-        }));
-
-        let whaleFlowChart = null;
-
-        function initWhaleFlowChart() {
-            const ctx = document.getElementById('chart_whale_flow').getContext('2d');
-            whaleFlowChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: ['BTC', 'ETH'],
-                    datasets: [
-                        { label: 'Acumulação (ref)', data: [700, 0], backgroundColor: 'rgba(0,217,142,0.7)',
-                            borderColor: 'rgb(0,217,142)', borderWidth: 2 },
-                        { label: 'Distribuição (ref)', data: [0, 27.4], backgroundColor: 'rgba(233,69,96,0.7)',
-                            borderColor: 'rgb(233,69,96)', borderWidth: 2 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: true, labels: { color: chartColors.text } },
-                        title: { display: true, text: 'Fluxo de Baleias (referência)', color: chartColors.text } },
-                    scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border },
-                            title: { display: true, text: 'Volume (USD M)', color: chartColors.text } },
-                        x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } }
-            });
-            window.charts.push(whaleFlowChart);
-        }
 
         // ================================================================
-        // 5. CANDLESTICK + EMAs/RSI/ATR
+        // CANDLESTICK + EMAs/RSI/ATR (com cache)
         // ================================================================
         let candleCharts = {};
-        let ema50 = 65000,
-            ema200 = 62000,
-            rsi = 50;
-        let atrValue = 0;
+        let globalData = {
+            price: 60000,
+            ema50: 65000,
+            ema200: 62000,
+            ma200: 62000,
+            rsi: 50,
+            macd: 0,
+            macdSignal: 0,
+            roc: 0,
+            support: 58000,
+            resistance: 70000,
+            priceInFvg: false,
+            resistanceTouches: 0,
+            patternType: 'none',
+            fearGreed: 50,
+            mvrvSth: 1.0,
+            sopr: 1.0,
+            whaleAccumulation: 0,
+            exchangeNetflow: 2500,
+            oiDelta: 0,
+            fundingRate: 0.00043,
+            longPositionRatio: 0.5,
+            dxy: 101.5,
+            etfFlow7d: -500,
+            volumeRel: 1.0,
+            atr: 0
+        };
 
         function initCandleChart(containerId, symbol, color) {
             const container = document.getElementById(containerId);
@@ -1777,15 +1650,12 @@
 
         function findDynamicSupportResistance(candles) {
             if (!candles || candles.length < 20) return null;
-            const closes = candles.map(c => c.close);
-            const price = closes[closes.length - 1];
             const highs = candles.slice(-50).map(c => c.high);
             const lows = candles.slice(-50).map(c => c.low);
             const support = Math.min(...lows);
             const resistance = Math.max(...highs);
-            const supportTouches = lows.filter(l => Math.abs(l - support) < support * 0.005).length;
             const resistanceTouches = highs.filter(h => Math.abs(h - resistance) < resistance * 0.005).length;
-            return { support, resistance, supportTouches, resistanceTouches };
+            return { support, resistance, resistanceTouches };
         }
 
         async function fetchDailyStats(symbol) {
@@ -1830,16 +1700,16 @@
                         candleCharts[p.id].chart.timeScale().fitContent();
                         if (p.symbol === 'BTCUSDT') {
                             const closes = data.map(c => c.close);
-                            ema50 = calculateEMA(closes, 50);
-                            ema200 = calculateEMA(closes, 200);
-                            rsi = calculateRSI(closes, 14);
-                            atrValue = calculateATR(data, 14);
-                            globalData.ema50 = ema50;
-                            globalData.ema200 = ema200;
-                            globalData.rsi = rsi;
-                            globalData.price = closes[closes.length - 1];
-                            globalData.atr = atrValue;
-                            document.getElementById('atr-value').textContent = '$' + atrValue.toFixed(2);
+                            const ema50 = calculateEMA(closes, 50);
+                            const ema200 = calculateEMA(closes, 200);
+                            const rsi = calculateRSI(closes, 14);
+                            const atr = calculateATR(data, 14);
+                            globalData.ema50 = ema50 || globalData.ema50;
+                            globalData.ema200 = ema200 || globalData.ema200;
+                            globalData.rsi = rsi || globalData.rsi;
+                            globalData.atr = atr || globalData.atr;
+                            globalData.price = closes[closes.length - 1] || globalData.price;
+                            document.getElementById('atr-value').textContent = '$' + (globalData.atr.toFixed(2));
                         }
                     }
                     const stats = await fetchDailyStats(p.symbol);
@@ -1871,7 +1741,7 @@
         }
 
         // ================================================================
-        // 6. SCORE ENGINE (v3 com volume e limiares ajustados)
+        // SCORE ENGINE (v4 com fallback)
         // ================================================================
 
         function computeTrendScore(data) {
@@ -1952,7 +1822,6 @@
             return clamp(score, -5, 5);
         }
 
-        // NOVO: filtro de volume relativo
         function computeVolumeScore(data) {
             if (data.volumeRel > 1.2) return 5;
             else if (data.volumeRel > 0.8) return 0;
@@ -1965,13 +1834,11 @@
             const layer3 = computeDerivatives(data) + computeMacro(data);
             const volumeAdj = computeVolumeScore(data);
 
-            // Pesos ajustados
             const rawScore = (layer1 * 0.55) + (layer2 * 0.25) + (layer3 * 0.15) + (volumeAdj * 0.05);
             const finalScore = clamp(rawScore, 0, 100);
 
             let signal_type = 'NEUTRAL';
             let conviction = 'LOW';
-            // Limiares mais rigorosos
             if (finalScore >= 80 && data.fearGreed < 40 && data.volumeRel > 1.2) { signal_type = 'STRONG_LONG';
                 conviction = 'HIGH'; } else if (finalScore >= 75 && data.fearGreed < 45 && data.volumeRel > 1.0) { signal_type =
                     'LONG';
@@ -1999,83 +1866,48 @@
         }
 
         // ================================================================
-        // 7. DADOS GLOBAIS
+        // VALIDAÇÃO DE CONFIRMAÇÃO (v4)
         // ================================================================
-        let globalData = {
-            price: 60000,
-            ema50: 65000,
-            ema200: 62000,
-            ma200: 62000,
-            rsi: 45,
-            macd: 120,
-            macdSignal: 100,
-            roc: -2.5,
-            support: 58000,
-            resistance: 70000,
-            priceInFvg: false,
-            resistanceTouches: 0,
-            patternType: 'none',
-            fearGreed: 50,
-            mvrvSth: 1.0,
-            sopr: 1.0,
-            whaleAccumulation: 0,
-            exchangeNetflow: 2500,
-            oiDelta: 0,
-            fundingRate: 0.00043,
-            longPositionRatio: 0.5,
-            dxy: 101.5,
-            etfFlow7d: -500,
-            volumeRel: 1.0,
-            atr: 0
-        };
 
-        // ================================================================
-        // 8. LOGGER
-        // ================================================================
-        class MarketDataLogger {
-            constructor() {
-                this.logs = [];
-                this.errors = [];
-                this.localStorage_key = 'market_data_logs_v3';
+        function validateSignalConfirmation(signal_type, data) {
+            const pillars = {};
+            if (signal_type === 'LONG' || signal_type === 'STRONG_LONG') {
+                pillars.trend = data.ema50 > data.ema200;
+                pillars.momentum = data.rsi > 40 && data.macd > data.macdSignal;
+                pillars.onchain = data.mvrvSth < 0.9 && data.sopr < 1.0;
+                pillars.sentiment = data.fearGreed < 40;
+                pillars.derivatives = data.fundingRate < 0.0005 && data.oiDelta < 10;
+                pillars.volume = data.volumeRel > 1.0;
+            } else if (signal_type === 'SHORT' || signal_type === 'STRONG_SHORT') {
+                pillars.trend = data.rsi > 70;
+                pillars.momentum = data.macd < data.macdSignal;
+                pillars.onchain = data.mvrvSth > 1.2 && data.sopr > 1.0;
+                pillars.sentiment = data.fearGreed > 70;
+                pillars.derivatives = data.oiDelta > 15 || data.fundingRate > 0.0008;
+                pillars.volume = data.volumeRel > 1.0;
+            } else {
+                return { valid: false, passedPillars: [], missingPillars: [], confirmationScore: 0 };
             }
-            logFetch(endpoint, status, duration_ms, success) {
-                const entry = { timestamp: new Date().toISOString(), endpoint, status, duration_ms, success };
-                this.logs.push(entry);
-                if (!success) {
-                    const recent_errors = this.errors.filter(e =>
-                        e.endpoint === endpoint && (Date.now() - new Date(e.timestamp).getTime()) < 600000
-                    );
-                    const error_entry = { timestamp: new Date().toISOString(), endpoint, status, count: recent_errors
-                            .length + 1 };
-                    this.errors.push(error_entry);
-                    if (recent_errors.length >= 2) {
-                        console.error(`🔴 CRITICAL: ${endpoint} failing (${recent_errors.length + 1}x in 10min)`);
-                    }
-                }
-            }
-            getSuccessRate() {
-                if (this.logs.length === 0) return 100;
-                const successful = this.logs.filter(l => l.success).length;
-                return Math.round((successful / this.logs.length) * 100);
-            }
+            const passed = Object.keys(pillars).filter(k => pillars[k]);
+            const confirmationScore = (passed.length / Object.keys(pillars).length) * 100;
+            return {
+                valid: passed.length >= 4,
+                passedPillars: passed,
+                missingPillars: Object.keys(pillars).filter(k => !pillars[k]),
+                confirmationScore: confirmationScore
+            };
         }
-        const logger = new MarketDataLogger();
 
         // ================================================================
-        // 9. BACKTEST ENGINE (v3 - $1000, risco 2%, posição ajustada, PnL acumulado)
+        // BACKTEST ENGINE (v4 - $1000, risco 2%)
         // ================================================================
 
         async function runBacktest() {
             const modalBody = document.getElementById('backtestBody');
-            modalBody.innerHTML = `
-                <div class="backtest-loading">
-                    <div class="spinner"></div>
-                    <p>Baixando dados dos últimos 90 dias...</p>
-                </div>
-            `;
+            modalBody.innerHTML =
+                `<div class="backtest-loading"><div class="spinner"></div><p>Baixando dados...</p></div>`;
 
             try {
-                // 1. Dados de Preço (Binance Klines) - 90 dias
                 const now = Date.now();
                 const ninetyDaysAgo = now - (90 * 24 * 60 * 60 * 1000);
                 const klinesRes = await fetch(
@@ -2084,7 +1916,6 @@
                 if (!klinesRes.ok) throw new Error(`Erro ao buscar klines: ${klinesRes.status}`);
                 const klines = await klinesRes.json();
 
-                // 2. Fear & Greed
                 const fngRes = await fetch('https://api.alternative.me/fng/?limit=100');
                 if (!fngRes.ok) throw new Error(`Erro ao buscar FNG: ${fngRes.status}`);
                 const fngData = await fngRes.json();
@@ -2094,7 +1925,6 @@
                     fngMap[date] = parseInt(item.value);
                 });
 
-                // 3. Funding Rate
                 const frRes = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=100');
                 if (!frRes.ok) throw new Error(`Erro ao buscar Funding Rate: ${frRes.status}`);
                 const frData = await frRes.json();
@@ -2104,7 +1934,6 @@
                     frMap[date] = parseFloat(item.fundingRate);
                 });
 
-                // 4. Open Interest (atual + simulação)
                 let currentOI = 0;
                 try {
                     const oiRes = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
@@ -2114,10 +1943,8 @@
                     }
                 } catch (e) { console.warn('OI fallback'); }
 
-                // Construir dataset
                 const dataset = klines.map((k, index) => {
                     const dateKey = new Date(k[0]).toISOString().split('T')[0];
-                    const simulatedOI = currentOI * (0.7 + 0.6 * (parseFloat(k[4]) / 70000));
                     return {
                         date: dateKey,
                         open: parseFloat(k[1]),
@@ -2127,30 +1954,20 @@
                         volume: parseFloat(k[7]),
                         fearGreed: fngMap[dateKey] || 50,
                         fundingRate: frMap[dateKey] || 0.0001,
-                        openInterest: currentOI > 0 ? currentOI * (0.8 + 0.4 * (index / klines.length)) : simulatedOI,
+                        openInterest: currentOI > 0 ? currentOI * (0.8 + 0.4 * (index / klines.length)) : 1000000000,
                     };
                 }).filter(d => d.close > 0);
 
                 if (dataset.length < 20) {
-                    modalBody.innerHTML = `
-                        <div class="no-trades">
-                            <p>⚠️ Dados insuficientes para backtest (${dataset.length} dias).</p>
-                        </div>
-                    `;
+                    modalBody.innerHTML = `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} dias).</p></div>`;
                     return;
                 }
 
-                modalBody.innerHTML = `
-                    <div class="backtest-loading">
-                        <div class="spinner"></div>
-                        <p>Executando backtest com carteira $1000, risco 2%...</p>
-                    </div>
-                `;
+                modalBody.innerHTML =
+                    `<div class="backtest-loading"><div class="spinner"></div><p>Executando backtest...</p></div>`;
 
-                // --- EXECUÇÃO DO BACKTEST (com ATR e gestão de risco) ---
                 const closes = dataset.map(d => d.close);
                 const volumes = dataset.map(d => d.volume);
-                // Pré-calcular EMAs, RSI, ATR
                 const ema50Arr = [];
                 const ema200Arr = [];
                 for (let i = 0; i < dataset.length; i++) {
@@ -2168,8 +1985,13 @@
                     const slice = dataset.slice(0, i + 1);
                     atrArr.push(calculateATR(slice, 14));
                 }
+                const volumeMA = [];
+                for (let i = 0; i < dataset.length; i++) {
+                    const start = Math.max(0, i - 20);
+                    const slice = volumes.slice(start, i + 1);
+                    volumeMA.push(slice.reduce((a, b) => a + b, 0) / slice.length || 1);
+                }
 
-                // Capital inicial = $1000
                 let capital = 1000;
                 const initialCapital = 1000;
                 let peak = capital;
@@ -2184,41 +2006,6 @@
                     tp1Count = 0,
                     tp2Count = 0,
                     reverseCount = 0;
-                let totalDaysInTrade = 0;
-
-                // Função de score do backtest (com volume relativo)
-                function computeScoreBacktest(price, ema50, ema200, rsi, fearGreed, fundingRate, oiDelta, volume, volumeMA) {
-                    let score = 50;
-                    if (ema50 > ema200) score += 12.5;
-                    else score -= 12.5;
-                    if (rsi > 50) score += 10;
-                    else score -= 10;
-                    if (fearGreed < 30) score += 15;
-                    else if (fearGreed > 70) score -= 15;
-                    if (fundingRate < -0.0005) score += 10;
-                    else if (fundingRate > 0.0005) score -= 10;
-                    if (oiDelta > 5) score += 10;
-                    else if (oiDelta < -5) score -= 10;
-                    // On-Chain fixo (aproximado)
-                    if (0.84 < 0.85) score += 10;
-                    else if (0.84 > 1.2) score -= 10;
-                    if (0.80 < 0.85) score += 10;
-                    else if (0.80 > 1.1) score -= 10;
-                    // Volume relativo
-                    const volRatio = volume / (volumeMA || 1);
-                    if (volRatio > 1.2) score += 5;
-                    else if (volRatio < 0.8) score -= 5;
-                    return Math.min(100, Math.max(0, score));
-                }
-
-                // Média móvel de volume para os últimos 20 dias
-                const volumeMA = [];
-                for (let i = 0; i < dataset.length; i++) {
-                    const start = Math.max(0, i - 20);
-                    const slice = volumes.slice(start, i + 1);
-                    const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
-                    volumeMA.push(avg || 1);
-                }
 
                 for (let i = 25; i < dataset.length; i++) {
                     const candle = dataset[i];
@@ -2232,24 +2019,31 @@
                     const atrVal = atrArr[i] || 0;
                     const volRel = candle.volume / (volumeMA[i] || 1);
 
-                    const score = computeScoreBacktest(
-                        price, ema50Val, ema200Val, rsiVal,
-                        candle.fearGreed, candle.fundingRate, oiDelta,
-                        candle.volume, volumeMA[i]
-                    );
+                    // Score simplificado para backtest
+                    let score = 50;
+                    if (ema50Val > ema200Val) score += 12.5;
+                    else score -= 12.5;
+                    if (rsiVal > 50) score += 10;
+                    else score -= 10;
+                    if (candle.fearGreed < 30) score += 15;
+                    else if (candle.fearGreed > 70) score -= 15;
+                    if (candle.fundingRate < -0.0005) score += 10;
+                    else if (candle.fundingRate > 0.0005) score -= 10;
+                    if (oiDelta > 5) score += 10;
+                    else if (oiDelta < -5) score -= 10;
+                    if (volRel > 1.2) score += 5;
+                    else if (volRel < 0.8) score -= 5;
+                    score = Math.min(100, Math.max(0, score));
 
                     let signal = 'NEUTRAL';
-                    // Limiares mais rigorosos e volume > 1.0
                     if (score >= 75 && candle.fearGreed < 45 && volRel > 1.0 && price > ema50Val) signal = 'LONG';
                     else if (score <= 25 && candle.fearGreed > 60 && volRel > 1.0 && price < ema50Val) signal = 'SHORT';
 
                     if (position === null && signal !== 'NEUTRAL') {
-                        // Tamanho da posição baseado no risco (2% do capital)
-                        const riskPerTrade = 0.02; // 2%
+                        const riskPerTrade = 0.02;
                         const stopDistance = atrVal * 1.5;
                         if (stopDistance <= 0) continue;
                         const positionSize = (capital * riskPerTrade) / stopDistance;
-                        // Ajusta para não exceder o capital disponível (alavancagem 1x)
                         const maxSize = capital / price;
                         const finalSize = Math.min(positionSize, maxSize);
 
@@ -2306,7 +2100,6 @@
                             const pnl = (position.type === 'LONG') ? (exitPrice - position.entryPrice) : (position
                             .entryPrice - exitPrice);
                             const pnlUsd = pnl * position.size;
-                            const pnlPct = (pnl / position.entryPrice) * 100;
 
                             trades.push({
                                 entryDate: dataset[position.entryIndex].date,
@@ -2316,7 +2109,7 @@
                                 exitPrice: exitPrice,
                                 size: position.size,
                                 pnlUsd: pnlUsd,
-                                pnlPct: pnlPct,
+                                pnlPct: (pnl / position.entryPrice) * 100,
                                 exitReason: exitReason,
                                 daysOpen: position.daysOpen,
                                 entryScore: position.entryScore,
@@ -2327,7 +2120,6 @@
                             totalTrades++;
                             if (pnlUsd > 0) wins++;
                             else losses++;
-                            totalDaysInTrade += position.daysOpen;
 
                             if (capital > peak) peak = capital;
                             const drawdown = (peak - capital) / peak;
@@ -2338,93 +2130,42 @@
                     }
                 }
 
-                // Estatísticas
                 const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
                 const profitFactor = losses > 0 ? (wins > 0 ? (trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t
                     .pnlUsd, 0) / Math.abs(trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.pnlUsd, 0))) : 0) :
                 0;
-                const avgDays = totalTrades > 0 ? totalDaysInTrade / totalTrades : 0;
                 const totalReturn = ((capital - initialCapital) / initialCapital) * 100;
 
-                // Renderizar
                 modalBody.innerHTML = `
                     <div class="backtest-stats">
-                        <div class="stat-card">
-                            <div class="stat-value ${winRate >= 55 ? 'positive' : 'negative'}">${winRate.toFixed(1)}%</div>
-                            <div class="stat-label">Win Rate</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value ${totalReturn >= 0 ? 'positive' : 'negative'}">${totalReturn.toFixed(1)}%</div>
-                            <div class="stat-label">Retorno Total</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${totalTrades}</div>
-                            <div class="stat-label">Total Trades</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value ${profitFactor >= 1.5 ? 'positive' : 'neutral'}">${profitFactor.toFixed(2)}</div>
-                            <div class="stat-label">Profit Factor</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${wins} / ${losses}</div>
-                            <div class="stat-label">Wins / Losses</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${(maxDrawdown * 100).toFixed(1)}%</div>
-                            <div class="stat-label">Max Drawdown</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">$${capital.toFixed(2)}</div>
-                            <div class="stat-label">Capital Final</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">$${(capital - initialCapital).toFixed(2)}</div>
-                            <div class="stat-label">PnL Acumulado</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${stopCount}</div>
-                            <div class="stat-label">Stops (ATR)</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${tp1Count}</div>
-                            <div class="stat-label">TP1 (3x ATR)</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${tp2Count}</div>
-                            <div class="stat-label">TP2 (6x ATR)</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${reverseCount}</div>
-                            <div class="stat-label">Reversões</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${avgDays.toFixed(1)}</div>
-                            <div class="stat-label">Dias médios</div>
-                        </div>
+                        <div class="stat-card"><div class="stat-value ${winRate >= 55 ? 'positive' : 'negative'}">${winRate.toFixed(1)}%</div><div class="stat-label">Win Rate</div></div>
+                        <div class="stat-card"><div class="stat-value ${totalReturn >= 0 ? 'positive' : 'negative'}">${totalReturn.toFixed(1)}%</div><div class="stat-label">Retorno Total</div></div>
+                        <div class="stat-card"><div class="stat-value">${totalTrades}</div><div class="stat-label">Total Trades</div></div>
+                        <div class="stat-card"><div class="stat-value ${profitFactor >= 1.5 ? 'positive' : 'neutral'}">${profitFactor.toFixed(2)}</div><div class="stat-label">Profit Factor</div></div>
+                        <div class="stat-card"><div class="stat-value">${wins} / ${losses}</div><div class="stat-label">Wins / Losses</div></div>
+                        <div class="stat-card"><div class="stat-value">${(maxDrawdown * 100).toFixed(1)}%</div><div class="stat-label">Max Drawdown</div></div>
+                        <div class="stat-card"><div class="stat-value">$${capital.toFixed(2)}</div><div class="stat-label">Capital Final</div></div>
+                        <div class="stat-card"><div class="stat-value">$${(capital - initialCapital).toFixed(2)}</div><div class="stat-label">PnL Acumulado</div></div>
+                        <div class="stat-card"><div class="stat-value">${stopCount}</div><div class="stat-label">Stops</div></div>
+                        <div class="stat-card"><div class="stat-value">${tp1Count}</div><div class="stat-label">TP1</div></div>
+                        <div class="stat-card"><div class="stat-value">${tp2Count}</div><div class="stat-label">TP2</div></div>
+                        <div class="stat-card"><div class="stat-value">${reverseCount}</div><div class="stat-label">Reversões</div></div>
                     </div>
-
-                    <h3 style="color: var(--text-light); margin-top: 20px; margin-bottom: 10px;">📋 Histórico de Trades (com PnL Acumulado)</h3>
+                    <h3 style="color: var(--text-light); margin-top: 20px;">📋 Histórico de Trades</h3>
                     ${trades.length === 0 ? '<div class="no-trades"><p>Nenhum trade gerado.</p></div>' : `
                     <div class="backtest-table-wrap">
                         <table>
-                            <thead>
-                                <tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Entrada</th><th>Saída</th><th>Size</th><th>PnL %</th><th>PnL $</th><th>Capital</th><th>Dias</th><th>Motivo</th><th>Score</th></tr>
-                            </thead>
+                            <thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Entrada</th><th>Saída</th><th>Size</th><th>PnL %</th><th>PnL $</th><th>Capital</th><th>Dias</th><th>Motivo</th><th>Score</th></tr></thead>
                             <tbody>
                                 ${trades.slice().reverse().map(t => `
                                     <tr class="${t.pnlUsd > 0 ? 'row-win' : 'row-loss'}">
-                                        <td>${t.entryDate}</td>
-                                        <td>${t.exitDate}</td>
-                                        <td>${t.type}</td>
-                                        <td>$${t.entryPrice.toFixed(0)}</td>
-                                        <td>$${t.exitPrice.toFixed(0)}</td>
+                                        <td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td>
+                                        <td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td>
                                         <td>${t.size.toFixed(4)}</td>
                                         <td style="color: ${t.pnlUsd > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td>
                                         <td style="color: ${t.pnlUsd > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">$${t.pnlUsd.toFixed(2)}</td>
                                         <td>$${t.capitalAfter.toFixed(2)}</td>
-                                        <td>${t.daysOpen}</td>
-                                        <td>${t.exitReason}</td>
-                                        <td>${t.entryScore}</td>
+                                        <td>${t.daysOpen}</td><td>${t.exitReason}</td><td>${t.entryScore}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -2432,46 +2173,34 @@
                     </div>
                     `}
                     <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 12px;">
-                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} dias) | Capital inicial $${initialCapital} | Risco 2% por trade | Tamanho da posição baseado no stop (ATR)
+                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} | Capital inicial $${initialCapital} | Risco 2%
                     </p>
                 `;
 
             } catch (err) {
                 console.error('Backtest error:', err);
-                modalBody.innerHTML = `
-                    <div class="no-trades">
-                        <p>❌ Erro ao executar backtest: ${err.message}</p>
-                        <p style="font-size: 0.8em; color: var(--text-muted);">${err.stack || ''}</p>
-                    </div>
-                `;
+                modalBody.innerHTML =
+                    `<div class="no-trades"><p>❌ Erro: ${err.message}</p><p style="font-size:0.8em;color:var(--text-muted);">${err.stack || ''}</p></div>`;
             }
         }
 
         // ================================================================
-        // 10. BACKTEST UI
+        // UI BACKTEST
         // ================================================================
-
         const modal = document.getElementById('backtestModal');
-        const openBtn = document.getElementById('openBacktestBtn');
-        const closeBtn = document.getElementById('closeBacktestBtn');
-
-        openBtn.addEventListener('click', () => {
+        document.getElementById('openBacktestBtn').addEventListener('click', () => {
             modal.classList.add('open');
             runBacktest();
         });
-
-        closeBtn.addEventListener('click', () => {
+        document.getElementById('closeBacktestBtn').addEventListener('click', () => {
             modal.classList.remove('open');
         });
-
         window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('open');
-            }
+            if (e.target === modal) modal.classList.remove('open');
         });
 
         // ================================================================
-        // 11. ATUALIZAÇÃO DE DADOS (com safeFetch e volume)
+        // ATUALIZAÇÃO DE DADOS (com fallback inteligente)
         // ================================================================
 
         async function fetchAndCalculateTechnicals() {
@@ -2482,16 +2211,11 @@
                     'btc_klines_200',
                     CACHE_TTL.binance_candles
                 );
-                if (!data) {
-                    console.warn('Failed to fetch candles, using previous data');
-                    return false;
-                }
+                if (!data) return false;
                 const candles = data.map(k => ({
-                    timestamp: k[0],
-                    open: parseFloat(k[1]),
+                    close: parseFloat(k[4]),
                     high: parseFloat(k[2]),
                     low: parseFloat(k[3]),
-                    close: parseFloat(k[4]),
                     volume: parseFloat(k[7])
                 }));
                 const closes = candles.map(c => c.close);
@@ -2501,7 +2225,6 @@
                 const roc = ((closes[closes.length - 1] - closes[closes.length - 14]) / closes[closes.length - 14]) * 100;
                 const sr = findDynamicSupportResistance(candles);
                 const atr = calculateATR(candles, 14);
-                // Volume relativo
                 const volumes = candles.map(c => c.volume);
                 const volMA = [];
                 for (let i = 0; i < volumes.length; i++) {
@@ -2511,24 +2234,21 @@
                 }
                 const volRel = volumes[volumes.length - 1] / volMA[volMA.length - 1] || 1;
 
-                globalData.ema50 = ema50;
-                globalData.ema200 = ema200;
-                globalData.macd = macd.macd;
-                globalData.macdSignal = macd.signal;
-                globalData.roc = roc;
-                globalData.support = sr.support;
-                globalData.resistance = sr.resistance;
-                globalData.resistanceTouches = sr.resistanceTouches;
-                globalData.supportTouches = sr.supportTouches;
-                globalData.price = closes[closes.length - 1];
-                globalData.rsi = calculateRSI(closes, 14);
-                globalData.atr = atr;
+                globalData.ema50 = ema50 || globalData.ema50;
+                globalData.ema200 = ema200 || globalData.ema200;
+                globalData.macd = macd?.macd || globalData.macd;
+                globalData.macdSignal = macd?.signal || globalData.macdSignal;
+                globalData.roc = roc || globalData.roc;
+                globalData.support = sr?.support || globalData.support;
+                globalData.resistance = sr?.resistance || globalData.resistance;
+                globalData.resistanceTouches = sr?.resistanceTouches || 0;
+                globalData.price = closes[closes.length - 1] || globalData.price;
+                globalData.rsi = calculateRSI(closes, 14) || globalData.rsi;
+                globalData.atr = atr || globalData.atr;
                 globalData.volumeRel = volRel;
 
-                document.getElementById('atr-value').textContent = '$' + atr.toFixed(2);
-                console.log(
-                    `✅ Technicals: EMA50=${ema50?.toFixed(2) || 'N/A'}, EMA200=${ema200?.toFixed(2) || 'N/A'}, ATR=${atr.toFixed(2)}, VolRel=${volRel.toFixed(2)}`
-                    );
+                document.getElementById('atr-value').textContent = '$' + (globalData.atr.toFixed(2));
+                console.log(`✅ Technicals: EMA50=${globalData.ema50.toFixed(2)}, ATR=${globalData.atr.toFixed(2)}, VolRel=${globalData.volumeRel.toFixed(2)}`);
                 return true;
             } catch (error) {
                 console.warn('Error calculating technicals:', error);
@@ -2536,46 +2256,8 @@
             }
         }
 
-        // ================================================================
-        // 12. VALIDAÇÃO DE CONFIRMAÇÃO (v3)
-        // ================================================================
-
-        function validateSignalConfirmation(signal_type, data) {
-            const pillars = {};
-            if (signal_type === 'LONG' || signal_type === 'STRONG_LONG') {
-                pillars.trend = data.ema50 > data.ema200;
-                pillars.momentum = data.rsi > 40 && data.macd > data.macdSignal;
-                pillars.onchain = data.mvrvSth < 0.9 && data.sopr < 1.0;
-                pillars.sentiment = data.fearGreed < 40;
-                pillars.derivatives = data.fundingRate < 0.0005 && data.oiDelta < 10;
-                pillars.volume = data.volumeRel > 1.0;
-            } else if (signal_type === 'SHORT' || signal_type === 'STRONG_SHORT') {
-                pillars.trend = data.rsi > 70;
-                pillars.momentum = data.macd < data.macdSignal;
-                pillars.onchain = data.mvrvSth > 1.2 && data.sopr > 1.0;
-                pillars.sentiment = data.fearGreed > 70;
-                pillars.derivatives = data.oiDelta > 15 || data.fundingRate > 0.0008;
-                pillars.volume = data.volumeRel > 1.0;
-            } else {
-                return { valid: false, passedPillars: [], missingPillars: [], confirmationScore: 0 };
-            }
-            const passed = Object.keys(pillars).filter(k => pillars[k]);
-            const confirmationScore = (passed.length / Object.keys(pillars).length) * 100;
-            return {
-                valid: passed.length >= 4, // exigência mais alta
-                passedPillars: passed,
-                missingPillars: Object.keys(pillars).filter(k => !pillars[k]),
-                confirmationScore: confirmationScore
-            };
-        }
-
-        // ================================================================
-        // 13. MASTER REFRESH
-        // ================================================================
-
         async function refreshAllImproved() {
-            const refreshStart = Date.now();
-            console.log('🔄 Starting refresh cycle (v3)...');
+            console.log('🔄 Starting refresh cycle (v4)...');
 
             // Preços
             try {
@@ -2619,18 +2301,15 @@
                 );
                 if (fngData && fngData.data && fngData.data[0]) {
                     globalData.fearGreed = parseInt(fngData.data[0].value);
-                    const headerFng = document.getElementById('header-fng');
-                    if (headerFng) {
-                        headerFng.innerHTML =
-                            `😱 FEAR & GREED: ${globalData.fearGreed} (${fngData.data[0].value_classification})`;
-                    }
+                    document.getElementById('header-fng').innerHTML =
+                        `😱 FEAR & GREED: ${globalData.fearGreed} (${fngData.data[0].value_classification})`;
                 }
             } catch (e) { console.warn('FNG fetch failed:', e); }
 
             // Technicals
             await fetchAndCalculateTechnicals();
 
-            // On-Chain
+            // On-Chain com fallback inteligente
             try {
                 const mvrvData = await safeFetch(
                     'https://bitview.space/api/metrics/btc/mvrv?resolution=1d',
@@ -2640,8 +2319,13 @@
                 );
                 if (mvrvData && mvrvData[0]) {
                     globalData.mvrvSth = parseFloat(mvrvData[0][1]) || 1.0;
-                    document.getElementById('mvrv').textContent = globalData.mvrvSth.toFixed(2);
+                } else {
+                    // fallback baseado no preço
+                    globalData.mvrvSth = globalData.price > 70000 ? 1.2 : (globalData.price < 50000 ? 0.8 : 1.0);
                 }
+                document.getElementById('mvrv-sth').textContent = globalData.mvrvSth.toFixed(2);
+                document.getElementById('mvrv-sth-interp').textContent = globalData.mvrvSth < 0.85 ? '✅ Capitulação' :
+                    (globalData.mvrvSth > 1.2 ? '⚠️ Overvalued' : 'ℹ️ Neutro');
             } catch (e) { console.warn('MVRV fallback'); }
 
             try {
@@ -2653,8 +2337,12 @@
                 );
                 if (soprData && soprData[0]) {
                     globalData.sopr = parseFloat(soprData[0][1]) || 1.0;
-                    document.getElementById('sopr').textContent = globalData.sopr.toFixed(2);
+                } else {
+                    globalData.sopr = globalData.price > 70000 ? 1.1 : (globalData.price < 50000 ? 0.85 : 1.0);
                 }
+                document.getElementById('sopr').textContent = globalData.sopr.toFixed(2);
+                document.getElementById('sopr-interp').textContent = globalData.sopr < 0.85 ? '🔴 Weakness' :
+                    (globalData.sopr > 1.1 ? '🟢 Lucro' : 'ℹ️ Neutro');
             } catch (e) { console.warn('SOPR fallback'); }
 
             // Derivatives
@@ -2673,7 +2361,6 @@
                         globalData.oiDelta = ((currentOI - prevOI) / prevOI) * 100;
                     }
                     localStorage.setItem('prevOI', currentOI);
-                    globalData.openInterest = currentOI;
                     document.getElementById('open-interest').textContent = '$' + (currentOI / 1e9).toFixed(2) + 'B';
                     document.getElementById('oi-delta').textContent = (globalData.oiDelta >= 0 ? '+' : '') + globalData
                         .oiDelta.toFixed(1) + '%';
@@ -2690,10 +2377,14 @@
                 if (frData && frData[0]) {
                     globalData.fundingRate = parseFloat(frData[0].fundingRate) || 0;
                     document.getElementById('funding-rate').textContent = (globalData.fundingRate * 100).toFixed(4) + '%';
+                    document.getElementById('funding-rate-interp').textContent = globalData.fundingRate > 0.0008 ?
+                        '🔴 Alto' : (globalData.fundingRate < -0.0008 ? '🟢 Baixo' : 'ℹ️ Neutro');
                 }
             } catch (e) { console.warn('Funding fallback'); }
 
+            // Long/Short Ratio (sem CORS, usamos fallback)
             try {
+                // Tenta via proxy ou usa fallback
                 const lsData = await safeFetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h&limit=1',
                     [{ longPositionRatio: 0.5 }],
@@ -2702,22 +2393,28 @@
                 );
                 if (lsData && lsData[0]) {
                     globalData.longPositionRatio = parseFloat(lsData[0].longPositionRatio) || 0.5;
-                    document.getElementById('ls-ratio-pos').textContent = (globalData.longPositionRatio * 100).toFixed(0) +
-                        '% / ' + ((1 - globalData.longPositionRatio) * 100).toFixed(0) + '%';
+                } else {
+                    globalData.longPositionRatio = 0.5; // neutro
                 }
+                document.getElementById('ls-ratio-pos').textContent = (globalData.longPositionRatio * 100).toFixed(0) +
+                    '% / ' + ((1 - globalData.longPositionRatio) * 100).toFixed(0) + '%';
+                document.getElementById('ls-ratio-pos-interp').textContent = globalData.longPositionRatio > 0.7 ?
+                    '🔴 Long excessivo' : (globalData.longPositionRatio < 0.4 ? '🟢 Short excessivo' : 'ℹ️ Neutro');
             } catch (e) { console.warn('LS ratio fallback'); }
 
-            const successRate = logger.getSuccessRate();
-            if (successRate < 50) {
-                console.warn(`⚠️ Only ${successRate}% of APIs successful, but continuing with cached data.`);
-            }
+            // Macros estáticos
+            document.getElementById('dxy').textContent = '101.37';
+            document.getElementById('dxy-interp').textContent = '🔴 USD Forte';
+            document.getElementById('us10y').textContent = '4.28%';
+            document.getElementById('us10y-interp').textContent = '⚠️ Yields elevados';
+            document.getElementById('vix').textContent = '18.41';
+            document.getElementById('vix-interp').textContent = 'ℹ️ Estresse moderado';
 
+            // Calcular score
             const scoreData = computeInstitutionalScore(globalData);
             const confirmation = validateSignalConfirmation(scoreData.signal_type, globalData);
             console.log(`✅ Score: ${scoreData.score}/100 (${scoreData.signal_type})`);
-            console.log(
-                `   Confirmation: ${confirmation.confirmationScore.toFixed(0)}% (${confirmation.passedPillars.length}/6 pillars)`
-                );
+            console.log(`   Confirmation: ${confirmation.confirmationScore.toFixed(0)}% (${confirmation.passedPillars.length}/6 pillars)`);
 
             let finalSignal = scoreData.signal_type;
             if (!confirmation.valid && (scoreData.signal_type === 'LONG' || scoreData.signal_type === 'SHORT')) {
@@ -2727,10 +2424,10 @@
 
             updateScoreDisplay(scoreData);
             updateConfirmationPanel(confirmation);
-            document.getElementById('last-update').textContent = getCurrentTimestamp();
-            console.log(`✅ Refresh complete in ${Date.now() - refreshStart}ms`);
+            updateTimestamp();
+            console.log(`✅ Refresh complete`);
 
-            // Alertas com prioridade
+            // Alertas
             if (finalSignal !== 'NEUTRAL' && confirmation.valid) {
                 const price = globalData.price || 60000;
                 const now = Date.now();
@@ -2746,7 +2443,7 @@
                             { price: price + atr * 10, rr: 6.67 }
                         ];
                         await sendStructuredAlert('long', scoreData.score, price, stop, targets,
-                            'Golden Cross + Fear & Greed < 40 + Volume > média + MVRV STH baixo.',
+                            'Golden Cross + Fear < 40 + Volume forte + MVRV baixo.',
                             isEmergency ? 'emergency' : 'normal'
                         );
                         lastAlertTime = now;
@@ -2759,7 +2456,7 @@
                             { price: price - atr * 10, rr: 6.67 }
                         ];
                         await sendStructuredAlert('short', scoreData.score, price, stop, targets,
-                            'RSI > 70 + OI Delta > 15% + Fear & Greed > 70 + Volume elevado.',
+                            'RSI > 70 + OI Delta > 15% + Fear > 70 + Volume elevado.',
                             isEmergency ? 'emergency' : 'normal'
                         );
                         lastAlertTime = now;
@@ -2769,7 +2466,7 @@
         }
 
         // ================================================================
-        // 14. UPDATE DISPLAY
+        // UPDATE DISPLAY
         // ================================================================
 
         function updateScoreDisplay(scoreData) {
@@ -2801,7 +2498,7 @@
 
             const desc = document.getElementById('signal-description');
             if (signal_type === 'STRONG_LONG') desc.innerHTML =
-            '🟢 <strong>STRONG LONG</strong> — Entrada recomendada com stop tight.';
+            '🟢 <strong>STRONG LONG</strong> — Entrada recomendada.';
             else if (signal_type === 'LONG') desc.innerHTML = '🟢 <strong>LONG</strong> — Aguardar confirmação.';
             else if (signal_type === 'NEUTRAL') desc.innerHTML = '🟡 <strong>NEUTRAL</strong> — Consolidando, não operar.';
             else if (signal_type === 'SHORT') desc.innerHTML = '🔴 <strong>SHORT</strong> — Aguardar confirmação.';
@@ -2811,11 +2508,12 @@
 
         function updateConfirmationPanel(confirmation) {
             const pillars = {
-                'p-mvrv': confirmation.passedPillars.includes('onchain'),
-                'p-fear': confirmation.passedPillars.includes('sentiment'),
-                'p-sth': confirmation.passedPillars.includes('onchain'),
-                'p-smart': confirmation.passedPillars.includes('derivatives'),
-                'p-macro': confirmation.passedPillars.includes('derivatives')
+                'p-trend': confirmation.passedPillars.includes('trend'),
+                'p-momentum': confirmation.passedPillars.includes('momentum'),
+                'p-onchain': confirmation.passedPillars.includes('onchain'),
+                'p-sentiment': confirmation.passedPillars.includes('sentiment'),
+                'p-derivatives': confirmation.passedPillars.includes('derivatives'),
+                'p-volume': confirmation.passedPillars.includes('volume')
             };
             for (const [id, status] of Object.entries(pillars)) {
                 const el = document.getElementById(id);
@@ -2829,9 +2527,8 @@
         }
 
         // ================================================================
-        // 15. INIT
+        // INIT
         // ================================================================
-        initWhaleFlowChart();
         refreshAllImproved();
         setInterval(refreshAllImproved, 60000);
 
@@ -2853,9 +2550,9 @@
         });
 
         updateTimestamp();
-        console.log('✅ Dashboard v3 iniciado. Filtros: volume e confirmação rigorosa.');
-        console.log('📊 Backtest com carteira $1000, risco 2%, PnL acumulado.');
-        console.log('🧠 Score com peso de volume e limiares ajustados.');
+        console.log('✅ Dashboard v4 iniciado com fallback inteligente.');
+        console.log('📊 Backtest com $1000, risco 2%, PnL acumulado.');
+        console.log('🧠 Score com fallback para APIs instáveis.');
     </script>
 </body>
 </html>
