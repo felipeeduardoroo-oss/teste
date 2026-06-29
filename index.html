@@ -2004,12 +2004,10 @@
         // Busca histórico de MVRV (BitView) - retorna objeto com data -> valor
         async function fetchMVRVHistory(days = 30) {
             try {
-                // BitView retorna array com muitos pontos, pegamos os últimos 'days'
                 const data = await safeFetch('https://bitview.space/api/metrics/btc/mvrv?resolution=1d', null, 'mvrv_hist',
                     CACHE_TTL.mvrv);
                 if (!data || !Array.isArray(data)) return {};
                 const map = {};
-                // data é um array de arrays [timestamp, valor]
                 const sorted = data.sort((a, b) => a[0] - b[0]);
                 const recent = sorted.slice(-days);
                 recent.forEach(item => {
@@ -2038,9 +2036,7 @@
         }
 
         // Busca histórico de ETF Flows (Farside) - não temos API pública, então usamos dados mockados
-        // Para 30 dias, geramos valores aleatórios próximos ao último valor conhecido, mas com variação.
         async function fetchETFHistory(days = 30) {
-            // Simula dados reais de ETF (último valor conhecido -$445M)
             const base = -445;
             const map = {};
             const today = new Date();
@@ -2048,7 +2044,6 @@
                 const d = new Date(today);
                 d.setDate(d.getDate() - i);
                 const dateKey = d.toISOString().split('T')[0];
-                // Variação aleatória entre -50 e +50 milhões
                 const variation = (Math.random() - 0.5) * 100;
                 map[dateKey] = base + variation;
             }
@@ -2173,7 +2168,7 @@
                         openInterest: oiMap[dateKey] || 0,
                         fundingRate: fundingMap[dateKey] || 0.0001,
                         longRatio: lsMap[dateKey] || 0.5,
-                        mvrv: mvrvMap[dateKey] || 0.84, // fallback para fixo
+                        mvrv: mvrvMap[dateKey] || 0.84,
                         sopr: soprMap[dateKey] || 0.80,
                         etfFlow: etfMap[dateKey] || -445,
                         dxy: macroDxyMap[dateKey] || 101.5,
@@ -2526,4 +2521,4 @@
         console.log('📊 Backtest 30 dias: todos os dados reais, incluindo MVRV, SOPR, ETF e Macro (históricos).');
     </script>
 </body>
-</html>
+    </html>
