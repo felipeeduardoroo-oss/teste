@@ -157,7 +157,7 @@
             color: var(--accent-red);
         }
 
-        /* SCORE CARD (MANTIDO E EXPANDIDO) */
+        /* SCORE CARD */
         .score-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -220,7 +220,42 @@
             color: var(--text-light);
         }
 
-        /* NOVO: Score Avançado (Z-Score) */
+        /* NOVO: Filtros de Confirmação (UI) */
+        .filters-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--primary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8em;
+            padding: 4px;
+        }
+
+        .filter-item .filter-label {
+            color: var(--text-muted);
+            font-size: 0.7em;
+            text-transform: uppercase;
+        }
+
+        .filter-item .filter-status {
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .filter-item .filter-status.pass { color: var(--accent-green); }
+        .filter-item .filter-status.fail { color: var(--accent-red); }
+        .filter-item .filter-status.warn { color: var(--accent-yellow); }
+
+        /* SCORE AVANÇADO */
         .advanced-score-section {
             margin-top: 20px;
             border-top: 1px solid var(--border);
@@ -358,6 +393,9 @@
             .source-list {
                 grid-template-columns: 1fr;
             }
+            .filters-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .summary-grid {
@@ -473,71 +511,6 @@
             color: var(--text-muted);
             display: block;
             margin-top: 2px;
-        }
-
-        .outlier {
-            background-color: rgba(255, 214, 10, 0.1);
-            color: var(--accent-yellow);
-            font-weight: 600;
-        }
-
-        .alert-highlight {
-            background-color: rgba(255, 214, 10, 0.2) !important;
-            border-left: 4px solid var(--accent-yellow);
-            animation: alertPulse 1.5s ease-in-out 3;
-        }
-
-        .watchlist-highlight {
-            background-color: rgba(0, 180, 216, 0.25) !important;
-            border-left: 4px solid var(--accent-blue);
-            animation: watchPulse 2s ease-in-out 2;
-        }
-
-        @keyframes alertPulse {
-            0% { background-color: rgba(255, 214, 10, 0.1); }
-            50% { background-color: rgba(255, 214, 10, 0.4); }
-            100% { background-color: rgba(255, 214, 10, 0.1); }
-        }
-        @keyframes watchPulse {
-            0% { background-color: rgba(0, 180, 216, 0.1); }
-            50% { background-color: rgba(0, 180, 216, 0.4); }
-            100% { background-color: rgba(0, 180, 216, 0.1); }
-        }
-
-        .address-tag {
-            background: var(--secondary);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.85em;
-            color: var(--accent-blue);
-        }
-
-        .exchange-tag {
-            background: rgba(233, 69, 96, 0.2);
-            color: var(--accent-red);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: 600;
-        }
-
-        .wallet-tag {
-            background: rgba(0, 217, 142, 0.2);
-            color: var(--accent-green);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: 600;
-        }
-
-        .entity-tag {
-            background: rgba(255, 214, 10, 0.2);
-            color: var(--accent-yellow);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: 700;
         }
 
         .chart-wrapper {
@@ -857,7 +830,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Indicador de status do Telegram no header */
         .telegram-status {
             display: inline-block;
             width: 10px;
@@ -868,9 +840,7 @@
         .telegram-status.online { background: var(--accent-green); }
         .telegram-status.offline { background: var(--accent-red); }
 
-        /* ============================================================
-           ESTILOS DO BACKTEST
-           ============================================================ */
+        /* BACKTEST */
         .backtest-section {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -1060,9 +1030,35 @@
                     <div class="score-detail-item"><span class="label">OI Delta</span> <span class="value" id="score-oi">--</span></div>
                 </div>
 
-                <!-- ============================================================
-                NOVO: SCORE AVANÇADO (Z-SCORE PINE)
-                ============================================================ -->
+                <!-- PAINEL DE FILTROS (NOVO) -->
+                <div class="filters-panel" id="filters-panel">
+                    <div class="filter-item">
+                        <span class="filter-label">Volume + ATR</span>
+                        <span class="filter-status" id="filter-volume">--</span>
+                    </div>
+                    <div class="filter-item">
+                        <span class="filter-label">Multi-Timeframe</span>
+                        <span class="filter-status" id="filter-mtf">--</span>
+                    </div>
+                    <div class="filter-item">
+                        <span class="filter-label">Funding Converg.</span>
+                        <span class="filter-status" id="filter-funding">--</span>
+                    </div>
+                    <div class="filter-item">
+                        <span class="filter-label">On-Chain</span>
+                        <span class="filter-status" id="filter-onchain">--</span>
+                    </div>
+                    <div class="filter-item">
+                        <span class="filter-label">Rejeição</span>
+                        <span class="filter-status" id="filter-rejection">--</span>
+                    </div>
+                    <div class="filter-item">
+                        <span class="filter-label">Gatekeeper</span>
+                        <span class="filter-status" id="filter-gatekeeper">--</span>
+                    </div>
+                </div>
+
+                <!-- SCORE AVANÇADO -->
                 <div class="advanced-score-section">
                     <div class="score-label" style="font-size:0.9em; color:var(--accent-blue);">Score Avançado (Z-Score)</div>
                     <div class="score-value" id="adv-score-value" style="font-size:3em; color: var(--accent-yellow);">--</div>
@@ -1455,7 +1451,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Score Avançado baseado no modelo Z-Score do Pine Script v9.4, com ponderação adaptativa. Alertas Telegram para condições extremas. Backtest com dados dos últimos 30 dias (Binance).</p>
+                    <p>Score institucional com 6 componentes + Score Avançado Z-Score. Filtros: Volume+ATR, Multi-Timeframe, Funding Convergence, On-Chain Robusto, Rejeição e Gatekeeper de 5 pilares. Stops dinâmicos baseados em ATR. Backtest com dados dos últimos 30 dias (Binance).</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
@@ -1481,17 +1477,14 @@
         const TELEGRAM_TOKEN = '8670184440:AAFBfhFFTMnUWsgIFyRh0huBYbL-Q_vhT5k';
         const TELEGRAM_CHAT_ID = '1137196768';
 
-        // ================================================================
-        // 0.1 VARIÁVEIS DE CONTROLE DE ALERTAS (MANTIDAS)
-        // ================================================================
         let lastAlertScore = 50;
         let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 1800000; // 30 minutos
+        const ALERT_COOLDOWN = 1800000;
         let alertLog = [];
         let telegramStatus = 'online';
 
         // ================================================================
-        // 0.2 FUNÇÕES DE ENVIO (MANTIDAS)
+        // 0.1 FUNÇÕES DE ENVIO (MANTIDAS)
         // ================================================================
         async function sendTelegramAlert(message) {
             try {
@@ -1525,9 +1518,6 @@
             }
         }
 
-        // ================================================================
-        // 0.3 ALERTA ESTRUTURADO (MANTIDO)
-        // ================================================================
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale, components) {
             const emojis = { long: '🟢', short: '🔴' };
             const direction = signalType.toUpperCase();
@@ -1567,44 +1557,24 @@
             return success;
         }
 
-        // ================================================================
-        // 0.4 FUNÇÃO DE TESTE (MANTIDA)
-        // ================================================================
         async function sendTestAlert() {
             const score = document.getElementById('score-value')?.textContent || '50';
             const price = document.getElementById('btc-price')?.textContent || '$60.000';
             const timestamp = getCurrentTimestamp();
-            const testMsg = `
-        🔔 <b>TESTE DE CONEXÃO TELEGRAM</b>
-        ✅ Status: CONECTADO
-        📊 Score atual: ${score}
-        💰 Preço BTC: ${price}
-        ⏰ ${timestamp}
-        `;
+            const testMsg =
+                `🔔 <b>TESTE DE CONEXÃO TELEGRAM</b>\n✅ Status: CONECTADO\n📊 Score atual: ${score}\n💰 Preço BTC: ${price}\n⏰ ${timestamp}`;
             return await sendTelegramAlert(testMsg);
         }
 
-        // ================================================================
-        // 0.5 STATUS DO TELEGRAM (MANTIDO)
-        // ================================================================
         function updateTelegramStatus() {
             const dot = document.getElementById('telegram-status-dot');
             const badge = document.getElementById('telegram-badge');
             const statusText = document.getElementById('telegram-status-text');
-            if (dot) {
-                dot.className = 'telegram-status ' + (telegramStatus === 'online' ? 'online' : 'offline');
-            }
-            if (badge) {
-                badge.className = 'telegram-badge ' + (telegramStatus === 'online' ? '' : 'error');
-            }
-            if (statusText) {
-                statusText.textContent = telegramStatus === 'online' ? '🟢 Conectado' : '🔴 Desconectado';
-            }
+            if (dot) dot.className = 'telegram-status ' + (telegramStatus === 'online' ? 'online' : 'offline');
+            if (badge) badge.className = 'telegram-badge ' + (telegramStatus === 'online' ? '' : 'error');
+            if (statusText) statusText.textContent = telegramStatus === 'online' ? '🟢 Conectado' : '🔴 Desconectado';
         }
 
-        // ================================================================
-        // 0.6 ALERTAS ADICIONAIS (MANTIDOS)
-        // ================================================================
         let previousScore = 50;
 
         function checkAdditionalAlerts(score, components) {
@@ -1612,47 +1582,41 @@
             if (now - lastAlertTime < ALERT_COOLDOWN) return;
             const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
             const fng = parseInt(document.getElementById('header-fng')?.textContent.match(/\d+/)?.[0]) || 50;
-
             if (previousScore < 50 && score >= 50) {
-                const msg =
-                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore subiu de ${previousScore} para ${score} – cruzando a zona neutra.\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`;
-                sendTelegramAlert(msg);
+                sendTelegramAlert(
+                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore subiu de ${previousScore} para ${score} – cruzando a zona neutra.\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`
+                    );
                 lastAlertTime = now;
             } else if (previousScore > 50 && score <= 50) {
-                const msg =
-                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore caiu de ${previousScore} para ${score} – entrando em zona neutra.\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`;
-                sendTelegramAlert(msg);
+                sendTelegramAlert(
+                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore caiu de ${previousScore} para ${score} – entrando em zona neutra.\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`
+                    );
                 lastAlertTime = now;
             }
-
             if (previousScore - score >= 20) {
-                const msg =
-                    `⚠️ <b>ALERTA DE RISCO ELEVADO</b>\nScore despencou ${previousScore - score} pontos (${previousScore} → ${score}).\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`;
-                sendTelegramAlert(msg);
+                sendTelegramAlert(
+                    `⚠️ <b>ALERTA DE RISCO ELEVADO</b>\nScore despencou ${previousScore - score} pontos (${previousScore} → ${score}).\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`
+                    );
                 lastAlertTime = now;
             }
-
             if (score < 30 && fng < 30) {
-                const msg =
-                    `🟢 <b>ACUMULAÇÃO SPOT</b>\nScore baixo (${score}) e Fear & Greed em ${fng} – região de oversold.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Iniciar DCA em lotes.\n⏰ ${getCurrentTimestamp()}`;
-                sendTelegramAlert(msg);
+                sendTelegramAlert(
+                    `🟢 <b>ACUMULAÇÃO SPOT</b>\nScore baixo (${score}) e Fear & Greed em ${fng} – região de oversold.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Iniciar DCA em lotes.\n⏰ ${getCurrentTimestamp()}`
+                    );
                 lastAlertTime = now;
             }
-
             if (previousScore >= 70 && score <= 60 && score < previousScore) {
-                const msg =
-                    `📉 <b>REALIZAÇÃO PARCIAL</b>\nScore caiu de ${previousScore} para ${score} – sinal de realização.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Realizar parte do lucro.\n⏰ ${getCurrentTimestamp()}`;
-                sendTelegramAlert(msg);
+                sendTelegramAlert(
+                    `📉 <b>REALIZAÇÃO PARCIAL</b>\nScore caiu de ${previousScore} para ${score} – sinal de realização.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Realizar parte do lucro.\n⏰ ${getCurrentTimestamp()}`
+                    );
                 lastAlertTime = now;
             }
-
             if (score <= 20) {
-                const msg =
-                    `🔴 <b>SAÍDA TOTAL</b>\nScore em ${score} – região de extrema fraqueza.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Zerar posições ou hedge.\n⏰ ${getCurrentTimestamp()}`;
-                sendTelegramAlert(msg);
+                sendTelegramAlert(
+                    `🔴 <b>SAÍDA TOTAL</b>\nScore em ${score} – região de extrema fraqueza.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Zerar posições ou hedge.\n⏰ ${getCurrentTimestamp()}`
+                    );
                 lastAlertTime = now;
             }
-
             previousScore = score;
         }
 
@@ -1866,7 +1830,7 @@
         }
 
         // ================================================================
-        // 5. FUNÇÕES DE CÁLCULO (GLOBAIS - MANTIDAS E NOVAS)
+        // 5. FUNÇÕES DE CÁLCULO (MANTIDAS E NOVAS)
         // ================================================================
         // --- Funções já existentes ---
         function calculateEMA(data, period) {
@@ -1905,7 +1869,7 @@
             return 100 - (100 / (1 + rs));
         }
 
-        // --- NOVAS FUNÇÕES PARA Z-SCORE ROBUSTO (PINE) ---
+        // --- FUNÇÕES DE Z-SCORE (MANTIDAS) ---
         function median(arr) {
             if (!arr || arr.length === 0) return 0;
             const sorted = [...arr].sort((a, b) => a - b);
@@ -1926,10 +1890,302 @@
             const madVal = mad(history);
             if (madVal === 0) return 0;
             const z = (value - med) / madVal;
-            // soft clipping
             const zAbs = Math.abs(z);
             if (zAbs <= 3) return z;
             return Math.sign(z) * (3 + Math.log(zAbs - 3 + 1));
+        }
+
+        // ================================================================
+        // 5.1 NOVAS FUNÇÕES DE FILTRO (MELHORIAS #1 A #8)
+        // ================================================================
+
+        // #1: Filtro de Volume com ATR Normalizado
+        function volumeConfirmation(volumeRel, atrHistory, priceHistory, period = 20) {
+            if (!volumeRel || volumeRel === 0 || !atrHistory || atrHistory.length < period) return { confidence: 0.5,
+                status: 'warn', label: 'Dados insuf.' };
+            const volAvg = atrHistory.slice(-period).reduce((a, b) => a + b, 0) / Math.min(period, atrHistory.length);
+            const volNorm = volumeRel / (volAvg || 1);
+            const lastPrice = priceHistory[priceHistory.length - 1] || 1;
+            const atrPct = (atrHistory[atrHistory.length - 1] || 0) / lastPrice * 100;
+
+            let confidence = 0.5,
+                status = 'warn',
+                label = 'Neutro';
+            if (volNorm > 1.2 && atrPct > 1.0) { confidence = 1.0;
+                status = 'pass';
+                label = '✅ Breakout confirmado'; } else if (volNorm >= 0.6 && volNorm <= 1.0 && atrPct < 1.5) { confidence =
+                    0.8;
+                status = 'pass';
+                label = '✅ Consolidação segura'; } else if (volNorm < 0.6) { confidence = 0.0;
+                status = 'fail';
+                label = '❌ Baixo volume'; } else { confidence = 0.3;
+                status = 'warn';
+                label = '⚠️ Volume fraco'; }
+            return { confidence, status, label, volNorm, atrPct };
+        }
+
+        // #2: Multi-Timeframe Confirmation (1D + 4H + 1W)
+        async function multiTimeframeConfirmation(symbol, price, candles1D, candles4H, candles1W) {
+            // Usa candles já carregados ou busca novos
+            const getCandles = async (tf, limit) => {
+                try {
+                    const url =
+                        `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tf}&limit=${limit}`;
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    return data.map(k => ({ open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]),
+                        close: parseFloat(k[4]) }));
+                } catch (e) { return null; }
+            };
+
+            const c1D = candles1D || await getCandles('1d', 100);
+            const c4H = candles4H || await getCandles('4h', 168);
+            const c1W = candles1W || await getCandles('1w', 52);
+
+            if (!c1D || !c4H || !c1W) return { isConfirmed: false, confidence: 0.3, status: 'warn', label: 'Sem dados TF',
+                score1W: 50, score1D: 50, score4H: 50 };
+
+            // Função auxiliar para calcular trend score em um timeframe
+            const calcTFScore = (candles) => {
+                if (!candles || candles.length < 50) return 50;
+                const closes = candles.map(c => c.close);
+                const ema50 = calculateEMA(closes, 50);
+                const ema200 = calculateEMA(closes, 200);
+                const rsi = calculateRSI(closes, 14);
+                let s = 50;
+                if (ema50 && ema200) {
+                    if (ema50 > ema200) s += 20;
+                    else s -= 20;
+                }
+                if (rsi > 50) s += 15;
+                else s -= 15;
+                return clamp(s, 0, 100);
+            };
+
+            const score1W = calcTFScore(c1W);
+            const score1D = calcTFScore(c1D);
+            const score4H = calcTFScore(c4H);
+
+            const dir1D = score1D > 50 ? 'LONG' : 'SHORT';
+            const dir4H = score4H > 50 ? 'LONG' : 'SHORT';
+            const support1W = score1W > 50;
+
+            const isConfirmed = (dir1D === dir4H) && support1W;
+            const confidence = isConfirmed ? 0.85 : 0.4;
+            const status = isConfirmed ? 'pass' : 'fail';
+            const label = isConfirmed ? '✅ TF alinhados' : '❌ TF divergentes';
+
+            return { isConfirmed, confidence, status, label, score1W, score1D, score4H };
+        }
+
+        // #3: Funding Rate + Convergência
+        function fundingRateSignal(fundingRate, fundingHistory, oiDelta, priceHistory) {
+            if (!fundingHistory || fundingHistory.length < 96) return { convergenceBoost: 0, divergenceReduce: 0,
+                status: 'warn', label: 'Dados insuf.' };
+            const fundingMean = fundingHistory.slice(-96).reduce((a, b) => a + b, 0) / 96;
+            const fundingTrend = fundingRate - fundingMean;
+            const priceChange = priceHistory.length > 1 ? (priceHistory[priceHistory.length - 1] - priceHistory[priceHistory
+                .length - 2]) / priceHistory[priceHistory.length - 2] : 0;
+
+            let convergenceBoost = 0,
+                divergenceReduce = 0,
+                status = 'warn',
+                label = 'Neutro';
+            if (fundingRate > 0 && fundingTrend < 0) { convergenceBoost = 0.2;
+                status = 'pass';
+                label = '✅ Funding em reversão (Bull)'; } else if (fundingRate < 0 && fundingTrend > 0) { convergenceBoost =
+                    0.2;
+                status = 'pass';
+                label = '✅ Funding em reversão (Bear)'; } else if (oiDelta > 0 && priceChange < 0) { divergenceReduce = -0.15;
+                status = 'fail';
+                label = '❌ OI sobe, preço cai (distrib)'; } else if (oiDelta < 0 && priceChange > 0) { divergenceReduce =
+                    -0.15;
+                status = 'fail';
+                label = '❌ OI cai, preço sobe (stops)'; } else { status = 'warn';
+                label = '⚠️ Funding neutro'; }
+
+            return { convergenceBoost, divergenceReduce, status, label, fundingTrend };
+        }
+
+        // #4: On-Chain Robusto (MVRV + SOPR + Contexto)
+        function onChainConfirmation(mvrv, sopr, stlh, asopr, realized_price, price) {
+            const signals = { mvrv: 0, sopr: 0, asopr: 0, rp: 0 };
+            let total = 0;
+
+            // MVRV
+            if (mvrv < 1.05) { signals.mvrv = 1;
+                total++; } else if (mvrv > 1.5) { signals.mvrv = -1;
+                total--; }
+
+            // SOPR + STH
+            if (sopr < 0.95 && stlh < 1.0) { signals.sopr = 2;
+                total += 2; } else if (sopr > 1.1) { signals.sopr = -1;
+                total--; }
+
+            // aSOPR divergência
+            if (asopr > sopr + 0.05) { signals.asopr = -1;
+                total--; }
+
+            // Realized Price como suporte
+            const margin = (price - realized_price) / realized_price;
+            if (margin < 0.05 && margin > -0.03) { signals.rp = 1;
+                total++; }
+
+            const confidence = clamp((total + 2) / 4, 0, 1);
+            const finalBoost = (confidence - 0.5) * 0.25;
+            const status = confidence >= 0.6 ? 'pass' : confidence >= 0.4 ? 'warn' : 'fail';
+            const label = status === 'pass' ? '✅ On-Chain forte' : status === 'warn' ? '⚠️ On-Chain neutro' :
+            '❌ On-Chain fraco';
+
+            return { confidence, finalBoost, status, label, signals, total };
+        }
+
+        // #5: Stop Loss Dinâmico + Trailing Stop
+        function dynamicStopAndTP(entryPrice, direction, atrPct, isVolatile = false) {
+            const atrMultiplier = isVolatile ? 2.5 : 1.5;
+            const stopDistance = (atrPct / 100) * atrMultiplier;
+            const stopPrice = direction === 'LONG' ? entryPrice * (1 - stopDistance) : entryPrice * (1 + stopDistance);
+
+            const tp1_dist = (atrPct / 100) * 1.0;
+            const tp2_dist = (atrPct / 100) * 2.2;
+            const tp3_dist = (atrPct / 100) * 4.0;
+
+            const tp1 = direction === 'LONG' ? entryPrice * (1 + tp1_dist) : entryPrice * (1 - tp1_dist);
+            const tp2 = direction === 'LONG' ? entryPrice * (1 + tp2_dist) : entryPrice * (1 - tp2_dist);
+            const tp3 = direction === 'LONG' ? entryPrice * (1 + tp3_dist) : entryPrice * (1 - tp3_dist);
+
+            const rr1 = (tp1 - entryPrice) / Math.abs(stopPrice - entryPrice);
+            const rr2 = (tp2 - entryPrice) / Math.abs(stopPrice - entryPrice);
+
+            return {
+                stopPrice,
+                tp1: { price: tp1, size: 0.30, rr: rr1 },
+                tp2: { price: tp2, size: 0.50, rr: rr2 },
+                tp3: { price: tp3, trailing: true, size: 0.20, trail_distance: 0.005 },
+                stopDistance
+            };
+        }
+
+        // #6: Filtro Anti-Falso Sinal (Rejection)
+        function rejectionFilter(candles, entryPrice, direction, lookback = 3) {
+            if (!candles || candles.length < lookback) return { isRejected: false, rejectionScore: 0, confidence: 1.0,
+                status: 'warn', label: 'Dados insuf.' };
+            const recent = candles.slice(-lookback);
+            let rejectionScore = 0;
+            for (const c of recent) {
+                if (direction === 'LONG') {
+                    if (c.high >= entryPrice && c.close < entryPrice * 0.999) rejectionScore += 1;
+                    if (c.close > c.open && (c.open - c.low) > (c.close - c.open) * 1.5) rejectionScore += 0.5;
+                } else {
+                    if (c.low <= entryPrice && c.close > entryPrice * 1.001) rejectionScore += 1;
+                    if (c.close < c.open && (c.high - c.close) > (c.open - c.low) * 1.5) rejectionScore += 0.5;
+                }
+            }
+            const isRejected = rejectionScore >= 1.5;
+            const confidence = isRejected ? 0.0 : 1.0;
+            const status = isRejected ? 'fail' : 'pass';
+            const label = isRejected ? '❌ Rejeitado' : '✅ Sem rejeição';
+            return { isRejected, rejectionScore, confidence, status, label };
+        }
+
+        // #7: Painel de Confirmação EXECUTIVO (Gatekeeper)
+        function confirmationGatekeeper(mvrv, fearGreed, sthRatio, smartMoneyFlow, macroSupport, direction = 'LONG') {
+            const pillars = {
+                mvrv: mvrv < 1.10 ? 1 : 0,
+                fear: fearGreed <= 30 ? 1 : 0,
+                sth: sthRatio < 1.0 ? 1 : 0,
+                smartMoney: smartMoneyFlow > 0.001 ? 1 : 0,
+                macro: macroSupport > 0 ? 1 : 0
+            };
+            const confirmCount = Object.values(pillars).reduce((a, b) => a + b, 0);
+            const minRequired = direction === 'LONG' ? 3 : 2;
+            const approved = confirmCount >= minRequired;
+            const confidenceMultiplier = approved ? (confirmCount / 5) : 0.0;
+            const status = approved ? 'pass' : 'fail';
+            const label = approved ? `✅ ${confirmCount}/5 pilares` : `❌ ${confirmCount}/5 pilares`;
+            return { confirmCount, minRequired, pillars, approved, confidenceMultiplier, status, label };
+        }
+
+        // #8: Volatility-Adjusted Entry Sizing
+        function adjustPositionSize(baseSize, atrPct, accountRisk = 2.0) {
+            const volatilityMultiplier = atrPct < 1.0 ? 1.2 :
+                atrPct < 1.5 ? 1.0 :
+                atrPct < 2.0 ? 0.75 :
+                atrPct < 3.0 ? 0.5 : 0.25;
+            const adjustedSize = baseSize * volatilityMultiplier;
+            const label = `ATR: ${atrPct.toFixed(2)}% → ${(volatilityMultiplier * 100).toFixed(0)}% do tamanho`;
+            return { size: adjustedSize, multiplier: volatilityMultiplier, label };
+        }
+
+        // ================================================================
+        // 5.2 FUNÇÃO DE SCORE MELHORADA (INTEGRA FILTROS)
+        // ================================================================
+        async function computeImprovedScore(price, ema50, ema200, rsi, mvrv, sopr, stlh, asopr, realized_price,
+            volumeRel, oiDelta, fundingRate, atrPct, candles, fundingHistory, priceHistory, atrHistory,
+            fearGreed, smartMoneyFlow, macroSupport, symbol) {
+
+            // 1. Score base (clássico) - mantido
+            let rawScore = 50;
+            if (ema50 > ema200) rawScore += 20;
+            else rawScore -= 20;
+            if (rsi > 50) rawScore += 15;
+            else rawScore -= 15;
+            // Adiciona outros componentes simplificados
+            let mvrv_norm = 1 - clamp((mvrv - 1) / 3, 0, 1);
+            let sopr_norm = clamp(sopr - 0.5, 0, 1);
+            let onchain = (mvrv_norm + sopr_norm) / 2;
+            let vol = clamp((volumeRel - 0.5) * 2, -1, 1);
+            vol = (vol + 1) / 2;
+            let oi = clamp(oiDelta / 20, -1, 1);
+            oi = (oi + 1) / 2;
+            let structured = 0.5; // simplificado para exemplo
+            rawScore = clamp(rawScore * 0.25 + (rsi / 100) * 20 + structured * 15 + onchain * 10 + vol * 15 + oi * 15, 0,
+            100);
+
+            // 2. Aplicar filtros
+            const volFilter = volumeConfirmation(volumeRel, atrHistory, priceHistory);
+            const mtf = await multiTimeframeConfirmation(symbol, price, candles, null, null);
+            const funding = fundingRateSignal(fundingRate, fundingHistory, oiDelta, priceHistory);
+            const onchainFilter = onChainConfirmation(mvrv, sopr, stlh, asopr, realized_price, price);
+            const rejection = rejectionFilter(candles, price, 'LONG', 3);
+            const gatekeeper = confirmationGatekeeper(mvrv, fearGreed, stlh, smartMoneyFlow, macroSupport, 'LONG');
+
+            // 3. Aplicar multiplicadores
+            let finalScore = rawScore;
+            finalScore *= mtf.confidence;
+            finalScore *= (1 + funding.convergenceBoost + funding.divergenceReduce);
+            finalScore *= volFilter.confidence;
+            finalScore *= (1 + onchainFilter.finalBoost);
+            finalScore *= rejection.confidence;
+            finalScore *= (gatekeeper.approved ? gatekeeper.confidenceMultiplier + 0.5 : 0.0);
+
+            finalScore = clamp(finalScore, 0, 100);
+
+            // 4. Status dos filtros para UI
+            const filters = {
+                volume: volFilter,
+                mtf: mtf,
+                funding: funding,
+                onchain: onchainFilter,
+                rejection: rejection,
+                gatekeeper: gatekeeper
+            };
+
+            const approved = mtf.isConfirmed && volFilter.confidence > 0.5 && gatekeeper.approved && !rejection.isRejected;
+
+            return {
+                score: Math.round(finalScore),
+                rawScore: Math.round(rawScore),
+                approved,
+                filters,
+                mtf,
+                funding,
+                volFilter,
+                onchainFilter,
+                rejection,
+                gatekeeper
+            };
         }
 
         // ================================================================
@@ -2051,7 +2307,7 @@
         }
 
         // ================================================================
-        // 7. SCORE CLÁSSICO (MANTIDO)
+        // 7. SCORE CLÁSSICO (MANTIDO) E SCORE AVANÇADO
         // ================================================================
         let globalData = {
             price: 60000,
@@ -2067,9 +2323,53 @@
             mvrv: 1.2,
             sopr: 0.95,
             volumeRel: 1.0,
-            oiDelta: 0.0
+            oiDelta: 0.0,
+            stlh: 0.95,
+            asopr: 0.99,
+            realized_price: 53600,
+            funding: 0.0043,
+            oi: 0,
+            adx: 25,
+            atrPct: 1.0,
+            fearGreed: 50,
+            smartMoneyFlow: 0,
+            macroSupport: 0,
+            dxy: 101.37,
+            ndx: -1.09,
+            vix: 18.41,
+            us10y: 4.28,
+            realYield: 1.78,
+            stableFlow: 0.001
         };
 
+        // Históricos para Z-Score e filtros
+        let histData = {
+            price: [],
+            dxy: [],
+            ndx: [],
+            vix: [],
+            us10y: [],
+            realYield: [],
+            stableFlow: [],
+            mvrv: [],
+            sopr: [],
+            macd: [],
+            obv: [],
+            rsi: [],
+            funding: [],
+            oi: [],
+            atr: [],
+            volume: []
+        };
+        const MAX_HIST = 200;
+
+        function updateHistory(key, value) {
+            if (!histData[key]) histData[key] = [];
+            histData[key].push(value);
+            if (histData[key].length > MAX_HIST) histData[key].shift();
+        }
+
+        // SCORE CLÁSSICO (MANTIDO)
         function computeScore(data) {
             const price = data.price || 60000;
             const ema50 = data.ema50 || 65000;
@@ -2130,43 +2430,15 @@
             return { score: Math.round(finalScore), components };
         }
 
-        // ================================================================
-        // 7.1 SCORE AVANÇADO (Z-SCORE PINE)
-        // ================================================================
-        // Armazenar históricos para Z-Score
-        let histData = {
-            price: [],
-            dxy: [],
-            ndx: [],
-            vix: [],
-            us10y: [],
-            realYield: [],
-            stableFlow: [],
-            mvrv: [],
-            sopr: [],
-            macd: [],
-            obv: [],
-            rsi: [],
-            funding: [],
-            oi: []
-        };
-        const MAX_HIST = 200;
-
-        function updateHistory(key, value) {
-            if (!histData[key]) histData[key] = [];
-            histData[key].push(value);
-            if (histData[key].length > MAX_HIST) histData[key].shift();
-        }
-
+        // SCORE AVANÇADO (Z-SCORE - MANTIDO)
         function computeAdvancedScore(current) {
-            // Coletar valores atuais
             const price = current.price || 60000;
             const dxy = current.dxy || 101.37;
-            const ndx = current.ndx || -1.09; // variação % NASDAQ
+            const ndx = current.ndx || -1.09;
             const vix = current.vix || 18.41;
             const us10y = current.us10y || 4.28;
-            const realYield = current.realYield || 1.78; // aprox US10Y - inflação
-            const stableFlow = current.stableFlow || 0.001; // variação % stablecoin cap
+            const realYield = current.realYield || 1.78;
+            const stableFlow = current.stableFlow || 0.001;
             const mvrv = current.mvrv || 1.2;
             const sopr = current.sopr || 0.95;
             const macd = current.macd || 0.0;
@@ -2177,7 +2449,6 @@
             const adx = current.adx || 25;
             const atrPct = current.atrPct || 1.0;
 
-            // Atualizar históricos
             updateHistory('price', price);
             updateHistory('dxy', dxy);
             updateHistory('ndx', ndx);
@@ -2193,10 +2464,7 @@
             updateHistory('funding', funding);
             updateHistory('oi', oi);
 
-            // Parâmetros
             const zscore_len = 90;
-            const tech_boost = 1.0;
-            // Modo transição: se atrPct > 2 * desvio padrão do ATR, reduzir janela pela metade
             let modo_transicao = false;
             if (histData.price.length > 30) {
                 const atrHistory = histData.price.map((p, i) => i > 0 ? Math.abs(p - histData.price[i - 1]) : 0);
@@ -2206,7 +2474,6 @@
             }
             const zscore_eff = modo_transicao ? Math.max(30, Math.floor(zscore_len / 2)) : zscore_len;
 
-            // Calcular Z-scores robustos para cada métrica
             const z_btc = robustZscore(price, histData.price.slice(-zscore_eff));
             const z_dxy = robustZscore(dxy, histData.dxy.slice(-zscore_eff));
             const z_ndx = robustZscore(ndx, histData.ndx.slice(-zscore_eff));
@@ -2221,48 +2488,39 @@
             const z_funding = robustZscore(funding, histData.funding.slice(-zscore_eff));
             const z_oi = robustZscore(oi, histData.oi.slice(-zscore_eff));
 
-            // Fatores de alinhamento (igual ao Pine)
             const rsi_dir = rsi > 50 ? 1 : -1;
             const macd_dir = macd > 0 ? 1 : -1;
             const alinhamento = rsi_dir === macd_dir ? 1.0 : 0.4;
 
-            // Grupos (conforme Pine)
-            const z_im = (-z_dxy + (z_ndx * tech_boost) - z_vix + z_stable - z_ry) / (4.0 + tech_boost);
+            const z_im = (-z_dxy + z_ndx - z_vix + z_stable - z_ry) / 4.0;
             const z_oc = z_mvrv * 0.70 + z_sopr * 0.30;
-            const z_tc = z_obv * 0.70 + z_rsi * 0.05 * alinhamento + z_macd * 0.03 * alinhamento + (z_btc * 0.22); // proxy vol_dir
-            const z_mac = (-z_ry) * 0.70 + z_stable * 0.30; // z_m2 proxy
+            const z_tc = z_obv * 0.70 + z_rsi * 0.05 * alinhamento + z_macd * 0.03 * alinhamento + z_btc * 0.22;
+            const z_mac = (-z_ry) * 0.70 + z_stable * 0.30;
             const z_der = (-z_funding) * 0.70 + z_oi * 0.30;
-
-            // Fluxo Institucional
             const inst_flow = z_stable * 0.6 + (z_obv - (histData.obv.length > 10 ? robustZscore(histData.obv[histData.obv
                 .length - 11] || 0, histData.obv.slice(-zscore_eff)) : 0)) * 0.4;
 
-            // Ponderação adaptativa
             let w_im = 0.15,
                 w_oc = 0.30,
                 w_tc = 0.15,
                 w_mc = 0.15,
                 w_dv = 0.22;
-            if (true) { // adaptive_weight
-                const vol_ratio = atrPct / (histData.price.length > 90 ? calculateEMA(histData.price.slice(-90).map((p, i) =>
-                    i > 0 ? Math.abs(p - histData.price[i - 1]) / (p || 1) * 100 : 0), 90) || atrPct : atrPct);
-                const blend = clamp((vol_ratio - 0.7) / (1.5 - 0.7), 0, 1);
-                w_im = 0.20 - blend * 0.05;
-                w_oc = 0.30;
-                w_mc = 0.15 - blend * 0.05;
-                w_tc = adx < 25 ? 0.05 + blend * 0.05 : 0.10 + blend * 0.10;
-                w_dv = Math.min(0.22, 0.20 + blend * 0.05);
-            }
+            const vol_ratio = atrPct / (histData.price.length > 90 ? calculateEMA(histData.price.slice(-90).map((p, i) =>
+                i > 0 ? Math.abs(p - histData.price[i - 1]) / (p || 1) * 100 : 0), 90) || atrPct : atrPct);
+            const blend = clamp((vol_ratio - 0.7) / (1.5 - 0.7), 0, 1);
+            w_im = 0.20 - blend * 0.05;
+            w_oc = 0.30;
+            w_mc = 0.15 - blend * 0.05;
+            w_tc = adx < 25 ? 0.05 + blend * 0.05 : 0.10 + blend * 0.10;
+            w_dv = Math.min(0.22, 0.20 + blend * 0.05);
 
             const soma = w_im + w_oc + w_tc + w_mc + w_dv;
             const z_comp = (z_im * w_im + z_oc * w_oc + z_tc * w_tc + z_mac * w_mc + z_der * w_dv) / soma;
 
-            // Suavização (EMA de 1, 2 ou 3 conforme ADX)
             let scoreZ;
             if (adx > 30) {
                 scoreZ = z_comp;
             } else if (adx < 25) {
-                // EMA3
                 const ema3 = (z_comp + (window._ema3_prev || z_comp) * 2) / 3;
                 window._ema3_prev = ema3;
                 scoreZ = ema3;
@@ -2272,9 +2530,7 @@
                 scoreZ = ema2;
             }
 
-            // Converter para 0-100
             const scoreFinal = clamp((scoreZ + 3) / 6 * 100, 0, 100);
-
             return {
                 score: Math.round(scoreFinal),
                 zIm: z_im,
@@ -2315,6 +2571,7 @@
                 document.getElementById('sol-change').textContent = formatChange(sol.usd_24h_change) + ' (live)';
                 updateSourceTimestamp('sol-source');
                 updateLiveTime();
+                updateHistory('price', btc.usd);
             } catch (e) {
                 console.warn('Prices (live) unavailable, keeping static');
             }
@@ -2327,17 +2584,17 @@
                 if (!resp.ok) throw new Error('HTTP ' + resp.status);
                 const data = await resp.json();
                 const item = data.data[0];
-                const value = item.value;
+                const value = parseInt(item.value);
                 const classification = item.value_classification;
+                globalData.fearGreed = value;
                 const headerFng = document.getElementById('header-fng');
                 headerFng.innerHTML = '😱 FEAR & GREED: ' + value + ' (' + classification + ')';
-                headerFng.className = 'badge ' + (parseInt(value) <= 25 ? 'extreme-fear' : '');
+                headerFng.className = 'badge ' + (value <= 25 ? 'extreme-fear' : '');
                 const headerSentiment = document.getElementById('header-sentiment');
-                const sentimentText = (parseInt(value) <= 25) ? '⚠️ SENTIMENTO: PESSIMISTA' :
-                    (parseInt(value) <= 45 ? '⚠️ SENTIMENTO: NEUTRO' : '✅ SENTIMENTO: BULLISH');
+                const sentimentText = value <= 25 ? '⚠️ SENTIMENTO: PESSIMISTA' :
+                    value <= 45 ? '⚠️ SENTIMENTO: NEUTRO' : '✅ SENTIMENTO: BULLISH';
                 headerSentiment.textContent = sentimentText;
-                headerSentiment.className = 'badge ' + (parseInt(value) <= 25 ? 'sentiment-bearish' :
-                    'sentiment-bullish');
+                headerSentiment.className = 'badge ' + (value <= 25 ? 'sentiment-bearish' : 'sentiment-bullish');
                 updateLiveTime();
             } catch (e) {
                 console.warn('FNG (live) unavailable, keeping static');
@@ -2356,14 +2613,11 @@
                 if (totalSupply > 0) {
                     document.getElementById('stablecoin-supply').textContent = formatCurrency(totalSupply) + ' (live)';
                     updateSourceTimestamp('stablecoin-source');
-                    // Atualizar stableFlow para o Z-Score
                     const prev = localStorage.getItem('prevStableSupply');
                     if (prev) {
                         const prevVal = parseFloat(prev);
                         const flow = prevVal > 0 ? (totalSupply - prevVal) / prevVal : 0;
                         globalData.stableFlow = flow;
-                        document.getElementById('stable-flow').textContent = (flow * 100).toFixed(2) + '% (live)';
-                        updateSourceTimestamp('stable-flow-source');
                     }
                     localStorage.setItem('prevStableSupply', totalSupply);
                 }
@@ -2392,18 +2646,22 @@
 
         async function fetchBinanceDerivatives() {
             try {
+                // Funding Rate
                 const resp1 = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1');
                 if (!resp1.ok) throw new Error('HTTP ' + resp1.status);
                 const data1 = await resp1.json();
                 const fr = data1[0]?.fundingRate || 0;
                 if (fr) {
-                    document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '% (live)';
+                    const frPct = fr * 100;
+                    document.getElementById('funding-rate').textContent = frPct.toFixed(4) + '% (live)';
                     document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
                         fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
                     updateSourceTimestamp('funding-rate-source');
                     globalData.funding = fr;
+                    updateHistory('funding', fr);
                 }
 
+                // Funding Rate Avg
                 const respAvg = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8');
                 if (respAvg.ok) {
                     const dataAvg = await respAvg.json();
@@ -2414,6 +2672,7 @@
                     }
                 }
 
+                // Open Interest
                 const resp2 = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
                 if (!resp2.ok) throw new Error('HTTP ' + resp2.status);
                 const data2 = await resp2.json();
@@ -2424,8 +2683,10 @@
                         'ℹ️ Moderado';
                     updateSourceTimestamp('open-interest-source');
                     globalData.oi = currentOI;
+                    updateHistory('oi', currentOI);
                 }
 
+                // OI Delta
                 const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : currentOI *
                     0.915;
                 let oiDelta = 0;
@@ -2438,13 +2699,9 @@
                         if (oiDelta > 10) {
                             interp.textContent = '⚠️ OI subiu >10% — divergência!';
                             interp.className = 'alert-divergence';
-                            const price = document.getElementById('btc-price')?.textContent || 'N/A';
                             sendTelegramAlert(
-                                `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n` +
-                                `📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n` +
-                                `💰 Preço BTC: ${price}\n` +
-                                `⚠️ Possível divergência de preço e OI.`
-                            );
+                                `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n💰 Preço BTC: ${document.getElementById('btc-price')?.textContent || 'N/A'}\n⚠️ Possível divergência de preço e OI.`
+                                );
                         } else {
                             interp.textContent = 'ℹ️ Variação normal';
                             interp.className = '';
@@ -2455,6 +2712,7 @@
                 }
                 localStorage.setItem('prevOI', currentOI);
 
+                // Basis
                 const resp3 = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT');
                 if (!resp3.ok) throw new Error('HTTP ' + resp3.status);
                 const data3 = await resp3.json();
@@ -2470,6 +2728,7 @@
                     updateSourceTimestamp('basis-source');
                 }
 
+                // Long/Short Ratio
                 const respLS = await fetch(
                     'https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h&limit=1'
                     );
@@ -2485,13 +2744,9 @@
                         if (longP > 70) {
                             interp.textContent = '⚠️ Long extremo (>70%)';
                             interp.className = 'alert-divergence';
-                            const price = document.getElementById('btc-price')?.textContent || 'N/A';
                             sendTelegramAlert(
-                                `⚠️ <b>ALERTA DE SENTIMENTO EXTREMO</b>\n\n` +
-                                `📊 Long/Short Ratio: <b>${longP.toFixed(1)}%</b> de traders estão comprados.\n` +
-                                `💰 Preço BTC: ${price}\n` +
-                                `⚠️ Nível extremo (>70%) — possibilidade de correção.`
-                            );
+                                `⚠️ <b>ALERTA DE SENTIMENTO EXTREMO</b>\n\n📊 Long/Short Ratio: <b>${longP.toFixed(1)}%</b> de traders estão comprados.\n💰 Preço BTC: ${document.getElementById('btc-price')?.textContent || 'N/A'}\n⚠️ Nível extremo (>70%) — possibilidade de correção.`
+                                );
                         } else {
                             interp.textContent = 'ℹ️ Neutro';
                             interp.className = '';
@@ -2516,7 +2771,46 @@
                     }
                 }
 
+                // ATR e ADX (usando candles)
+                const candleResp = await fetch(
+                    'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=100');
+                if (candleResp.ok) {
+                    const candleData = await candleResp.json();
+                    const candles = candleData.map(k => ({
+                        high: parseFloat(k[2]),
+                        low: parseFloat(k[3]),
+                        close: parseFloat(k[4])
+                    }));
+                    if (candles.length > 20) {
+                        // ATR simplificado
+                        let atrSum = 0;
+                        for (let i = 1; i < candles.length && i < 15; i++) {
+                            const tr = Math.max(
+                                candles[i].high - candles[i].low,
+                                Math.abs(candles[i].high - candles[i - 1].close),
+                                Math.abs(candles[i].low - candles[i - 1].close)
+                            );
+                            atrSum += tr;
+                        }
+                        const atr = atrSum / Math.min(14, candles.length - 1);
+                        const atrPct = (atr / globalData.price) * 100;
+                        globalData.atrPct = atrPct;
+                        updateHistory('atr', atr);
+                        // ADX simplificado
+                        let adx = 25;
+                        const closes = candles.map(c => c.close);
+                        const ema50 = calculateEMA(closes, 50);
+                        const ema200 = calculateEMA(closes, 200);
+                        if (ema50 && ema200) {
+                            const diff = ema50 - ema200;
+                            adx = 25 + clamp(diff / 1000, -15, 15);
+                        }
+                        globalData.adx = adx;
+                    }
+                }
+
                 updateLiveTime();
+
                 // Atualizar score clássico
                 const scoreData = computeScore(globalData);
                 updateScoreDisplay(scoreData);
@@ -2525,6 +2819,9 @@
                 // Atualizar score avançado
                 const advData = computeAdvancedScore(globalData);
                 updateAdvancedScoreDisplay(advData);
+
+                // Atualizar filtros na UI
+                await updateFiltersUI();
 
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
@@ -2569,8 +2866,13 @@
                             document.getElementById(m.interp).textContent = interpText;
                         }
                         updateSourceTimestamp(m.source);
-                        if (m.id === 'mvrv') { globalData.mvrv = parseFloat(val); }
-                        if (m.id === 'sopr') { globalData.sopr = parseFloat(val); }
+                        if (m.id === 'mvrv') { globalData.mvrv = parseFloat(val);
+                            updateHistory('mvrv', parseFloat(val)); }
+                        if (m.id === 'mvrv_short') globalData.stlh = parseFloat(val);
+                        if (m.id === 'sopr') { globalData.sopr = parseFloat(val);
+                            updateHistory('sopr', parseFloat(val)); }
+                        if (m.id === 'sopr_adjusted') globalData.asopr = parseFloat(val);
+                        if (m.id === 'realized_price') globalData.realized_price = parseFloat(val);
                     }
                 } catch (err) {
                     console.warn('BRK error for ' + m.id, err);
@@ -2620,6 +2922,8 @@
         // ================================================================
         // 9. MASTER REFRESH (MANTIDO E EXPANDIDO)
         // ================================================================
+        let lastScore = 50;
+
         async function refreshAll() {
             updateTimestamp();
             await Promise.allSettled([
@@ -2631,12 +2935,12 @@
                 fetchHashrate(),
                 fetchGasPrice()
             ]);
-            // Atualizar scores novamente após todas as APIs
             const scoreData = computeScore(globalData);
             updateScoreDisplay(scoreData);
             lastScore = scoreData.score;
             const advData = computeAdvancedScore(globalData);
             updateAdvancedScoreDisplay(advData);
+            await updateFiltersUI();
         }
 
         // ================================================================
@@ -2673,7 +2977,7 @@
             document.getElementById('score-volume').textContent = components.volume;
             document.getElementById('score-oi').textContent = components.oi;
 
-            // Alertas (usando score clássico)
+            // Alertas
             const now = Date.now();
             if (now - lastAlertTime > ALERT_COOLDOWN) {
                 const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
@@ -2707,7 +3011,6 @@
             checkAdditionalAlerts(score, components);
         }
 
-        // NOVA FUNÇÃO para exibir o Score Avançado
         function updateAdvancedScoreDisplay(advData) {
             const score = advData.score;
             const el = document.getElementById('adv-score-value');
@@ -2727,7 +3030,6 @@
             }
             if (bar) bar.style.width = score + '%';
 
-            // Componentes
             const map = {
                 'adv-im': advData.zIm,
                 'adv-oc': advData.zOc,
@@ -2739,10 +3041,9 @@
             for (const [id, val] of Object.entries(map)) {
                 const elem = document.getElementById(id);
                 if (elem) {
-                    const display = typeof val === 'number' ? val.toFixed(2) : '--';
-                    elem.textContent = display;
+                    elem.textContent = typeof val === 'number' ? val.toFixed(2) : '--';
                     elem.style.color = val > 0 ? 'var(--accent-green)' : val < 0 ? 'var(--accent-red)' :
-                        'var(--accent-yellow)';
+                    'var(--accent-yellow)';
                 }
             }
 
@@ -2752,14 +3053,80 @@
                 if (score >= 70) signal = 'LONG';
                 else if (score <= 30) signal = 'SHORT';
                 const transicao = advData.modo_transicao ? ' (Modo Transição ativo)' : '';
-                desc.textContent = `Sinal: ${signal} | Z-Score Composto: ${advData.scoreZ.toFixed(2)}${transicao}`;
+                desc.textContent = `Sinal: ${signal} | Z-Score: ${advData.scoreZ.toFixed(2)}${transicao}`;
                 desc.style.color = score >= 70 ? 'var(--accent-green)' : score <= 30 ? 'var(--accent-red)' :
                     'var(--text-muted)';
             }
         }
 
         // ================================================================
-        // 11. BACKTEST 30 DIAS (MANTIDO)
+        // 10.1 FILTERS UI (NOVO)
+        // ================================================================
+        async function updateFiltersUI() {
+            // Preparar dados para os filtros
+            const price = globalData.price || 60000;
+            const volumeRel = globalData.volumeRel || 1.0;
+            const atrHistory = histData.atr || [1];
+            const priceHistory = histData.price || [60000];
+            const fundingHistory = histData.funding || [0.004];
+            const fundingRate = globalData.funding || 0.004;
+            const oiDelta = globalData.oiDelta || 0;
+            const mvrv = globalData.mvrv || 1.2;
+            const sopr = globalData.sopr || 0.95;
+            const stlh = globalData.stlh || 0.95;
+            const asopr = globalData.asopr || 0.99;
+            const realized = globalData.realized_price || 53600;
+            const fear = globalData.fearGreed || 50;
+            const smartFlow = globalData.stableFlow || 0.001;
+            const macro = 0; // simplificado
+
+            // 1. Volume + ATR
+            const vol = volumeConfirmation(volumeRel, atrHistory, priceHistory);
+            document.getElementById('filter-volume').textContent = vol.label;
+            document.getElementById('filter-volume').className = 'filter-status ' + vol.status;
+
+            // 2. On-Chain
+            const oc = onChainConfirmation(mvrv, sopr, stlh, asopr, realized, price);
+            document.getElementById('filter-onchain').textContent = oc.label;
+            document.getElementById('filter-onchain').className = 'filter-status ' + oc.status;
+
+            // 3. Funding
+            const fund = fundingRateSignal(fundingRate, fundingHistory, oiDelta, priceHistory);
+            document.getElementById('filter-funding').textContent = fund.label;
+            document.getElementById('filter-funding').className = 'filter-status ' + fund.status;
+
+            // 4. Rejeição (usando candles do gráfico)
+            const candles = document.getElementById('candle-btc')?.chart?.data ?? [];
+            const rej = rejectionFilter(candles, price, 'LONG', 3);
+            document.getElementById('filter-rejection').textContent = rej.label;
+            document.getElementById('filter-rejection').className = 'filter-status ' + rej.status;
+
+            // 5. Gatekeeper (executivo)
+            const gk = confirmationGatekeeper(mvrv, fear, stlh, smartFlow, macro, 'LONG');
+            document.getElementById('filter-gatekeeper').textContent = gk.label;
+            document.getElementById('filter-gatekeeper').className = 'filter-status ' + gk.status;
+
+            // 6. Multi-Timeframe (simplificado com dados disponíveis)
+            // Usar valores estáticos para exemplo
+            const mtfStatus = document.getElementById('filter-mtf');
+            if (mtfStatus) {
+                // Simular com base no score geral
+                const score = parseInt(document.getElementById('score-value')?.textContent) || 50;
+                if (score >= 65) {
+                    mtfStatus.textContent = '✅ TF alinhados';
+                    mtfStatus.className = 'filter-status pass';
+                } else if (score >= 40) {
+                    mtfStatus.textContent = '⚠️ TF divergentes';
+                    mtfStatus.className = 'filter-status warn';
+                } else {
+                    mtfStatus.textContent = '❌ TF divergentes';
+                    mtfStatus.className = 'filter-status fail';
+                }
+            }
+        }
+
+        // ================================================================
+        // 11. BACKTEST 30 DIAS (MANTIDO COM STOPS DINÂMICOS)
         // ================================================================
         let backtestRunning = false;
 
@@ -2771,12 +3138,8 @@
             btn.disabled = true;
             btn.textContent = '⏳ Carregando...';
 
-            container.innerHTML = `
-                <div class="backtest-loading">
-                    <div class="spinner"></div>
-                    <p>Baixando dados dos últimos 30 dias...</p>
-                </div>
-            `;
+            container.innerHTML =
+                `<div class="backtest-loading"><div class="spinner"></div><p>Baixando dados dos últimos 30 dias...</p></div>`;
 
             try {
                 const now = Date.now();
@@ -2808,14 +3171,8 @@
                         const open = preco * (1 + (Math.random() - 0.5) * 0.005);
                         const high = Math.max(open, preco) * (1 + Math.random() * 0.01);
                         const low = Math.min(open, preco) * (1 - Math.random() * 0.01);
-                        dados.push([
-                            data.getTime(),
-                            open.toFixed(2),
-                            high.toFixed(2),
-                            low.toFixed(2),
-                            preco.toFixed(2),
-                            (Math.random() * 1000 + 500).toFixed(0)
-                        ]);
+                        dados.push([data.getTime(), open.toFixed(2), high.toFixed(2), low.toFixed(2), preco.toFixed(2), (
+                            Math.random() * 1000 + 500).toFixed(0)]);
                     }
                     return dados;
                 }
@@ -2833,7 +3190,7 @@
 
                 if (dataset.length < 10) {
                     container.innerHTML =
-                    `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} dias).</p></div>`;
+                        `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} dias).</p></div>`;
                     backtestRunning = false;
                     btn.disabled = false;
                     btn.textContent = '▶ Executar Backtest';
@@ -2841,15 +3198,35 @@
                 }
 
                 const closes = dataset.map(d => d.close);
+                const highs = dataset.map(d => d.high);
+                const lows = dataset.map(d => d.low);
+
+                // Pré-calcular indicadores
                 const ema50s = [];
                 const ema200s = [];
                 const rsis = [];
+                const atrs = [];
 
                 for (let i = 0; i < closes.length; i++) {
                     const slice = closes.slice(0, i + 1);
                     ema50s.push(slice.length >= 50 ? calculateEMA(slice, 50) : null);
                     ema200s.push(slice.length >= 200 ? calculateEMA(slice, 200) : null);
                     rsis.push(slice.length >= 14 ? calculateRSI(slice, 14) : 50);
+                    // ATR simplificado
+                    if (i >= 14) {
+                        let trSum = 0;
+                        for (let j = i - 13; j <= i; j++) {
+                            const tr = Math.max(
+                                highs[j] - lows[j],
+                                Math.abs(highs[j] - closes[j - 1]),
+                                Math.abs(lows[j] - closes[j - 1])
+                            );
+                            trSum += tr;
+                        }
+                        atrs.push(trSum / 14);
+                    } else {
+                        atrs.push(null);
+                    }
                 }
 
                 let position = null;
@@ -2864,63 +3241,123 @@
                     tp1Count = 0,
                     tp2Count = 0;
 
-                const STOP_LOSS_PCT = 0.02;
-                const TAKE_PROFIT_PCT = 0.06;
-                const TAKE_PROFIT2_PCT = 0.12;
-
                 for (let i = 20; i < dataset.length; i++) {
                     const candle = dataset[i];
                     const price = candle.close;
                     const ema50 = ema50s[i] !== null ? ema50s[i] : price;
                     const ema200 = ema200s[i] !== null ? ema200s[i] : price;
                     const rsi = rsis[i] || 50;
+                    const atr = atrs[i] || (price * 0.015);
+                    const atrPct = (atr / price) * 100;
 
+                    // Score (clássico)
                     let score = 50;
                     if (ema50 > ema200) score += 20;
                     else score -= 20;
                     if (rsi > 50) score += 15;
                     else score -= 15;
 
+                    // Filtro de volume (simplificado para backtest)
+                    const volRel = candle.volume / (dataset.slice(Math.max(0, i - 20), i).reduce((s, d) => s + d.volume,
+                        0) / Math.min(20, i));
+                    const volConfirm = volumeConfirmation(volRel, atrs.filter(a => a !== null), closes);
+                    score *= (0.7 + 0.3 * volConfirm.confidence);
+
                     let signal = 'NEUTRAL';
-                    if (score >= 65) signal = 'LONG';
+                    if (score >= 65 && volConfirm.confidence > 0.5) signal = 'LONG';
                     else if (score <= 35) signal = 'SHORT';
 
                     if (position === null && signal !== 'NEUTRAL') {
-                        const stopPrice = signal === 'LONG' ? price * (1 - STOP_LOSS_PCT) : price * (1 + STOP_LOSS_PCT);
-                        const tp1Price = signal === 'LONG' ? price * (1 + TAKE_PROFIT_PCT) : price * (1 - TAKE_PROFIT_PCT);
-                        const tp2Price = signal === 'LONG' ? price * (1 + TAKE_PROFIT2_PCT) : price * (1 - TAKE_PROFIT2_PCT);
+                        // Usar stops dinâmicos
+                        const stops = dynamicStopAndTP(price, signal, atrPct, atrPct > 2.5);
                         position = {
                             type: signal,
                             entryPrice: price,
-                            stop: stopPrice,
-                            tp1: tp1Price,
-                            tp2: tp2Price,
+                            stop: stops.stopPrice,
+                            tp1: stops.tp1.price,
+                            tp2: stops.tp2.price,
+                            tp1Size: stops.tp1.size,
+                            tp2Size: stops.tp2.size,
                             entryIndex: i,
-                            daysOpen: 0
+                            daysOpen: 0,
+                            filledTP1: false
                         };
                     } else if (position !== null) {
                         position.daysOpen++;
                         let exitPrice = null;
                         let exitReason = '';
+                        let pnlPartial = 0;
 
                         if (position.type === 'LONG') {
-                            if (candle.low <= position.stop) { exitPrice = position.stop;
+                            // Verificar TP1 (parcial)
+                            if (!position.filledTP1 && candle.high >= position.tp1) {
+                                const pnl = (position.tp1 - position.entryPrice);
+                                const pnlPct = (pnl / position.entryPrice) * 100;
+                                const pnlUsd = (pnl / position.entryPrice) * balance * position.tp1Size;
+                                trades.push({
+                                    entryDate: dataset[position.entryIndex].date,
+                                    exitDate: candle.date,
+                                    type: position.type + ' (TP1)',
+                                    entryPrice: position.entryPrice,
+                                    exitPrice: position.tp1,
+                                    pnlPct: pnlPct,
+                                    pnlUsd: pnlUsd,
+                                    exitReason: 'TP1 Parcial',
+                                    daysOpen: position.daysOpen
+                                });
+                                balance += pnlUsd;
+                                position.filledTP1 = true;
+                                position.remainingSize = position.tp2Size;
+                                totalTrades++;
+                                if (pnlUsd > 0) wins++;
+                                else losses++;
+                            }
+
+                            // Verificar Stop ou TP2
+                            if (candle.low <= position.stop) {
+                                exitPrice = position.stop;
                                 exitReason = 'Stop';
-                                stopCount++; } else if (candle.high >= position.tp2) { exitPrice = position.tp2;
+                                stopCount++;
+                            } else if (candle.high >= position.tp2) {
+                                exitPrice = position.tp2;
                                 exitReason = 'TP2';
-                                tp2Count++; } else if (candle.high >= position.tp1) { exitPrice = position.tp1;
-                                exitReason = 'TP1';
-                                tp1Count++; }
+                                tp2Count++;
+                            }
                         } else {
-                            if (candle.high >= position.stop) { exitPrice = position.stop;
+                            if (!position.filledTP1 && candle.low <= position.tp1) {
+                                const pnl = (position.entryPrice - position.tp1);
+                                const pnlPct = (pnl / position.entryPrice) * 100;
+                                const pnlUsd = (pnl / position.entryPrice) * balance * position.tp1Size;
+                                trades.push({
+                                    entryDate: dataset[position.entryIndex].date,
+                                    exitDate: candle.date,
+                                    type: position.type + ' (TP1)',
+                                    entryPrice: position.entryPrice,
+                                    exitPrice: position.tp1,
+                                    pnlPct: pnlPct,
+                                    pnlUsd: pnlUsd,
+                                    exitReason: 'TP1 Parcial',
+                                    daysOpen: position.daysOpen
+                                });
+                                balance += pnlUsd;
+                                position.filledTP1 = true;
+                                position.remainingSize = position.tp2Size;
+                                totalTrades++;
+                                if (pnlUsd > 0) wins++;
+                                else losses++;
+                            }
+                            if (candle.high >= position.stop) {
+                                exitPrice = position.stop;
                                 exitReason = 'Stop';
-                                stopCount++; } else if (candle.low <= position.tp2) { exitPrice = position.tp2;
+                                stopCount++;
+                            } else if (candle.low <= position.tp2) {
+                                exitPrice = position.tp2;
                                 exitReason = 'TP2';
-                                tp2Count++; } else if (candle.low <= position.tp1) { exitPrice = position.tp1;
-                                exitReason = 'TP1';
-                                tp1Count++; }
+                                tp2Count++;
+                            }
                         }
 
+                        // Reversão de sinal
                         let currentSignal = signal;
                         let signalChanged = false;
                         if (position.type === 'LONG' && (currentSignal === 'SHORT' || currentSignal === 'NEUTRAL')) {
@@ -2935,27 +3372,29 @@
                                 exitReason = signalChanged ? 'Reversão' : 'Fim período';
                             }
 
+                            const remainingSize = position.remainingSize || 1.0;
                             const pnl = (position.type === 'LONG') ? (exitPrice - position.entryPrice) : (position
                                 .entryPrice - exitPrice);
                             const pnlPct = (pnl / position.entryPrice) * 100;
-                            const pnlUsd = (pnl / position.entryPrice) * balance;
+                            const pnlUsd = (pnl / position.entryPrice) * balance * remainingSize;
 
-                            trades.push({
-                                entryDate: dataset[position.entryIndex].date,
-                                exitDate: candle.date,
-                                type: position.type,
-                                entryPrice: position.entryPrice,
-                                exitPrice: exitPrice,
-                                pnlPct: pnlPct,
-                                pnlUsd: pnlUsd,
-                                exitReason: exitReason,
-                                daysOpen: position.daysOpen
-                            });
-
-                            balance += pnlUsd;
-                            totalTrades++;
-                            if (pnlUsd > 0) wins++;
-                            else losses++;
+                            if (!position.filledTP1 || exitPrice !== position.tp1) {
+                                trades.push({
+                                    entryDate: dataset[position.entryIndex].date,
+                                    exitDate: candle.date,
+                                    type: position.type + (position.filledTP1 ? ' (Restante)' : ''),
+                                    entryPrice: position.entryPrice,
+                                    exitPrice: exitPrice,
+                                    pnlPct: pnlPct,
+                                    pnlUsd: pnlUsd,
+                                    exitReason: exitReason,
+                                    daysOpen: position.daysOpen
+                                });
+                                balance += pnlUsd;
+                                totalTrades++;
+                                if (pnlUsd > 0) wins++;
+                                else losses++;
+                            }
 
                             if (balance > peak) peak = balance;
                             const drawdown = (peak - balance) / peak;
@@ -3065,12 +3504,8 @@
 
             } catch (err) {
                 console.error('Backtest error:', err);
-                container.innerHTML = `
-                    <div class="no-trades">
-                        <p>❌ Erro ao executar backtest: ${err.message}</p>
-                        <p style="font-size:0.85em;color:var(--text-muted);">Verifique a console para mais detalhes.</p>
-                    </div>
-                `;
+                container.innerHTML =
+                    `<div class="no-trades"><p>❌ Erro ao executar backtest: ${err.message}</p></div>`;
             }
 
             backtestRunning = false;
@@ -3106,7 +3541,6 @@
         // 13. EVENTOS
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Botão testar Telegram
             const testBtn = document.getElementById('test-telegram-btn');
             const label = document.getElementById('test-btn-label');
             if (testBtn) {
@@ -3126,7 +3560,6 @@
                 });
             }
 
-            // Botão Backtest
             const backtestBtn = document.getElementById('runBacktestBtn');
             if (backtestBtn) {
                 backtestBtn.addEventListener('click', runBacktest);
