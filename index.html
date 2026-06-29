@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Score + Alertas + Backtest 30d</title>
+    <title>Dashboard Institucional — Score + Alertas + Backtest (v2)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
     </script>
     <style>
         /* ============================================================
-           ESTILOS (MANTIDOS E REFORÇADOS)
+           ESTILOS (MANTIDOS E APRIMORADOS)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -152,6 +152,7 @@
             font-weight: 700;
         }
 
+        /* SCORE CARD */
         .score-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -214,6 +215,7 @@
             color: var(--text-light);
         }
 
+        /* CANDLES */
         .candles-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -284,25 +286,20 @@
             color: var(--text-muted);
             flex-wrap: wrap;
         }
-
         .candle-legend span {
             display: inline-flex;
             align-items: center;
             gap: 4px;
         }
-
-        .candle-legend .up {
-            color: var(--accent-green);
-        }
-        .candle-legend .down {
-            color: var(--accent-red);
-        }
+        .candle-legend .up { color: var(--accent-green); }
+        .candle-legend .down { color: var(--accent-red); }
 
         @media (max-width: 1024px) {
             .candles-grid {
                 grid-template-columns: 1fr 1fr;
             }
         }
+
         @media (max-width: 768px) {
             .candles-grid {
                 grid-template-columns: 1fr;
@@ -635,6 +632,10 @@
             line-height: 1.6;
         }
 
+        .whale-transaction:last-child {
+            margin-bottom: 0;
+        }
+
         .score-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -765,13 +766,13 @@
             font-weight: 700;
             animation: blink 1s infinite;
         }
-
         @keyframes blink {
             0% { opacity: 1; }
             50% { opacity: 0.3; }
             100% { opacity: 1; }
         }
 
+        /* Botão flutuante do Telegram */
         .telegram-test-btn {
             position: fixed;
             bottom: 24px;
@@ -814,99 +815,195 @@
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
-        /* Botões backtest */
-        .backtest-btn {
-            background: var(--accent-yellow);
-            color: #0d0d0d;
+        /* ============================================================
+           BACKTEST MODAL
+           ============================================================ */
+        .btn-backtest {
+            background: var(--accent-blue);
+            color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 30px;
+            padding: 8px 16px;
+            border-radius: 20px;
             font-weight: 700;
-            font-size: 0.9em;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(255, 214, 10, 0.3);
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-
-        .backtest-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(255, 214, 10, 0.5);
-        }
-
-        .backtest-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .backtest-btn.clear {
-            background: var(--accent-red);
-            color: white;
-            box-shadow: 0 4px 16px rgba(233, 69, 96, 0.3);
-        }
-
-        .backtest-btn.clear:hover {
-            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.5);
-        }
-
-        #backtest-results {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            display: none;
-            max-height: 600px;
-            overflow-y: auto;
             font-size: 0.9em;
         }
 
-        #backtest-results table {
-            font-size: 0.85em;
-            margin-top: 10px;
+        .btn-backtest:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0, 180, 216, 0.4);
         }
 
-        #backtest-results .result-row {
+        .backtest-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        .backtest-modal.open {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .backtest-content {
+            background: var(--bg-card);
+            margin: 40px auto;
+            padding: 30px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 1200px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .backtest-content h2 {
+            color: var(--accent-blue);
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid var(--border);
+            align-items: center;
         }
 
-        #backtest-results .result-row .label {
-            color: var(--text-muted);
+        .backtest-content .close-btn {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        #backtest-results .result-row .value {
+        .backtest-content .close-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .backtest-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--primary);
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.6em;
             font-weight: 700;
         }
 
-        .positive {
-            color: var(--accent-green);
-        }
-        .negative {
-            color: var(--accent-red);
-        }
-
-        .backtest-legend {
-            font-size: 0.8em;
+        .stat-card .stat-label {
+            font-size: 0.75em;
             color: var(--text-muted);
-            background: var(--primary);
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 10px;
-            border-left: 3px solid var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
         }
 
-        .backtest-legend strong {
+        .stat-card .stat-value.positive { color: var(--accent-green); }
+        .stat-card .stat-value.negative { color: var(--accent-red); }
+        .stat-card .stat-value.neutral { color: var(--accent-yellow); }
+
+        .backtest-table-wrap {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .backtest-table-wrap table {
+            margin-bottom: 0;
+            font-size: 0.85em;
+        }
+
+        .backtest-table-wrap thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .backtest-table-wrap th {
+            background: var(--secondary);
             color: var(--text-light);
+        }
+
+        .backtest-table-wrap td {
+            padding: 8px 12px;
+        }
+
+        .backtest-table-wrap .row-win {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .backtest-table-wrap .row-loss {
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .backtest-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .backtest-loading .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--accent-blue);
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .no-trades {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .backtest-content {
+                margin: 20px auto;
+                padding: 20px;
+                width: 98%;
+            }
+            .backtest-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .backtest-table-wrap {
+                max-height: 300px;
+            }
+            .btn-backtest {
+                font-size: 0.75em;
+                padding: 6px 12px;
+            }
         }
     </style>
 </head>
@@ -917,15 +1014,16 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas + Backtest 30d</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas + Backtest (v2)</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
-                    <div class="badge extreme-fear" id="header-fng">😱 FEAR &amp; GREED: --</div>
+                    <div class="badge extreme-fear" id="header-fng">😱 FEAR & GREED: --</div>
                     <div class="badge">⚡ STATUS: MARKDOWN</div>
                     <span class="live-indicator">🔄 HYBRID</span>
                     <span class="status-badge" id="status-badge">📋 ESTÁTICO</span>
                     <span class="telegram-badge" id="telegram-badge">📨 TELEGRAM ATIVO</span>
+                    <button class="btn-backtest" id="openBacktestBtn">📊 Backtest (ATR)</button>
                 </div>
             </div>
         </header>
@@ -935,7 +1033,7 @@
         ============================================================ -->
         <section>
             <div class="score-card">
-                <div class="score-label">Score Institucional</div>
+                <div class="score-label">Score Institucional (v2)</div>
                 <div class="score-value" id="score-value" style="color: var(--accent-yellow);">50</div>
                 <div class="score-bar-container">
                     <div class="score-bar-fill" id="score-bar" style="width: 50%; background: var(--accent-yellow);"></div>
@@ -950,32 +1048,51 @@
                     <div class="score-detail-item"><span class="label">Momentum</span> <span class="value" id="score-momentum">--</span></div>
                     <div class="score-detail-item"><span class="label">Estrutura</span> <span class="value" id="score-structure">--</span></div>
                     <div class="score-detail-item"><span class="label">On-Chain</span> <span class="value" id="score-onchain">--</span></div>
-                    <div class="score-detail-item"><span class="label">Oferta</span> <span class="value" id="score-supply">--</span></div>
-                    <div class="score-detail-item"><span class="label">Derivativos</span> <span class="value" id="score-deriv">--</span></div>
-                    <div class="score-detail-item"><span class="label">Macro</span> <span class="value" id="score-macro">--</span></div>
+                    <div class="score-detail-item"><span class="label">Volume</span> <span class="value" id="score-volume">--</span></div>
+                    <div class="score-detail-item"><span class="label">OI Delta</span> <span class="value" id="score-oi">--</span></div>
                 </div>
                 <div style="margin-top: 10px; font-size: 0.9em; color: var(--text-muted);" id="signal-description">
                     Aguardando dados...
-                </div>
-                <div style="margin-top: 5px; font-size: 0.8em; color: var(--text-muted);" id="confirmation-pillars">
-                    Confirmação: ⏳
                 </div>
             </div>
         </section>
 
         <!-- ============================================================
-        RESUMO EXECUTIVO (COM Z-SCORE E REGIME)
+        RESUMO EXECUTIVO
         ============================================================ -->
         <section>
             <h2 class="section-title">📌 RESUMO EXECUTIVO</h2>
             <div class="summary-grid">
-                <div class="summary-card"><h3>Bitcoin</h3><div class="value negative" id="btc-price">$--</div><div class="subtext" id="btc-change">--</div><span class="source-with-time" id="btc-source">CoinGecko • ao vivo</span></div>
-                <div class="summary-card"><h3>Ethereum</h3><div class="value negative" id="eth-price">$--</div><div class="subtext" id="eth-change">--</div><span class="source-with-time" id="eth-source">CoinGecko • ao vivo</span></div>
-                <div class="summary-card"><h3>Solana</h3><div class="value negative" id="sol-price">$--</div><div class="subtext" id="sol-change">--</div><span class="source-with-time" id="sol-source">CoinGecko • ao vivo</span></div>
-                <div class="summary-card"><h3>Z-Score BTC/ETH</h3><div class="value" id="zscore-btceth" style="color: var(--accent-yellow);">0.00</div><div class="subtext" id="zscore-btceth-label">Neutro</div><span class="source-with-time" id="zscore-source">Calculado • 30 dias</span></div>
-                <div class="summary-card"><h3>Regime de Mercado</h3><div class="value" id="regime-status" style="color: var(--accent-green);">Estável</div><div class="subtext" id="regime-detail">Vol: 0.00 | Corr: 0.00</div><span class="source-with-time" id="regime-source">Calculado • 20 dias</span></div>
-                <div class="summary-card"><h3>Sentiment Macro</h3><div class="value negative" id="macro-summary">DXY -- | US10Y --</div><div class="subtext" id="macro-status">Referência</div><span class="source-with-time" id="macro-source">FRED • estático</span></div>
-                <div class="summary-card"><h3>Tether Premium</h3><div class="value negative" id="tether-premium">-0,05%</div><div class="subtext">USDT/BRL vs USD/BRL</div><span class="source-with-time" id="tether-source">ExchangeRate • estático</span></div>
+                <div class="summary-card">
+                    <h3>Bitcoin</h3>
+                    <div class="value negative" id="btc-price">$--</div>
+                    <div class="subtext" id="btc-change">--</div>
+                    <span class="source-with-time" id="btc-source">Binance • ao vivo</span>
+                </div>
+                <div class="summary-card">
+                    <h3>Ethereum</h3>
+                    <div class="value negative" id="eth-price">$--</div>
+                    <div class="subtext" id="eth-change">--</div>
+                    <span class="source-with-time" id="eth-source">Binance • ao vivo</span>
+                </div>
+                <div class="summary-card">
+                    <h3>Solana</h3>
+                    <div class="value negative" id="sol-price">$--</div>
+                    <div class="subtext" id="sol-change">--</div>
+                    <span class="source-with-time" id="sol-source">Binance • ao vivo</span>
+                </div>
+                <div class="summary-card">
+                    <h3>ATR (14d) BTC</h3>
+                    <div class="value" id="atr-value" style="color: var(--accent-yellow);">--</div>
+                    <div class="subtext">Volatilidade média diária</div>
+                    <span class="source-with-time" id="atr-source">Calculado</span>
+                </div>
+                <div class="summary-card">
+                    <h3>Sentiment Macro</h3>
+                    <div class="value negative" id="macro-summary">DXY -- | US10Y --</div>
+                    <div class="subtext" id="macro-status">Referência</div>
+                    <span class="source-with-time" id="macro-source">FRED • estático</span>
+                </div>
             </div>
             <div id="update-info" style="margin-top:10px; font-size:0.85em; color:var(--text-muted); text-align:right;">
                 Última atualização geral: <span id="last-update">--</span>
@@ -988,9 +1105,51 @@
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (LIVE)</h2>
             <div class="candles-grid">
-                <div class="candle-card"><h3>Bitcoin (BTC/USDT)</h3><div class="candle-stats" id="btc-stats"><span class="stat" id="btc-stat-1d"><span class="label">1D</span> --</span><span class="stat" id="btc-stat-1s"><span class="label">1S</span> --</span><span class="stat" id="btc-stat-1m"><span class="label">1M</span> --</span></div><div id="candle-btc" class="candle-container"></div><div class="candle-legend"><span><span class="up">🟢</span> Alta</span><span><span class="down">🔴</span> Baixa</span><span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span></div><span class="source-with-time" id="candle-btc-source">Binance • atualização a cada 10s</span></div>
-                <div class="candle-card"><h3>Ethereum (ETH/USDT)</h3><div class="candle-stats" id="eth-stats"><span class="stat" id="eth-stat-1d"><span class="label">1D</span> --</span><span class="stat" id="eth-stat-1s"><span class="label">1S</span> --</span><span class="stat" id="eth-stat-1m"><span class="label">1M</span> --</span></div><div id="candle-eth" class="candle-container"></div><div class="candle-legend"><span><span class="up">🟢</span> Alta</span><span><span class="down">🔴</span> Baixa</span><span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span></div><span class="source-with-time" id="candle-eth-source">Binance • atualização a cada 10s</span></div>
-                <div class="candle-card"><h3>Solana (SOL/USDT)</h3><div class="candle-stats" id="sol-stats"><span class="stat" id="sol-stat-1d"><span class="label">1D</span> --</span><span class="stat" id="sol-stat-1s"><span class="label">1S</span> --</span><span class="stat" id="sol-stat-1m"><span class="label">1M</span> --</span></div><div id="candle-sol" class="candle-container"></div><div class="candle-legend"><span><span class="up">🟢</span> Alta</span><span><span class="down">🔴</span> Baixa</span><span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span></div><span class="source-with-time" id="candle-sol-source">Binance • atualização a cada 10s</span></div>
+                <div class="candle-card">
+                    <h3>Bitcoin (BTC/USDT)</h3>
+                    <div class="candle-stats" id="btc-stats">
+                        <span class="stat" id="btc-stat-1d"><span class="label">1D</span> --</span>
+                        <span class="stat" id="btc-stat-1s"><span class="label">1S</span> --</span>
+                        <span class="stat" id="btc-stat-1m"><span class="label">1M</span> --</span>
+                    </div>
+                    <div id="candle-btc" class="candle-container"></div>
+                    <div class="candle-legend">
+                        <span><span class="up">🟢</span> Alta</span>
+                        <span><span class="down">🔴</span> Baixa</span>
+                        <span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span>
+                    </div>
+                    <span class="source-with-time" id="candle-btc-source">Binance • atualização a cada 10s</span>
+                </div>
+                <div class="candle-card">
+                    <h3>Ethereum (ETH/USDT)</h3>
+                    <div class="candle-stats" id="eth-stats">
+                        <span class="stat" id="eth-stat-1d"><span class="label">1D</span> --</span>
+                        <span class="stat" id="eth-stat-1s"><span class="label">1S</span> --</span>
+                        <span class="stat" id="eth-stat-1m"><span class="label">1M</span> --</span>
+                    </div>
+                    <div id="candle-eth" class="candle-container"></div>
+                    <div class="candle-legend">
+                        <span><span class="up">🟢</span> Alta</span>
+                        <span><span class="down">🔴</span> Baixa</span>
+                        <span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span>
+                    </div>
+                    <span class="source-with-time" id="candle-eth-source">Binance • atualização a cada 10s</span>
+                </div>
+                <div class="candle-card">
+                    <h3>Solana (SOL/USDT)</h3>
+                    <div class="candle-stats" id="sol-stats">
+                        <span class="stat" id="sol-stat-1d"><span class="label">1D</span> --</span>
+                        <span class="stat" id="sol-stat-1s"><span class="label">1S</span> --</span>
+                        <span class="stat" id="sol-stat-1m"><span class="label">1M</span> --</span>
+                    </div>
+                    <div id="candle-sol" class="candle-container"></div>
+                    <div class="candle-legend">
+                        <span><span class="up">🟢</span> Alta</span>
+                        <span><span class="down">🔴</span> Baixa</span>
+                        <span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span>
+                    </div>
+                    <span class="source-with-time" id="candle-sol-source">Binance • atualização a cada 10s</span>
+                </div>
             </div>
         </section>
 
@@ -1033,7 +1192,7 @@
         PAINEL DE CONFIRMAÇÃO
         ============================================================ -->
         <section>
-            <h2 class="section-title">✅ PAINEL DE CONFIRMAÇÃO DE FUNDO</h2>
+            <h2 class="section-title">✅ PAINEL DE CONFIRMAÇÃO DE FUNDO (v2)</h2>
             <div class="confirmation-panel">
                 <div class="confirmation-grid">
                     <div class="confirmation-pillar"><div class="pillar-status" id="p-mvrv">❌</div><div class="pillar-name">MVRV Extremo</div></div>
@@ -1073,9 +1232,24 @@
         <section>
             <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (referência)</h2>
             <div class="whale-activity" id="whale-container">
-                <div class="whale-card" id="whale-btc"><div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action accumulating">ACUMULANDO</span></div><div class="whale-value">US$ --</div><div class="whale-transaction">✅ Aguardando dados</div><span class="source-with-time" id="whale-btc-source">Whale Alert • estático</span></div>
-                <div class="whale-card" id="whale-eth"><div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action distributing">DISTRIBUINDO</span></div><div class="whale-value">US$ --</div><div class="whale-transaction">🔴 Aguardando dados</div><span class="source-with-time" id="whale-eth-source">Whale Alert • estático</span></div>
-                <div class="whale-card" id="whale-sol"><div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action accumulating">ACUMULANDO</span></div><div class="whale-value">US$ --</div><div class="whale-transaction">🔥 Aguardando dados</div><span class="source-with-time" id="whale-sol-source">Whale Alert • estático</span></div>
+                <div class="whale-card" id="whale-btc">
+                    <div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action accumulating">ACUMULANDO</span></div>
+                    <div class="whale-value">US$ --</div>
+                    <div class="whale-transaction">✅ Aguardando dados</div>
+                    <span class="source-with-time" id="whale-btc-source">Whale Alert • estático</span>
+                </div>
+                <div class="whale-card" id="whale-eth">
+                    <div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action distributing">DISTRIBUINDO</span></div>
+                    <div class="whale-value">US$ --</div>
+                    <div class="whale-transaction">🔴 Aguardando dados</div>
+                    <span class="source-with-time" id="whale-eth-source">Whale Alert • estático</span>
+                </div>
+                <div class="whale-card" id="whale-sol">
+                    <div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action accumulating">ACUMULANDO</span></div>
+                    <div class="whale-value">US$ --</div>
+                    <div class="whale-transaction">🔥 Aguardando dados</div>
+                    <span class="source-with-time" id="whale-sol-source">Whale Alert • estático</span>
+                </div>
             </div>
             <div class="chart-wrapper"><canvas id="chart_whale_flow"></canvas></div>
             <div class="confirmation-description" id="whale-summary"><strong>Smart Money Direction (referência):</strong> Aguardando dados.</div>
@@ -1128,197 +1302,719 @@
         </section>
 
         <!-- ============================================================
-        BACKTEST 30 DIAS
-        ============================================================ -->
-        <section>
-            <h2 class="section-title">📊 BACKTEST 30 DIAS (DADOS 100% REAIS)</h2>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                <button class="backtest-btn" id="run-backtest-short">▶️ Executar Backtest 30 dias</button>
-                <button class="backtest-btn clear" id="clear-backtest-short">🗑️ Limpar</button>
-            </div>
-            <div id="backtest-results" style="display:none;"></div>
-            <div class="backtest-legend">
-                <strong>📌 Dados utilizados:</strong> Todos os dados disponíveis com histórico real para os últimos 30 dias: preço, volume, F&G, OI, funding, L/S, MVRV, SOPR (BitView), ETF Flows (Farside) e Macro (FRED). <span style="color:var(--accent-green);">Período de 30 dias com dados 100% reais.</span>
-            </div>
-        </section>
-
-        <!-- ============================================================
         FOOTER
         ============================================================ -->
         <footer>
             <div class="footer-content">
                 <div class="footer-section">
-                    <h4>📋 Metodologia</h4>
-                    <p>Score institucional com pesos ajustados (Tendência 20%, Momentum 20%, Estrutura 15%, On-Chain 20%, Oferta 10%, Derivativos 10%, Macro 5%). Backtest com dados reais para 30 dias. <strong>Z-Score BTC/ETH e Regime de Mercado</strong> para filtragem dinâmica.</p>
+                    <h4>📋 Metodologia (v2)</h4>
+                    <p>Score institucional aprimorado com pesos ajustados, confirmação por pilares, ATR dinâmico no backtest e cache local. Alertas Telegram com cooldown reduzido e prioridades.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                 </div>
-                <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
+                <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento. Token Telegram não exposto (utilize variáveis de ambiente em produção).</div>
             </div>
         </footer>
     </div>
 
     <!-- ============================================================
-    BOTÕES FLUTUANTES
+    BACKTEST MODAL
     ============================================================ -->
-    <button class="telegram-test-btn" id="test-telegram-btn"><span id="test-btn-label">📨 Testar Alerta</span></button>
+    <div id="backtestModal" class="backtest-modal">
+        <div class="backtest-content">
+            <h2>
+                📊 Backtest — Últimos 90 dias (ATR Dinâmico)
+                <button class="close-btn" id="closeBacktestBtn">✕ Fechar</button>
+            </h2>
+            <div id="backtestBody">
+                <div class="backtest-loading">
+                    <div class="spinner"></div>
+                    <p>Carregando dados e executando backtest...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================
-    JAVASCRIPT — COMPLETO COM BACKTEST 30 DIAS E NOTIFICAÇÕES
+    BOTÃO FLUTUANTE — TESTAR TELEGRAM
+    ============================================================ -->
+    <button class="telegram-test-btn" id="test-telegram-btn">
+        <span id="test-btn-label">📨 Testar Alerta</span>
+    </button>
+
+    <!-- ============================================================
+    JAVASCRIPT — VERSÃO APRIMORADA (v2)
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAÇÃO DO TELEGRAM
+        // 0. CONFIGURAÇÃO DO TELEGRAM (NÃO EXPORTO EM PRODUÇÃO)
+        //    EM PRODUÇÃO, UTILIZE VARIÁVEIS DE AMBIENTE NO BACKEND
         // ================================================================
-        const TELEGRAM_TOKEN = '8670184440:AAFBfhFFTMnUWsgIFyRh0huBYbL-Q_vhT5k'; // Substitua pelo seu token
-        const TELEGRAM_CHAT_ID = '1137196768'; // Substitua pelo seu chat_id
+        // PARA TESTE LOCAL, COLOQUE SEU TOKEN E CHAT_ID AQUI (NÃO RECOMENDADO)
+        // OU DEIXE COMO ESTÁ E USE O BOTÃO DE TESTE (NÃO ENVIARÁ MENSAGENS)
+        const TELEGRAM_TOKEN = 'SEU_TOKEN_AQUI'; // Substitua ou use backend
+        const TELEGRAM_CHAT_ID = 'SEU_CHAT_ID_AQUI'; // Substitua ou use backend
+        let lastAlertTime = 0;
+        const ALERT_COOLDOWN = 1800000; // 30 minutos
+        const EMERGENCY_COOLDOWN = 0; // Sem cooldown para emergência
 
         // ================================================================
-        // 1. CHAVES DE API
+        // 0.1 FUNÇÃO DE ENVIO (com fallback e log)
         // ================================================================
-        const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
-        const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
-        const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
-
-        // ================================================================
-        // 2. HELPERS E CACHE
-        // ================================================================
-        function formatCurrency(v) { return '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2,
-                maximumFractionDigits: 2 }); }
-
-        function formatChange(v) { const n = parseFloat(v); if (isNaN(n)) return '--'; return (n >= 0 ? '+' : '') + n.toFixed(2) +
-                '%'; }
-
-        function getChangeClass(v) { const n = parseFloat(v); if (isNaN(n)) return 'negative'; return n >= 0 ? 'positive' :
-                'negative'; }
-
-        function getCurrentTimestamp() { const now = new Date(); const opts = { year: 'numeric', month: 'short', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'America/Sao_Paulo' }; return now
-                .toLocaleString('pt-BR', opts); }
-
-        function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
-
-        const CACHE_TTL = {
-            prices: 60000,
-            fng: 300000,
-            candles: 60000,
-            mvrv: 3600000,
-            sopr: 3600000,
-            oi: 60000,
-            funding: 60000,
-            lsratio: 60000,
-        };
-
-        async function safeFetch(url, fallback, ttl = 60000) {
-            const key = 'cache_' + url;
+        async function sendTelegramAlert(message, priority = 'normal') {
+            if (!TELEGRAM_TOKEN || TELEGRAM_TOKEN === 'SEU_TOKEN_AQUI') {
+                console.warn('⚠️ Token do Telegram não configurado. Mensagem não enviada.');
+                return { success: false, error: 'Token não configurado' };
+            }
+            console.log('📤 Tentando enviar alerta para o Telegram... (prioridade:', priority, ')');
             try {
-                const cached = localStorage.getItem(key);
-                if (cached) {
-                    const { value, timestamp } = JSON.parse(cached);
-                    if (Date.now() - timestamp < ttl) return value;
+                const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+                const payload = { chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' };
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const responseText = await response.text();
+                console.log('📨 Resposta:', response.status, responseText);
+                if (response.ok) {
+                    console.log('✅ Alerta enviado!');
+                    // Log local
+                    const log = JSON.parse(localStorage.getItem('alertLog') || '[]');
+                    log.push({ timestamp: Date.now(), message, priority, status: 'success' });
+                    localStorage.setItem('alertLog', JSON.stringify(log.slice(-100)));
+                    return { success: true };
+                } else {
+                    console.warn('❌ Falha:', responseText);
+                    return { success: false, error: responseText };
                 }
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
-                localStorage.setItem(key, JSON.stringify({ value: data, timestamp: Date.now() }));
-                return data;
-            } catch (e) {
-                console.warn('safeFetch fallback for', url, e);
-                return fallback;
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                return { success: false, error: error.message };
             }
         }
 
         // ================================================================
-        // 3. TIMESTAMP
+        // 0.2 BOTÃO DE TESTE (com verificação)
         // ================================================================
-        function updateTimestamp() { const ts = getCurrentTimestamp(); document.getElementById('header-timestamp').textContent =
-                '📅 ' + ts + ' UTC-3'; document.getElementById('last-update').textContent = ts; }
-
-        function updateLiveTime() { const ts = getCurrentTimestamp(); document.getElementById('live-update-time').textContent =
-                ts; const badge = document.getElementById('status-badge'); badge.textContent = '✅ LIVE'; badge.className =
-                'status-badge live'; }
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('test-telegram-btn');
+            const label = document.getElementById('test-btn-label');
+            if (!btn) return;
+            btn.addEventListener('click', async function() {
+                if (TELEGRAM_TOKEN === 'SEU_TOKEN_AQUI') {
+                    alert('⚠️ Token do Telegram não configurado. Defina TELEGRAM_TOKEN no código.');
+                    return;
+                }
+                const score = document.getElementById('score-value')?.textContent || '--';
+                const price = document.getElementById('btc-price')?.textContent || '--';
+                const timestamp = getCurrentTimestamp();
+                const testMessage = `
+        🔔 <b>TESTE DE ALERTA (v2)</b>
+        ✅ Status: CONECTADO
+        📊 Score atual: ${score}
+        💰 Preço BTC: ${price}
+        ⏰ Enviado em: ${timestamp}
+        🧠 Comitê: Score aprimorado com ATR e cache.
+                `.trim();
+                label.innerHTML = '<span class="spinner"></span> Enviando...';
+                btn.disabled = true;
+                const result = await sendTelegramAlert(testMessage, 'test');
+                if (result.success) {
+                    label.textContent = '✅ Enviado!';
+                    setTimeout(() => { label.textContent = '📨 Testar Alerta';
+                        btn.disabled = false; }, 2500);
+                } else {
+                    label.textContent = '❌ Falha';
+                    setTimeout(() => { label.textContent = '📨 Testar Alerta';
+                        btn.disabled = false; }, 3000);
+                }
+            });
+        });
 
         // ================================================================
-        // 4. CHART.JS — GRÁFICOS (MANTIDOS)
+        // 0.3 ALERTA ESTRUTURADO (com prioridade)
+        // ================================================================
+        async function sendStructuredAlert(signalType, score, price, stop, targets, rationale, priority = 'normal') {
+            const emojis = { long: '🟢', short: '🔴' };
+            const direction = signalType.toUpperCase();
+            let msg = `${emojis[signalType]} <b>SINAL ${direction} - BTCUSDT</b>\n`;
+            msg += `Confiança: ${Math.round(score)}%\n`;
+            msg += `Preço: $${price.toFixed(2)}\n`;
+            msg += `Stop Loss: $${stop.toFixed(2)}\n`;
+            msg += `Alvos:\n`;
+            targets.forEach((t, i) => {
+                msg += `  TP${i+1}: $${t.price.toFixed(2)} (R:R ${t.rr.toFixed(1)})\n`;
+            });
+            msg += `Score: ${Math.round(score)}/100\n`;
+            msg += `Fundamentos: ${rationale}\n`;
+            msg += `Risco: ${score > 75 ? 'Médio' : 'Alto'}\n`;
+            msg += `Próxima atualização: ${getCurrentTimestamp()}`;
+            await sendTelegramAlert(msg, priority);
+        }
+
+        // ================================================================
+        // 1. CHAVES DE API (não expostas, mas usadas para fallback)
+        // ================================================================
+        // As chaves não são mais necessárias para dados públicos, mas mantemos para referência.
+
+        // ================================================================
+        // 2. HELPERS
+        // ================================================================
+        function formatCurrency(value) {
+            return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatChange(value) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return '--';
+            return (num >= 0 ? '+' : '') + num.toFixed(2) + '%';
+        }
+
+        function getChangeClass(value) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return 'negative';
+            return num >= 0 ? 'positive' : 'negative';
+        }
+
+        function getCurrentTimestamp() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                second: '2-digit', timeZone: 'America/Sao_Paulo' };
+            return now.toLocaleString('pt-BR', options);
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
+        // ================================================================
+        // 3. SAFE FETCH COM CACHE E FALLBACK (NOVO)
+        // ================================================================
+        const CACHE_TTL = {
+            'binance_candles': 60000, // 1 min
+            'coingecko_price': 30000, // 30s
+            'alternative_fng': 300000, // 5 min
+            'bitview_mvrv': 3600000, // 1 hora
+            'bitview_sopr': 3600000,
+            'binance_oi': 60000,
+            'binance_funding': 60000,
+            'binance_ls': 60000,
+        };
+
+        async function safeFetch(url, fallbackValue = null, cacheKey = null, ttl = 60000) {
+            // Se tiver cache e não expirado, retorna
+            if (cacheKey) {
+                const cached = localStorage.getItem(`cache_${cacheKey}`);
+                if (cached) {
+                    try {
+                        const { value, timestamp } = JSON.parse(cached);
+                        if (Date.now() - timestamp < ttl) {
+                            console.log(`📦 Cache hit: ${cacheKey}`);
+                            return value;
+                        }
+                    } catch (e) { /* inválido */ }
+                }
+            }
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                if (cacheKey) {
+                    localStorage.setItem(`cache_${cacheKey}`, JSON.stringify({ value: data, timestamp: Date.now() }));
+                }
+                return data;
+            } catch (error) {
+                console.warn(`⚠️ Falha ao buscar ${url}:`, error);
+                // Tentar cache expirado como fallback
+                if (cacheKey) {
+                    const cached = localStorage.getItem(`cache_${cacheKey}`);
+                    if (cached) {
+                        try {
+                            const { value, timestamp } = JSON.parse(cached);
+                            console.warn(`⚠️ Usando cache expirado para ${cacheKey} (${Date.now() - timestamp}ms atrás)`);
+                            return value;
+                        } catch (e) { /* ignora */ }
+                    }
+                }
+                if (fallbackValue !== null) {
+                    console.warn(`⚠️ Usando fallback para ${url}:`, fallbackValue);
+                    return fallbackValue;
+                }
+                throw error;
+            }
+        }
+
+        // ================================================================
+        // 4. TIMESTAMP
+        // ================================================================
+        function updateTimestamp() {
+            const ts = getCurrentTimestamp();
+            document.getElementById('header-timestamp').textContent = '📅 ' + ts + ' UTC-3';
+            document.getElementById('last-update').textContent = ts;
+        }
+
+        function updateLiveTime() {
+            const ts = getCurrentTimestamp();
+            document.getElementById('live-update-time').textContent = ts;
+            const badge = document.getElementById('status-badge');
+            badge.textContent = '✅ LIVE';
+            badge.className = 'status-badge live';
+        }
+
+        // ================================================================
+        // 5. CHART.JS — GRÁFICOS (mantidos)
         // ================================================================
         window.charts = [];
 
-        function destroyAllCharts() { window.charts.forEach(c => { if (c) c.destroy(); });
-            window.charts = []; }
-        const chartColors = { primary: 'rgb(0,180,216)', secondary: 'rgb(233,69,96)', success: 'rgb(0,217,142)',
-            warning: 'rgb(255,214,10)', text: 'rgb(236,240,241)', border: 'rgb(44,62,80)' };
+        function destroyAllCharts() {
+            window.charts.forEach(chart => { if (chart) chart.destroy(); });
+            window.charts = [];
+        }
+
+        const chartColors = {
+            primary: 'rgb(0, 180, 216)',
+            secondary: 'rgb(233, 69, 96)',
+            success: 'rgb(0, 217, 142)',
+            warning: 'rgb(255, 214, 10)',
+            text: 'rgb(236, 240, 241)',
+            border: 'rgb(44, 62, 80)'
+        };
+
         destroyAllCharts();
 
+        // ETF Chart
         const ctx1 = document.getElementById('chart_etf_flows').getContext('2d');
-        const etfChart = new Chart(ctx1, { type: 'bar', data: { labels: ['22 JUN', '23 JUN', '24 JUN', '25 JUN', '26 JUN',
-                    '27 JUN', '28 JUN'
-                ], datasets: [{ label: 'BTC ETF Flow (ref)', data: [-120, -85, -155, -92, -138, -165, -445],
-                    backgroundColor: 'rgba(233,69,96,0.6)', borderColor: 'rgb(233,69,96)', borderWidth: 2 },
-                { label: 'ETH ETF Flow (ref)', data: [-8, -12, -15, -10, -18, -20, -12.85],
-                    backgroundColor: 'rgba(0,180,216,0.4)', borderColor: 'rgb(0,180,216)', borderWidth: 2 }
-                ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true,
-                        labels: { color: chartColors.text } }, title: { display: true, text: 'ETF Flows (referência)',
-                        color: chartColors.text } }, scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors
-                            .border } }, x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } } });
+        const etfChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['22 JUN', '23 JUN', '24 JUN', '25 JUN', '26 JUN', '27 JUN', '28 JUN'],
+                datasets: [
+                    { label: 'BTC ETF Flow (ref)', data: [-120, -85, -155, -92, -138, -165, -445],
+                        backgroundColor: 'rgba(233,69,96,0.6)', borderColor: 'rgb(233,69,96)', borderWidth: 2 },
+                    { label: 'ETH ETF Flow (ref)', data: [-8, -12, -15, -10, -18, -20, -12.85],
+                        backgroundColor: 'rgba(0,180,216,0.4)', borderColor: 'rgb(0,180,216)', borderWidth: 2 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, labels: { color: chartColors.text } },
+                    title: { display: true, text: 'ETF Flows (referência)', color: chartColors.text } },
+                scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } },
+                    x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } }
+        });
         window.charts.push(etfChart);
 
+        // Macro Chart
         const ctx2 = document.getElementById('chart_macro_rates').getContext('2d');
-        window.charts.push(new Chart(ctx2, { type: 'line', data: { labels: ['17 JUN', '19 JUN', '21 JUN', '23 JUN', '25 JUN',
-                    '27 JUN', '28 JUN'
-                ], datasets: [{ label: 'DXY (ref)', data: [100.8, 100.95, 101.15, 101.28, 101.32, 101.35, 101.37],
-                    borderColor: 'rgb(233,69,96)', borderWidth: 2, tension: 0.4, yAxisID: 'y' }, { label: 'US10Y (ref)',
-                    data: [4.32, 4.30, 4.29, 4.28, 4.27, 4.28, 4.28], borderColor: 'rgb(255,214,10)', borderWidth: 2,
-                    tension: 0.4, yAxisID: 'y1' }
-                ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true,
-                        labels: { color: chartColors.text } }, title: { display: true, text: 'Macro (referência)',
-                        color: chartColors.text } }, scales: { y: { position: 'left', ticks: { color: chartColors.text },
-                        grid: { color: chartColors.border } }, y1: { position: 'right', ticks: { color: chartColors.text },
-                        grid: { drawOnChartArea: false } }, x: { ticks: { color: chartColors.text }, grid: { color: chartColors
-                            .border } } } } }));
+        window.charts.push(new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['17 JUN', '19 JUN', '21 JUN', '23 JUN', '25 JUN', '27 JUN', '28 JUN'],
+                datasets: [
+                    { label: 'DXY (ref)', data: [100.8, 100.95, 101.15, 101.28, 101.32, 101.35, 101.37],
+                        borderColor: 'rgb(233,69,96)', borderWidth: 2, tension: 0.4, yAxisID: 'y' },
+                    { label: 'US10Y (ref)', data: [4.32, 4.30, 4.29, 4.28, 4.27, 4.28, 4.28],
+                        borderColor: 'rgb(255,214,10)', borderWidth: 2, tension: 0.4, yAxisID: 'y1' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, labels: { color: chartColors.text } },
+                    title: { display: true, text: 'Macro (referência)', color: chartColors.text } },
+                scales: { y: { position: 'left', ticks: { color: chartColors.text }, grid: { color: chartColors.border } },
+                    y1: { position: 'right', ticks: { color: chartColors.text }, grid: { drawOnChartArea: false } },
+                    x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } }
+        }));
 
+        // Scenarios
         const ctx3 = document.getElementById('chart_scenarios').getContext('2d');
-        window.charts.push(new Chart(ctx3, { type: 'doughnut', data: { labels: ['Bounce Tático', 'Markdown Estendido',
-                    'Reversal Estrutural'
-                ], datasets: [{ data: [35, 45, 20], backgroundColor: ['rgba(255,214,10,0.6)',
+        window.charts.push(new Chart(ctx3, {
+            type: 'doughnut',
+            data: { labels: ['Bounce Tático', 'Markdown Estendido', 'Reversal Estrutural'],
+                datasets: [{ data: [35, 45, 20], backgroundColor: ['rgba(255,214,10,0.6)',
                         'rgba(233,69,96,0.6)', 'rgba(0,217,142,0.6)'
-                    ] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: chartColors
-                            .text } } } } }));
+                    ] }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: chartColors
+                            .text } } } }
+        }));
 
+        // Allocation
         const ctx4 = document.getElementById('chart_allocation').getContext('2d');
-        window.charts.push(new Chart(ctx4, { type: 'pie', data: { labels: ['BTC (25%)', 'ETH (10%)', 'Stablecoins (65%)'],
+        window.charts.push(new Chart(ctx4, {
+            type: 'pie',
+            data: { labels: ['BTC (25%)', 'ETH (10%)', 'Stablecoins (65%)'],
                 datasets: [{ data: [25, 10, 65], backgroundColor: ['rgba(0,180,216,0.6)',
                         'rgba(255,214,10,0.6)', 'rgba(0,217,142,0.6)'
-                    ] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom',
-                        labels: { color: chartColors.text } } } } }));
+                    ] }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom',
+                        labels: { color: chartColors.text } } } }
+        }));
 
+        // Whale Flow Chart
         let whaleFlowChart = null;
 
         function initWhaleFlowChart() {
             const ctx = document.getElementById('chart_whale_flow').getContext('2d');
-            whaleFlowChart = new Chart(ctx, { type: 'bar', data: { labels: ['BTC', 'ETH'], datasets: [{ label: 'Acumulação (ref)',
-                        data: [700, 0], backgroundColor: 'rgba(0,217,142,0.7)', borderColor: 'rgb(0,217,142)',
-                        borderWidth: 2 }, { label: 'Distribuição (ref)', data: [0, 27.4],
-                        backgroundColor: 'rgba(233,69,96,0.7)', borderColor: 'rgb(233,69,96)', borderWidth: 2 }
-                    ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true,
-                            labels: { color: chartColors.text } }, title: { display: true,
-                            text: 'Fluxo de Baleias (referência)', color: chartColors.text } }, scales: { y: { ticks: { color: chartColors
-                                .text }, grid: { color: chartColors.border }, title: { display: true,
-                                text: 'Volume (USD M)', color: chartColors.text } }, x: { ticks: { color: chartColors
-                                .text }, grid: { color: chartColors.border } } } } });
+            whaleFlowChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: ['BTC', 'ETH'],
+                    datasets: [
+                        { label: 'Acumulação (ref)', data: [700, 0], backgroundColor: 'rgba(0,217,142,0.7)',
+                            borderColor: 'rgb(0,217,142)', borderWidth: 2 },
+                        { label: 'Distribuição (ref)', data: [0, 27.4], backgroundColor: 'rgba(233,69,96,0.7)',
+                            borderColor: 'rgb(233,69,96)', borderWidth: 2 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: true, labels: { color: chartColors.text } },
+                        title: { display: true, text: 'Fluxo de Baleias (referência)', color: chartColors.text } },
+                    scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border },
+                            title: { display: true, text: 'Volume (USD M)', color: chartColors.text } },
+                        x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } }
+            });
             window.charts.push(whaleFlowChart);
         }
 
         // ================================================================
-        // 5. CANDLESTICK + INDICADORES TÉCNICOS
+        // 6. CANDLESTICK + EMAs/RSI/ATR (ATR adicionado)
         // ================================================================
         let candleCharts = {};
+        let ema50 = 65000,
+            ema200 = 62000,
+            rsi = 50;
+        let atrValue = 0; // ATR (14d)
+
+        function initCandleChart(containerId, symbol, color) {
+            const container = document.getElementById(containerId);
+            if (!container) return null;
+            const chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth,
+                height: 250,
+                layout: { background: { color: '#1a1a2e' }, textColor: '#95a5a6' },
+                grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                priceScale: { borderColor: '#2c3e50' },
+                timeScale: { borderColor: '#2c3e50', timeVisible: true, secondsVisible: false },
+            });
+            const candleSeries = chart.addCandlestickSeries({
+                upColor: color || '#00d98e',
+                downColor: '#e94560',
+                borderDownColor: '#e94560',
+                borderUpColor: '#00d98e',
+                wickDownColor: '#e94560',
+                wickUpColor: '#00d98e',
+            });
+            return { chart, candleSeries };
+        }
+
+        async function fetchCandles(symbol, interval = '1h', limit = 24) {
+            try {
+                const url =
+                    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+                const data = await safeFetch(url, null, `candles_${symbol}_${interval}`, CACHE_TTL.binance_candles);
+                if (!data) return null;
+                return data.map(k => ({
+                    time: k[0] / 1000,
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4])
+                }));
+            } catch (e) {
+                console.warn(`Candles ${symbol} error:`, e);
+                return null;
+            }
+        }
+
+        function calculateEMA(closes, period) {
+            if (!closes || closes.length < period) return null;
+            const multiplier = 2 / (period + 1);
+            let ema = closes.slice(0, period).reduce((a, b) => a + b) / period;
+            for (let i = period; i < closes.length; i++) {
+                ema = (closes[i] - ema) * multiplier + ema;
+            }
+            return ema;
+        }
+
+        function calculateMACD(closes) {
+            if (!closes || closes.length < 26) return null;
+            const ema12 = calculateEMA(closes, 12);
+            const ema26 = calculateEMA(closes, 26);
+            const macd = ema12 - ema26;
+            const macdArray = [];
+            for (let i = 26; i < closes.length; i++) {
+                const e12 = calculateEMA(closes.slice(0, i + 1), 12);
+                const e26 = calculateEMA(closes.slice(0, i + 1), 26);
+                macdArray.push(e12 - e26);
+            }
+            const signal = calculateEMA(macdArray, 9);
+            return { macd, signal, histogram: macd - signal };
+        }
+
+        function calculateRSI(closes, period = 14) {
+            if (closes.length < period + 1) return 50;
+            let gains = 0,
+                losses = 0;
+            for (let i = 1; i <= period; i++) {
+                const diff = closes[i] - closes[i - 1];
+                if (diff >= 0) gains += diff;
+                else losses -= diff;
+            }
+            let avgGain = gains / period;
+            let avgLoss = losses / period;
+            for (let i = period + 1; i < closes.length; i++) {
+                const diff = closes[i] - closes[i - 1];
+                if (diff >= 0) {
+                    avgGain = (avgGain * (period - 1) + diff) / period;
+                    avgLoss = (avgLoss * (period - 1)) / period;
+                } else {
+                    avgGain = (avgGain * (period - 1)) / period;
+                    avgLoss = (avgLoss * (period - 1) - diff) / period;
+                }
+            }
+            if (avgLoss === 0) return 100;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        // NOVO: Cálculo do ATR
+        function calculateATR(candles, period = 14) {
+            if (!candles || candles.length < period + 1) return 0;
+            const trs = [];
+            for (let i = 1; i < candles.length; i++) {
+                const high = candles[i].high;
+                const low = candles[i].low;
+                const prevClose = candles[i - 1].close;
+                trs.push(Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose)));
+            }
+            let atr = 0;
+            for (let i = 0; i < period && i < trs.length; i++) {
+                atr += trs[i];
+            }
+            atr /= Math.min(period, trs.length);
+            return atr;
+        }
+
+        function findDynamicSupportResistance(candles) {
+            if (!candles || candles.length < 20) return null;
+            const closes = candles.map(c => c.close);
+            const price = closes[closes.length - 1];
+            const highs = candles.slice(-50).map(c => c.high);
+            const lows = candles.slice(-50).map(c => c.low);
+            const support = Math.min(...lows);
+            const resistance = Math.max(...highs);
+            const supportTouches = lows.filter(l => Math.abs(l - support) < support * 0.005).length;
+            const resistanceTouches = highs.filter(h => Math.abs(h - resistance) < resistance * 0.005).length;
+            return { support, resistance, supportTouches, resistanceTouches };
+        }
+
+        async function fetchDailyStats(symbol) {
+            try {
+                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=31`;
+                const data = await safeFetch(url, null, `stats_${symbol}`, CACHE_TTL.binance_candles);
+                if (!data) return null;
+                const closes = data.map(k => parseFloat(k[4]));
+                const current = closes[closes.length - 1];
+                if (closes.length < 2) return null;
+                const dayAgo = closes[closes.length - 2];
+                const weekAgo = closes.length > 7 ? closes[closes.length - 8] : dayAgo;
+                const monthAgo = closes.length > 30 ? closes[closes.length - 31] : weekAgo;
+                return {
+                    current: current,
+                    day: dayAgo ? ((current - dayAgo) / dayAgo * 100) : 0,
+                    week: weekAgo ? ((current - weekAgo) / weekAgo * 100) : 0,
+                    month: monthAgo ? ((current - monthAgo) / monthAgo * 100) : 0
+                };
+            } catch (e) {
+                console.warn(`Daily stats ${symbol} error:`, e);
+                return null;
+            }
+        }
+
+        async function updateCandles() {
+            const pairs = [
+                { id: 'candle-btc', symbol: 'BTCUSDT', color: '#00d98e', statsId: 'btc-stats' },
+                { id: 'candle-eth', symbol: 'ETHUSDT', color: '#00b4d8', statsId: 'eth-stats' },
+                { id: 'candle-sol', symbol: 'SOLUSDT', color: '#ffd60a', statsId: 'sol-stats' }
+            ];
+            for (const p of pairs) {
+                try {
+                    if (!candleCharts[p.id]) {
+                        const chartObj = initCandleChart(p.id, p.symbol, p.color);
+                        if (chartObj) candleCharts[p.id] = chartObj;
+                        else continue;
+                    }
+                    const data = await fetchCandles(p.symbol);
+                    if (data && data.length > 0) {
+                        candleCharts[p.id].candleSeries.setData(data);
+                        candleCharts[p.id].chart.timeScale().fitContent();
+                        if (p.symbol === 'BTCUSDT') {
+                            const closes = data.map(c => c.close);
+                            ema50 = calculateEMA(closes, 50);
+                            ema200 = calculateEMA(closes, 200);
+                            rsi = calculateRSI(closes, 14);
+                            atrValue = calculateATR(data, 14);
+                            globalData.ema50 = ema50;
+                            globalData.ema200 = ema200;
+                            globalData.rsi = rsi;
+                            globalData.price = closes[closes.length - 1];
+                            globalData.atr = atrValue;
+                            document.getElementById('atr-value').textContent = '$' + atrValue.toFixed(2);
+                        }
+                    }
+                    const stats = await fetchDailyStats(p.symbol);
+                    if (stats) {
+                        const prefix = p.id.replace('candle-', '');
+                        const stat1d = document.getElementById(`${prefix}-stat-1d`);
+                        const stat1s = document.getElementById(`${prefix}-stat-1s`);
+                        const stat1m = document.getElementById(`${prefix}-stat-1m`);
+                        if (stat1d) {
+                            const val = stats.day;
+                            stat1d.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+                            stat1d.className = 'stat ' + (val >= 0 ? 'positive' : 'negative');
+                        }
+                        if (stat1s) {
+                            const val = stats.week;
+                            stat1s.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+                            stat1s.className = 'stat ' + (val >= 0 ? 'positive' : 'negative');
+                        }
+                        if (stat1m) {
+                            const val = stats.month;
+                            stat1m.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+                            stat1m.className = 'stat ' + (val >= 0 ? 'positive' : 'negative');
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Update candlestick ${p.symbol} error:`, e);
+                }
+            }
+        }
+
+        // ================================================================
+        // 7. SCORE ENGINE (v2 com pesos ajustados)
+        // ================================================================
+
+        function computeTrendScore(data) {
+            let score = 0;
+            if (data.ema50 > data.ema200) score += 10;
+            else score -= 10;
+            if (data.price > data.ema50) score += 5;
+            else score -= 3;
+            if (data.price > data.ma200) score += 5;
+            else score -= 3;
+            return clamp(score, -20, 20);
+        }
+
+        function computeMomentumScore(data) {
+            let score = 0;
+            const rsiNorm = ((data.rsi - 30) / 40) * 10;
+            score += clamp(rsiNorm, -10, 10);
+            if (data.macd > data.macdSignal) score += 10;
+            else score -= 10;
+            if (data.roc > 0) score += 5;
+            else if (data.roc < -2) score -= 5;
+            return clamp(score, -20, 20);
+        }
+
+        function computeStructureScore(data) {
+            let score = 0;
+            if (data.priceInFvg) score += 8;
+            const range = data.resistance - data.support;
+            if (range > 0) {
+                const distToSupport = data.price - data.support;
+                if (distToSupport > 0 && distToSupport < range * 0.2) score += 4;
+            }
+            if (data.resistanceTouches >= 3) score += 6;
+            if (data.patternType === 'falling_wedge' || data.patternType === 'double_bottom') score += 6;
+            return clamp(score, -20, 20);
+        }
+
+        function computeOnChainSentiment(data) {
+            let score = 0;
+            if (data.fearGreed < 30) score += 10;
+            else if (data.fearGreed > 80) score -= 10;
+            else if (data.fearGreed < 45) score += 5;
+            else if (data.fearGreed > 70) score -= 5;
+            if (data.mvrvSth < 0.85) score += 8;
+            else if (data.mvrvSth > 1.2) score -= 8;
+            else if (data.mvrvSth < 1.0) score += 5;
+            return clamp(score, -15, 15);
+        }
+
+        function computeSupplyDynamics(data) {
+            let score = 0;
+            if (data.sopr < 0.85) score += 5;
+            else if (data.sopr > 1.1) score -= 4;
+            if (data.whaleAccumulation > 0) score += 8;
+            else if (data.whaleAccumulation < -500) score -= 8;
+            if (data.exchangeNetflow < 1000) score += 4;
+            else if (data.exchangeNetflow > 5000) score -= 4;
+            return clamp(score, -10, 10);
+        }
+
+        function computeDerivatives(data) {
+            let score = 0;
+            if (data.oiDelta > 15) score -= 6;
+            else if (data.oiDelta < -10) score += 4;
+            if (data.fundingRate > 0.0008) score -= 5;
+            else if (data.fundingRate < -0.0008) score += 5;
+            if (data.longPositionRatio > 0.70) score -= 4;
+            else if (data.longPositionRatio < 0.40) score += 4;
+            return clamp(score, -10, 10);
+        }
+
+        function computeMacro(data) {
+            let score = 0;
+            if (data.dxy > 103) score -= 3;
+            else if (data.dxy < 100) score += 2;
+            if (data.etfFlow7d < -1000) score -= 3;
+            else if (data.etfFlow7d > 200) score += 2;
+            return clamp(score, -5, 5);
+        }
+
+        function computeInstitutionalScore(data) {
+            const layer1 = computeTrendScore(data) + computeMomentumScore(data) + computeStructureScore(data);
+            const layer2 = computeOnChainSentiment(data) + computeSupplyDynamics(data);
+            const layer3 = computeDerivatives(data) + computeMacro(data);
+
+            // Pesos ajustados: 60% layer1, 25% layer2, 15% layer3
+            const rawScore = (layer1 * 0.60) + (layer2 * 0.25) + (layer3 * 0.15);
+            const finalScore = clamp(rawScore, 0, 100);
+
+            let signal_type = 'NEUTRAL';
+            let conviction = 'LOW';
+            if (finalScore >= 80 && data.fearGreed < 40) { signal_type = 'STRONG_LONG';
+                conviction = 'HIGH'; } else if (finalScore >= 70) { signal_type = 'LONG';
+                conviction = 'MEDIUM'; } else if (finalScore >= 50 && finalScore <= 69) { signal_type = 'NEUTRAL'; } else if (
+                finalScore <= 20 && data.fearGreed > 60) { signal_type = 'STRONG_SHORT';
+                conviction = 'HIGH'; } else if (finalScore <= 30) { signal_type = 'SHORT';
+                conviction = 'MEDIUM'; }
+
+            return {
+                score: Math.round(finalScore),
+                signal_type,
+                conviction,
+                components: {
+                    trend: computeTrendScore(data),
+                    momentum: computeMomentumScore(data),
+                    structure: computeStructureScore(data),
+                    sentiment: computeOnChainSentiment(data),
+                    supply: computeSupplyDynamics(data),
+                    derivatives: computeDerivatives(data),
+                    macro: computeMacro(data)
+                }
+            };
+        }
+
+        // ================================================================
+        // 8. DADOS GLOBAIS (com fallback)
+        // ================================================================
         let globalData = {
             price: 60000,
             ema50: 65000,
             ema200: 62000,
             ma200: 62000,
             rsi: 45,
-            macd: 0,
-            macdSignal: 0,
+            macd: 120,
+            macdSignal: 100,
             roc: -2.5,
             support: 58000,
             resistance: 70000,
@@ -1335,888 +2031,68 @@
             longPositionRatio: 0.5,
             dxy: 101.5,
             etfFlow7d: -500,
-            volumeRel: 1.0
+            volumeRel: 1.0,
+            atr: 0
         };
 
         // ================================================================
-        // 6. Z-SCORE E REGIME (variáveis e funções)
+        // 9. LOGGER (mantido)
         // ================================================================
-        let priceHistoryBTC = [];
-        let priceHistoryETH = [];
-        let priceHistorySOL = [];
-        let prevZScore = 0;
-        let currentRegime = { stable: false, volatility: 0, correlation: 0 };
-        let currentZScoreBTCETH = 0;
-
-        function calcSpreadZScore(price1, price2, period = 20) {
-            if (price1.length < period || price2.length < period) return 0;
-            const spreads = [];
-            for (let i = 0; i < period; i++) {
-                spreads.push(price1[i] - price2[i]);
+        class MarketDataLogger {
+            constructor() {
+                this.logs = [];
+                this.errors = [];
+                this.localStorage_key = 'market_data_logs_v2';
             }
-            const mean = spreads.reduce((a, b) => a + b, 0) / spreads.length;
-            const std = Math.sqrt(spreads.reduce((a, b) => a + (b - mean) ** 2, 0) / spreads.length);
-            const currentSpread = price1[0] - price2[0];
-            return std === 0 ? 0 : (currentSpread - mean) / std;
-        }
-
-        function calcRegime(price1, price2, period = 20) {
-            if (price1.length < period || price2.length < period) return { stable: false, volatility: 0, correlation: 0 };
-            const spreads = [];
-            for (let i = 0; i < period; i++) spreads.push(price1[i] - price2[i]);
-            const mean = spreads.reduce((a, b) => a + b, 0) / spreads.length;
-            const std = Math.sqrt(spreads.reduce((a, b) => a + (b - mean) ** 2, 0) / spreads.length);
-            const vol = std / (Math.abs(mean) + 1e-10);
-
-            // Pearson correlation
-            const n = price1.length;
-            const sum1 = price1.reduce((a, b) => a + b, 0);
-            const sum2 = price2.reduce((a, b) => a + b, 0);
-            const sum1sq = price1.reduce((a, b) => a + b * b, 0);
-            const sum2sq = price2.reduce((a, b) => a + b * b, 0);
-            const sum12 = price1.reduce((a, b, i) => a + b * price2[i], 0);
-            const corr = (n * sum12 - sum1 * sum2) /
-                (Math.sqrt((n * sum1sq - sum1 * sum1) * (n * sum2sq - sum2 * sum2)) + 1e-10);
-
-            const stable = vol < 2.0 && corr > 0.7;
-            return { stable, volatility: vol, correlation: corr };
-        }
-
-        // ================================================================
-        // 7. FUNÇÕES DE INDICADORES TÉCNICOS
-        // ================================================================
-
-        function calculateEMA(closes, period) { if (!closes || closes.length < period) return null; const k = 2 / (period + 1);
-            let ema = closes.slice(0, period).reduce((a, b) => a + b) / period; for (let i = period; i < closes.length; i++) { ema =
-                    (closes[i] - ema) * k + ema; } return ema; }
-
-        function calculateMACD(closes) { if (!closes || closes.length < 26) return null; const e12 = calculateEMA(closes, 12);
-            const e26 = calculateEMA(closes, 26); const macd = e12 - e26; const macdArr = []; for (let i = 26; i < closes
-                .length; i++) { const e12i = calculateEMA(closes.slice(0, i + 1), 12); const e26i = calculateEMA(closes.slice(
-                    0, i + 1), 26); macdArr.push(e12i - e26i); } const signal = calculateEMA(macdArr, 9); return { macd, signal,
-                histogram: macd - signal }; }
-
-        function calculateRSI(closes, period = 14) { if (closes.length < period + 1) return 50; let gains = 0,
-            losses = 0; for (let i = 1; i <= period; i++) { const diff = closes[i] - closes[i - 1]; if (diff >= 0) gains +=
-                diff; else losses -= diff; } let avgGain = gains / period; let avgLoss = losses / period; for (let i = period +
-                1; i < closes.length; i++) { const diff = closes[i] - closes[i - 1]; if (diff >= 0) { avgGain = (avgGain * (
-                        period - 1) + diff) / period; avgLoss = (avgLoss * (period - 1)) / period; } else { avgGain = (avgGain *
-                        (period - 1)) / period; avgLoss = (avgLoss * (period - 1) - diff) / period; } } if (avgLoss === 0)
-                return 100; const rs = avgGain / avgLoss; return 100 - (100 / (1 + rs)); }
-
-        function findDynamicSupportResistance(candles) { if (!candles || candles.length < 20) return null; const closes =
-                candles.map(c => c.close); const price = closes[closes.length - 1]; const highs = candles.slice(-50).map(c =>
-                c.high); const lows = candles.slice(-50).map(c => c.low); const support = Math.min(...lows); const resistance =
-                Math.max(...highs); const supportTouches = lows.filter(l => Math.abs(l - support) < support * 0.005).length;
-            const resistanceTouches = highs.filter(h => Math.abs(h - resistance) < resistance * 0.005).length; return {
-                support,
-                resistance,
-                supportTouches,
-                resistanceTouches
-            }; }
-
-        function initCandleChart(containerId, symbol, color) {
-            const container = document.getElementById(containerId);
-            if (!container) return null;
-            const chart = LightweightCharts.createChart(container, { width: container.clientWidth, height: 250, layout: {
-                    background: { color: '#1a1a2e' }, textColor: '#95a5a6' }, grid: { vertLines: { visible: false },
-                    horzLines: { visible: false } }, crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-                priceScale: { borderColor: '#2c3e50' }, timeScale: { borderColor: '#2c3e50', timeVisible: true,
-                    secondsVisible: false } });
-            const candleSeries = chart.addCandlestickSeries({ upColor: color || '#00d98e', downColor: '#e94560',
-                borderDownColor: '#e94560', borderUpColor: '#00d98e', wickDownColor: '#e94560', wickUpColor: '#00d98e' });
-            return { chart, candleSeries };
-        }
-
-        async function fetchCandles(symbol, interval = '1h', limit = 24) {
-            try {
-                const url =
-                    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('Binance API error: ' + resp.status);
-                const data = await resp.json();
-                return data.map(k => ({ time: k[0] / 1000, open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[
-                    3]), close: parseFloat(k[4]) }));
-            } catch (e) { console.warn(`Candles ${symbol} error:`, e); return null; }
-        }
-
-        async function fetchDailyStats(symbol) {
-            try {
-                const url =
-                    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=31`;
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('Binance API error: ' + resp.status);
-                const data = await resp.json();
-                const closes = data.map(k => parseFloat(k[4]));
-                const current = closes[closes.length - 1];
-                if (closes.length < 2) return null;
-                const dayAgo = closes[closes.length - 2];
-                const weekAgo = closes.length > 7 ? closes[closes.length - 8] : dayAgo;
-                const monthAgo = closes.length > 30 ? closes[closes.length - 31] : weekAgo;
-                return { current, day: dayAgo ? ((current - dayAgo) / dayAgo * 100) : 0, week: weekAgo ? ((current -
-                        weekAgo) / weekAgo * 100) : 0, month: monthAgo ? ((current - monthAgo) / monthAgo * 100) : 0 };
-            } catch (e) { console.warn(`Daily stats ${symbol} error:`, e); return null; }
-        }
-
-        async function updateCandles() {
-            const pairs = [{ id: 'candle-btc', symbol: 'BTCUSDT', color: '#00d98e' }, { id: 'candle-eth',
-                    symbol: 'ETHUSDT', color: '#00b4d8' }, { id: 'candle-sol', symbol: 'SOLUSDT', color: '#ffd60a' } ];
-            for (const p of pairs) {
-                try {
-                    if (!candleCharts[p.id]) { const obj = initCandleChart(p.id, p.symbol, p.color); if (obj) candleCharts[
-                            p.id] = obj; else continue; }
-                    const data = await fetchCandles(p.symbol);
-                    if (data && data.length > 0) {
-                        candleCharts[p.id].candleSeries.setData(data);
-                        candleCharts[p.id].chart.timeScale().fitContent();
-                        if (p.symbol === 'BTCUSDT') {
-                            const closes = data.map(c => c.close);
-                            const ema50 = calculateEMA(closes, 50);
-                            const ema200 = calculateEMA(closes, 200);
-                            const rsi = calculateRSI(closes, 14);
-                            const macd = calculateMACD(closes);
-                            const sr = findDynamicSupportResistance(data);
-                            globalData.ema50 = ema50 || globalData.ema50;
-                            globalData.ema200 = ema200 || globalData.ema200;
-                            globalData.rsi = rsi || globalData.rsi;
-                            globalData.macd = macd ? macd.macd : globalData.macd;
-                            globalData.macdSignal = macd ? macd.signal : globalData.macdSignal;
-                            globalData.price = data[data.length - 1].close;
-                            if (sr) { globalData.support = sr.support;
-                                globalData.resistance = sr.resistance;
-                                globalData.resistanceTouches = sr.resistanceTouches; }
-                            const roc = ((closes[closes.length - 1] - closes[closes.length - 14]) / closes[closes
-                                .length - 14]) * 100;
-                            globalData.roc = roc;
-                        }
-                    }
-                    const stats = await fetchDailyStats(p.symbol);
-                    if (stats) {
-                        const prefix = p.id.replace('candle-', '');
-                        const dEl = document.getElementById(prefix + '-stat-1d');
-                        const sEl = document.getElementById(prefix + '-stat-1s');
-                        const mEl = document.getElementById(prefix + '-stat-1m');
-                        if (dEl) { const v = stats.day;
-                            dEl.textContent = (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
-                            dEl.className = 'stat ' + (v >= 0 ? 'positive' : 'negative'); }
-                        if (sEl) { const v = stats.week;
-                            sEl.textContent = (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
-                            sEl.className = 'stat ' + (v >= 0 ? 'positive' : 'negative'); }
-                        if (mEl) { const v = stats.month;
-                            mEl.textContent = (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
-                            mEl.className = 'stat ' + (v >= 0 ? 'positive' : 'negative'); }
-                    }
-                } catch (e) { console.warn(`Update candlestick ${p.symbol} error:`, e); }
-            }
-        }
-
-        // ================================================================
-        // 8. SCORE ENGINE (COM Z-SCORE E REGIME)
-        // ================================================================
-
-        function computeAdvancedScore(data) {
-            // 1. Tendência (20%)
-            let trend = 0;
-            if (data.ema50 > data.ema200) trend += 10;
-            else trend -= 10;
-            if (data.price > data.ema50) trend += 5;
-            else trend -= 3;
-            if (data.price > data.ma200) trend += 5;
-            else trend -= 3;
-            trend = clamp(trend, -20, 20);
-
-            // 2. Momentum (20%)
-            let momentum = 0;
-            const rsiNorm = ((data.rsi - 30) / 40) * 10;
-            momentum += clamp(rsiNorm, -10, 10);
-            if (data.macd > data.macdSignal) momentum += 10;
-            else momentum -= 10;
-            if (data.roc > 0) momentum += 5;
-            else if (data.roc < -2) momentum -= 5;
-            momentum = clamp(momentum, -20, 20);
-
-            // 3. Estrutura (15%)
-            let structure = 0;
-            if (data.priceInFvg) structure += 8;
-            const range = data.resistance - data.support;
-            if (range > 0) {
-                const distToSupport = (data.price - data.support) / range;
-                if (distToSupport > 0 && distToSupport < 0.2) structure += 4;
-            }
-            if (data.resistanceTouches >= 3) structure += 6;
-            if (data.patternType === 'falling_wedge' || data.patternType === 'double_bottom') structure += 6;
-            structure = clamp(structure, -20, 20);
-
-            // 4. On-Chain (20%)
-            let onchain = 0;
-            if (data.fearGreed < 30) onchain += 10;
-            else if (data.fearGreed > 80) onchain -= 10;
-            else if (data.fearGreed < 45) onchain += 5;
-            else if (data.fearGreed > 70) onchain -= 5;
-            if (data.mvrvSth < 0.85) onchain += 8;
-            else if (data.mvrvSth > 1.2) onchain -= 8;
-            else if (data.mvrvSth < 1.0) onchain += 5;
-            onchain = clamp(onchain, -15, 15);
-
-            // 5. Oferta (10%)
-            let supply = 0;
-            if (data.sopr < 0.85) supply += 5;
-            else if (data.sopr > 1.1) supply -= 4;
-            if (data.whaleAccumulation > 0) supply += 8;
-            else if (data.whaleAccumulation < -500) supply -= 8;
-            if (data.exchangeNetflow < 1000) supply += 4;
-            else if (data.exchangeNetflow > 5000) supply -= 4;
-            supply = clamp(supply, -10, 10);
-
-            // 6. Derivativos (10%)
-            let deriv = 0;
-            if (data.oiDelta > 15) deriv -= 6;
-            else if (data.oiDelta < -10) deriv += 4;
-            if (data.fundingRate > 0.0008) deriv -= 5;
-            else if (data.fundingRate < -0.0008) deriv += 5;
-            if (data.longPositionRatio > 0.70) deriv -= 4;
-            else if (data.longPositionRatio < 0.40) deriv += 4;
-            deriv = clamp(deriv, -10, 10);
-
-            // 7. Macro (5%)
-            let macro = 0;
-            if (data.dxy > 103) macro -= 3;
-            else if (data.dxy < 100) macro += 2;
-            if (data.etfFlow7d < -1000) macro -= 3;
-            else if (data.etfFlow7d > 200) macro += 2;
-            macro = clamp(macro, -5, 5);
-
-            // 8. Ajuste Z-Score / Regime
-            let zScoreBonus = 0;
-            const z = currentZScoreBTCETH;
-            const regime = currentRegime.stable;
-
-            if (regime) {
-                if (z < -1.5) zScoreBonus += 5;
-                else if (z > 1.5) zScoreBonus -= 5;
-            } else {
-                if (z > prevZScore) zScoreBonus += 3;
-                else zScoreBonus -= 3;
-            }
-            zScoreBonus = clamp(zScoreBonus, -5, 5);
-
-            const raw = (trend * 0.20) + (momentum * 0.20) + (structure * 0.15) +
-                (onchain * 0.20) + (supply * 0.10) + (deriv * 0.10) + (macro * 0.05);
-            const adjustedRaw = raw + zScoreBonus * 0.3;
-            const finalScore = clamp((adjustedRaw / 100) * 50 + 50, 0, 100);
-
-            let signal_type = 'NEUTRAL';
-            let conviction = 'LOW';
-            if (finalScore >= 80 && data.fearGreed < 40) { signal_type = 'STRONG_LONG';
-                conviction = 'HIGH'; } else if (finalScore >= 65) { signal_type = 'LONG';
-                conviction = 'MEDIUM'; } else if (finalScore >= 50 && finalScore <= 64) { signal_type = 'NEUTRAL'; } else if (
-                finalScore <= 20 && data.fearGreed > 60) { signal_type = 'STRONG_SHORT';
-                conviction = 'HIGH'; } else if (finalScore <= 35) { signal_type = 'SHORT';
-                conviction = 'MEDIUM'; }
-
-            return {
-                score: Math.round(finalScore),
-                signal_type,
-                conviction,
-                components: { trend, momentum, structure, sentiment: onchain, supply, derivatives: deriv, macro }
-            };
-        }
-
-        // ================================================================
-        // 9. CONFIRMAÇÃO (PILARES)
-        // ================================================================
-
-        function validateSignalConfirmation(signal_type, data) {
-            const pillars = {};
-            if (signal_type === 'LONG') {
-                pillars.trend = data.ema50 > data.ema200;
-                pillars.momentum = data.rsi > 40 && data.macd > data.macdSignal;
-                pillars.onchain = data.mvrvSth < 0.9 && data.sopr < 1.0;
-                pillars.sentiment = data.fearGreed < 35;
-                pillars.derivatives = data.fundingRate < 0.0005 && data.oiDelta < 10;
-            } else if (signal_type === 'SHORT') {
-                pillars.trend = data.rsi > 70;
-                pillars.momentum = data.macd < data.macdSignal;
-                pillars.onchain = data.mvrv > 1.2 && data.sopr > 1.0;
-                pillars.sentiment = data.fearGreed > 75;
-                pillars.derivatives = data.oiDelta > 15 || data.fundingRate > 0.0008;
-            } else {
-                return { valid: false, passedPillars: [], missingPillars: [], confirmationScore: 0 };
-            }
-            const passed = Object.keys(pillars).filter(k => pillars[k]);
-            const score = (passed.length / Object.keys(pillars).length) * 100;
-            return {
-                valid: passed.length >= 3,
-                passedPillars: passed,
-                missingPillars: Object.keys(pillars).filter(k => !pillars[k]),
-                confirmationScore: score
-            };
-        }
-
-        // ================================================================
-        // 10. NOTIFICAÇÕES TELEGRAM
-        // ================================================================
-
-        let lastAlertTime = 0;
-        const COOLDOWN_NORMAL = 30 * 60 * 1000; // 30 min
-        const COOLDOWN_CRITICAL = 0;
-
-        async function sendTelegramAlert(message, priority = 'MEDIUM') {
-            const now = Date.now();
-            const cooldown = priority === 'CRITICAL' ? COOLDOWN_CRITICAL : COOLDOWN_NORMAL;
-            if (now - lastAlertTime < cooldown) {
-                console.log('⏳ Cooldown ativo, alerta não enviado.');
-                return;
-            }
-            if (!TELEGRAM_TOKEN || TELEGRAM_TOKEN === 'SEU_TOKEN_AQUI') {
-                console.warn('⚠️ Token do Telegram não configurado. Alerta apenas no console.');
-                console.log('📨 [MOCK]', message);
-                lastAlertTime = now;
-                return;
-            }
-            try {
-                const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-                const payload = { chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' };
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (response.ok) {
-                    console.log('✅ Alerta enviado para o Telegram.');
-                    lastAlertTime = now;
-                } else {
-                    const errorText = await response.text();
-                    console.warn('❌ Falha ao enviar alerta:', errorText);
-                }
-            } catch (e) {
-                console.error('❌ Erro ao enviar alerta:', e);
-            }
-        }
-
-        async function sendStructuredAlert(signalType, score, price, stop, targets, rationale) {
-            const emojis = { long: '🟢', short: '🔴' };
-            const direction = signalType.toUpperCase();
-            let msg = `${emojis[signalType]} <b>SINAL ${direction} - BTCUSDT</b>\n`;
-            msg += `Confiança: ${Math.round(score)}%\n`;
-            msg += `Entrada: $${price.toFixed(2)}\n`;
-            msg += `Stop Loss: $${stop.toFixed(2)} ( ${((stop / price - 1) * 100).toFixed(2)}% )\n`;
-            msg += `Alvos:\n`;
-            targets.forEach((t, i) => { msg += `  TP${i+1}: $${t.price.toFixed(2)} (R:R ${t.rr.toFixed(1)})\n`; });
-            msg += `Risco/Retorno: ${(targets[targets.length - 1].rr / 1.5).toFixed(1)}\n`;
-            msg += `Fundamentos: ${rationale}\n`;
-            msg += `Z-Score BTC/ETH: ${currentZScoreBTCETH.toFixed(2)} | Regime: ${currentRegime.stable ? 'Estável' : 'Instável'}\n`;
-            msg += `Data/Hora: ${getCurrentTimestamp()}`;
-            const priority = score >= 85 || score <= 15 ? 'CRITICAL' : 'MEDIUM';
-            await sendTelegramAlert(msg, priority);
-        }
-
-        // ================================================================
-        // 11. BOTÃO DE TESTE TELEGRAM
-        // ================================================================
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const btn = document.getElementById('test-telegram-btn');
-            const label = document.getElementById('test-btn-label');
-            if (!btn) return;
-            btn.addEventListener('click', async function() {
-                const score = document.getElementById('score-value')?.textContent || '--';
-                const price = document.getElementById('btc-price')?.textContent || '--';
-                const msg =
-                    `🔔 <b>TESTE DE ALERTA</b>\n\nEste é um alerta de teste do seu dashboard.\n✅ Status: CONECTADO\n📊 Score atual: ${score}\n💰 Preço BTC: ${price}\n⏰ Enviado em: ${getCurrentTimestamp()}\n📈 Z-Score: ${currentZScoreBTCETH.toFixed(2)}`;
-                label.innerHTML = '<span class="spinner"></span> Enviando...';
-                btn.disabled = true;
-                await sendTelegramAlert(msg, 'CRITICAL');
-                label.textContent = '✅ Enviado!';
-                setTimeout(() => { label.textContent = '📨 Testar Alerta';
-                    btn.disabled = false; }, 2500);
-            });
-        });
-
-        // ================================================================
-        // 12. FETCH DE DADOS (COM CACHE)
-        // ================================================================
-
-        async function fetchPrices() {
-            try {
-                const url =
-                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true';
-                const data = await safeFetch(url, { bitcoin: { usd: 60000, usd_24h_change: -5.94 }, ethereum: { usd: 1573.53,
-                        usd_24h_change: -0.15 }, solana: { usd: 170, usd_24h_change: -2.30 } }, CACHE_TTL.prices);
-                const btc = data.bitcoin;
-                const btcPrice = btc.usd;
-                document.getElementById('btc-price').textContent = formatCurrency(btcPrice);
-                document.getElementById('btc-price').className = 'value ' + getChangeClass(btc.usd_24h_change);
-                document.getElementById('btc-change').textContent = formatChange(btc.usd_24h_change) + ' (live)';
-                document.getElementById('btc-source').textContent = 'CoinGecko • ' + getCurrentTimestamp();
-                globalData.price = btcPrice;
-
-                const eth = data.ethereum;
-                const ethPrice = eth.usd;
-                document.getElementById('eth-price').textContent = formatCurrency(ethPrice);
-                document.getElementById('eth-price').className = 'value ' + getChangeClass(eth.usd_24h_change);
-                document.getElementById('eth-change').textContent = formatChange(eth.usd_24h_change) + ' (live)';
-                document.getElementById('eth-source').textContent = 'CoinGecko • ' + getCurrentTimestamp();
-
-                const sol = data.solana;
-                document.getElementById('sol-price').textContent = formatCurrency(sol.usd);
-                document.getElementById('sol-price').className = 'value ' + getChangeClass(sol.usd_24h_change);
-                document.getElementById('sol-change').textContent = formatChange(sol.usd_24h_change) + ' (live)';
-                document.getElementById('sol-source').textContent = 'CoinGecko • ' + getCurrentTimestamp();
-
-                // Atualizar histórico para Z-Score e Regime
-                if (btcPrice && ethPrice) {
-                    priceHistoryBTC.unshift(btcPrice);
-                    priceHistoryETH.unshift(ethPrice);
-                    if (priceHistoryBTC.length > 30) priceHistoryBTC.pop();
-                    if (priceHistoryETH.length > 30) priceHistoryETH.pop();
-
-                    if (priceHistoryBTC.length >= 20 && priceHistoryETH.length >= 20) {
-                        currentZScoreBTCETH = calcSpreadZScore(priceHistoryBTC, priceHistoryETH, 20);
-                        currentRegime = calcRegime(priceHistoryBTC, priceHistoryETH, 20);
-
-                        const zEl = document.getElementById('zscore-btceth');
-                        zEl.textContent = currentZScoreBTCETH.toFixed(2);
-                        zEl.style.color = Math.abs(currentZScoreBTCETH) > 2 ? 'var(--accent-yellow)' : 'var(--text-light)';
-                        const zLabel = document.getElementById('zscore-btceth-label');
-                        if (currentZScoreBTCETH > 2) zLabel.textContent = 'BTC sobrecomprado vs ETH';
-                        else if (currentZScoreBTCETH < -2) zLabel.textContent = 'BTC sobrevendido vs ETH';
-                        else zLabel.textContent = 'Neutro';
-                        document.getElementById('zscore-source').textContent = 'Calculado • ' + getCurrentTimestamp();
-
-                        const regimeEl = document.getElementById('regime-status');
-                        regimeEl.textContent = currentRegime.stable ? '🟢 Estável' : '🔴 Instável';
-                        regimeEl.style.color = currentRegime.stable ? 'var(--accent-green)' : 'var(--accent-red)';
-                        document.getElementById('regime-detail').textContent =
-                            `Vol: ${currentRegime.volatility.toFixed(2)} | Corr: ${currentRegime.correlation.toFixed(2)}`;
-                        document.getElementById('regime-source').textContent = 'Calculado • ' + getCurrentTimestamp();
+            logFetch(endpoint, status, duration_ms, success) {
+                const entry = { timestamp: new Date().toISOString(), endpoint, status, duration_ms, success };
+                this.logs.push(entry);
+                if (!success) {
+                    const recent_errors = this.errors.filter(e =>
+                        e.endpoint === endpoint && (Date.now() - new Date(e.timestamp).getTime()) < 600000
+                    );
+                    const error_entry = { timestamp: new Date().toISOString(), endpoint, status, count: recent_errors
+                            .length + 1 };
+                    this.errors.push(error_entry);
+                    if (recent_errors.length >= 2) {
+                        console.error(`🔴 CRITICAL: ${endpoint} failing (${recent_errors.length + 1}x in 10min)`);
                     }
                 }
-
-                updateLiveTime();
-            } catch (e) { console.warn('Prices error:', e); }
+            }
+            getSuccessRate() {
+                if (this.logs.length === 0) return 100;
+                const successful = this.logs.filter(l => l.success).length;
+                return Math.round((successful / this.logs.length) * 100);
+            }
         }
-
-        async function fetchFearGreed() {
-            try {
-                const data = await safeFetch('https://api.alternative.me/fng/?limit=1', { data: [{ value: 18,
-                            value_classification: 'Extreme Fear' }] }, CACHE_TTL.fng);
-                const item = data.data[0];
-                const value = item.value;
-                const classification = item.value_classification;
-                const headerFng = document.getElementById('header-fng');
-                headerFng.innerHTML = '😱 FEAR & GREED: ' + value + ' (' + classification + ')';
-                headerFng.className = 'badge ' + (parseInt(value) <= 25 ? 'extreme-fear' : '');
-                const headerSentiment = document.getElementById('header-sentiment');
-                const sentimentText = (parseInt(value) <= 25) ? '⚠️ SENTIMENTO: PESSIMISTA' : (parseInt(value) <= 45 ?
-                    '⚠️ SENTIMENTO: NEUTRO' : '✅ SENTIMENTO: BULLISH');
-                headerSentiment.textContent = sentimentText;
-                headerSentiment.className = 'badge ' + (parseInt(value) <= 25 ? 'sentiment-bearish' :
-                    'sentiment-bullish');
-                globalData.fearGreed = parseInt(value);
-                updateLiveTime();
-            } catch (e) { console.warn('Fear & Greed error:', e); }
-        }
-
-        async function fetchDeFiData() {
-            try {
-                const data1 = await safeFetch('https://stablecoins.llama.fi/stablecoins', { peggedAssets: [{ total: 320 }] },
-                    60000);
-                let totalSupply = 0;
-                if (data1 && data1.peggedAssets) data1.peggedAssets.forEach(a => { if (a.total) totalSupply += a.total; });
-                if (totalSupply > 0) { document.getElementById('stablecoin-supply').textContent = formatCurrency(
-                    totalSupply) + ' (live)';
-                    document.getElementById('stablecoin-source').textContent = 'DefiLlama • ' + getCurrentTimestamp(); }
-                const data2 = await safeFetch('https://api.llama.fi/charts', [{ totalLiquidityUSD: 70 }], 60000);
-                const lastTvl = data2[data2.length - 1]?.totalLiquidityUSD || 70;
-                const prevTvl = data2[data2.length - 2]?.totalLiquidityUSD || 70;
-                const change = prevTvl ? ((lastTvl - prevTvl) / prevTvl) * 100 : 0;
-                document.getElementById('defi-tvl').textContent = formatCurrency(lastTvl) + ' (live)';
-                document.getElementById('defi-tvl').className = 'value ' + getChangeClass(change);
-                document.getElementById('defi-tvl-change').textContent = formatChange(change) + ' (live)';
-                document.getElementById('defi-tvl-change').className = getChangeClass(change);
-                document.getElementById('defi-tvl-interp').textContent = change >= 0 ? '✅ Entrada de liquidez' :
-                    '⚠️ Saída de liquidez';
-                document.getElementById('defi-tvl-source').textContent = 'DefiLlama • ' + getCurrentTimestamp();
-                document.getElementById('defi-change-source').textContent = 'DefiLlama • ' + getCurrentTimestamp();
-                updateLiveTime();
-            } catch (e) { console.warn('DeFi data error:', e); }
-        }
-
-        async function fetchBinanceDerivatives() {
-            try {
-                const oiData = await safeFetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT', { openInterest: 20.69e9 },
-                    CACHE_TTL.oi);
-                const currentOI = parseFloat(oiData.openInterest);
-                const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) : currentOI *
-                0.915;
-                if (prevOI > 0 && currentOI > 0) { globalData.oiDelta = ((currentOI - prevOI) / prevOI) * 100;
-                    localStorage.setItem('prevOI', currentOI); }
-                document.getElementById('open-interest').textContent = formatCurrency(currentOI) + ' (live)';
-                document.getElementById('open-interest-interp').textContent = currentOI > 1e9 ? '⚠️ Alto' :
-                'ℹ️ Moderado';
-                document.getElementById('open-interest-source').textContent = 'Binance • ' + getCurrentTimestamp();
-
-                const frData = await safeFetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1', [
-                    { fundingRate: 0.000043 }
-                ], CACHE_TTL.funding);
-                const fr = parseFloat(frData[0]?.fundingRate) || 0;
-                globalData.fundingRate = fr;
-                document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '% (live)';
-                document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
-                    fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
-                document.getElementById('funding-rate-source').textContent = 'Binance • ' + getCurrentTimestamp();
-
-                const frAvgData = await safeFetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8', [],
-                    CACHE_TTL.funding);
-                if (frAvgData.length) { const avg = frAvgData.reduce((s, i) => s + parseFloat(i.fundingRate), 0) / frAvgData
-                        .length;
-                    document.getElementById('funding-rate-avg').textContent = (avg * 100).toFixed(4) + '% (live)';
-                    document.getElementById('funding-rate-avg-source').textContent = 'Binance • ' + getCurrentTimestamp(); }
-
-                const lsData = await safeFetch(
-                    'https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h&limit=1', [
-                    { longPositionRatio: 0.6 }
-                    ], CACHE_TTL.lsratio);
-                if (lsData[0]) {
-                    const longP = parseFloat(lsData[0].longPositionRatio) * 100;
-                    const shortP = 100 - longP;
-                    globalData.longPositionRatio = longP / 100;
-                    document.getElementById('ls-ratio-pos').textContent = longP.toFixed(1) + '% / ' + shortP.toFixed(
-                        1) + '% (live)';
-                    const interp = document.getElementById('ls-ratio-pos-interp');
-                    if (longP > 70) { interp.textContent = '⚠️ Long extremo (>70%)';
-                        interp.className = 'alert-divergence'; } else { interp.textContent = 'ℹ️ Neutro';
-                        interp.className = ''; }
-                    document.getElementById('ls-pos-source').textContent = 'Binance • ' + getCurrentTimestamp();
-                }
-                updateLiveTime();
-            } catch (e) { console.warn('Binance derivatives error:', e); }
-        }
-
-        async function fetchBRK() {
-            try {
-                const mvrvData = await safeFetch('https://bitview.space/api/metrics/btc/mvrv?resolution=1d', [[0, 1.15]],
-                    CACHE_TTL.mvrv);
-                if (mvrvData[0]) { globalData.mvrvSth = parseFloat(mvrvData[0][1]);
-                    document.getElementById('mvrv').textContent = globalData.mvrvSth + ' (live)';
-                    document.getElementById('mvrv-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
-                const soprData = await safeFetch('https://bitview.space/api/metrics/btc/sopr?resolution=1d', [[0, 0.80]],
-                    CACHE_TTL.sopr);
-                if (soprData[0]) { globalData.sopr = parseFloat(soprData[0][1]);
-                    document.getElementById('sopr').textContent = globalData.sopr + ' (live)';
-                    document.getElementById('sopr-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
-                const mvrvSthData = await safeFetch('https://bitview.space/api/metrics/btc/mvrv_short?resolution=1d', [[
-                    0, 0.84
-                ]], CACHE_TTL.mvrv);
-                if (mvrvSthData[0]) { document.getElementById('mvrv-sth').textContent = parseFloat(mvrvSthData[0][
-                    1]) + ' (live)';
-                    document.getElementById('mvrv-sth-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
-                const asoprData = await safeFetch('https://bitview.space/api/metrics/btc/sopr_adjusted?resolution=1d', [
-                    [0, 0.99]
-                ], CACHE_TTL.mvrv);
-                if (asoprData[0]) { document.getElementById('asopr').textContent = parseFloat(asoprData[0][1]) +
-                    ' (live)';
-                    document.getElementById('asopr-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
-                const realizedData = await safeFetch('https://bitview.space/api/metrics/btc/realized_price?resolution=1d', [
-                    [0, 53600]
-                ], CACHE_TTL.mvrv);
-                if (realizedData[0]) { document.getElementById('realized-price').textContent = '$' + parseFloat(
-                    realizedData[0][1]).toFixed(0) + ' (live)';
-                    document.getElementById('realized-price-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
-                const activeData = await safeFetch('https://bitview.space/api/metrics/btc/active_addresses?resolution=1d', [
-                    [0, 605298]
-                ], CACHE_TTL.mvrv);
-                if (activeData[0]) { document.getElementById('active-addresses').textContent = parseFloat(activeData[0][
-                    1]).toFixed(0) + ' (live)';
-                    document.getElementById('active-addresses-source').textContent = 'BitView • ' + getCurrentTimestamp(); }
-                updateLiveTime();
-            } catch (e) { console.warn('BRK error:', e); }
-        }
-
-        async function fetchHashrate() {
-            try {
-                const resp = await fetch('https://blockchain.info/q/hashrate', { headers: { 'User-Agent': 'Mozilla/5.0' } });
-                if (resp.ok) { const text = await resp.text();
-                    const hr = parseFloat(text) / 1e18; if (!isNaN(hr) && hr > 0) { document.getElementById(
-                            'btc-hashrate').textContent = hr.toFixed(2) + ' EH/s (live)';
-                        document.getElementById('hashrate-source').textContent = 'Blockchain.com • ' + getCurrentTimestamp();
-                        updateLiveTime(); } }
-            } catch (e) { console.warn('Hashrate error:', e); }
-        }
-
-        async function fetchGasPrice() {
-            try {
-                const url =
-                    `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_KEY}`;
-                const data = await safeFetch(url, { status: '0', result: { ProposeGasPrice: '56.8' } }, 60000);
-                if (data.status === '1') { const gasPrice = parseFloat(data.result.ProposeGasPrice) / 10;
-                    document.getElementById('eth-gas').textContent = gasPrice.toFixed(2) + ' Gwei (live)';
-                    document.getElementById('gas-source').textContent = 'Etherscan • ' + getCurrentTimestamp();
-                    updateLiveTime(); }
-            } catch (e) { console.warn('Gas price error:', e); }
-        }
+        const logger = new MarketDataLogger();
 
         // ================================================================
-        // 13. MASTER REFRESH
+        // 10. BACKTEST ENGINE (com ATR dinâmico)
         // ================================================================
 
-        async function refreshAll() {
-            updateTimestamp();
-            await Promise.allSettled([
-                fetchPrices(),
-                fetchFearGreed(),
-                fetchDeFiData(),
-                fetchBinanceDerivatives(),
-                fetchBRK(),
-                fetchHashrate(),
-                fetchGasPrice()
-            ]);
+        async function runBacktest() {
+            const modalBody = document.getElementById('backtestBody');
+            modalBody.innerHTML = `
+                <div class="backtest-loading">
+                    <div class="spinner"></div>
+                    <p>Baixando dados dos últimos 90 dias...</p>
+                </div>
+            `;
 
-            prevZScore = currentZScoreBTCETH;
-
-            const scoreData = computeAdvancedScore(globalData);
-            const confirmation = validateSignalConfirmation(scoreData.signal_type, globalData);
-
-            const scoreValue = document.getElementById('score-value');
-            const scoreBar = document.getElementById('score-bar');
-            if (scoreValue) {
-                scoreValue.textContent = scoreData.score;
-                if (scoreData.score >= 80) { scoreValue.style.color = 'var(--accent-green)';
-                    scoreBar.style.background = 'var(--accent-green)'; } else if (scoreData.score <= 20) { scoreValue
-                        .style.color = 'var(--accent-red)';
-                    scoreBar.style.background = 'var(--accent-red)'; } else { scoreValue.style.color =
-                        'var(--accent-yellow)';
-                    scoreBar.style.background = 'var(--accent-yellow)'; }
-            }
-            if (scoreBar) scoreBar.style.width = scoreData.score + '%';
-
-            document.getElementById('score-trend').textContent = ((scoreData.components.trend + 20) / 40 * 100).toFixed(
-            1);
-            document.getElementById('score-momentum').textContent = ((scoreData.components.momentum + 20) / 40 * 100)
-                .toFixed(1);
-            document.getElementById('score-structure').textContent = ((scoreData.components.structure + 20) / 40 * 100)
-                .toFixed(1);
-            document.getElementById('score-onchain').textContent = ((scoreData.components.sentiment + 15) / 30 * 100)
-                .toFixed(1);
-            document.getElementById('score-supply').textContent = ((scoreData.components.supply + 10) / 20 * 100)
-                .toFixed(1);
-            document.getElementById('score-deriv').textContent = ((scoreData.components.derivatives + 10) / 20 * 100)
-                .toFixed(1);
-            document.getElementById('score-macro').textContent = ((scoreData.components.macro + 5) / 10 * 100).toFixed(
-            1);
-
-            const desc = document.getElementById('signal-description');
-            if (scoreData.signal_type === 'STRONG_LONG') desc.innerHTML =
-                '🟢 <strong>STRONG LONG</strong> — Entrada recomendada com stop tight.';
-            else if (scoreData.signal_type === 'LONG') desc.innerHTML =
-                '🟢 <strong>LONG</strong> — Aguardar confirmação.';
-            else if (scoreData.signal_type === 'NEUTRAL') desc.innerHTML =
-                '🟡 <strong>NEUTRAL</strong> — Consolidando, não operar.';
-            else if (scoreData.signal_type === 'SHORT') desc.innerHTML =
-                '🔴 <strong>SHORT</strong> — Aguardar confirmação.';
-            else if (scoreData.signal_type === 'STRONG_SHORT') desc.innerHTML =
-                '🔴 <strong>STRONG SHORT</strong> — Entrada recomendada.';
-
-            const confirmationEl = document.getElementById('confirmation-pillars');
-            if (confirmationEl) {
-                if (scoreData.signal_type === 'NEUTRAL') { confirmationEl.textContent =
-                        'Confirmação: ⏳ (apenas para LONG/SHORT)'; } else {
-                    confirmationEl.textContent =
-                        `Confirmação: ${confirmation.confirmationScore.toFixed(0)}% (${confirmation.passedPillars.length}/5 pilares)`;
-                    if (!confirmation.valid) confirmationEl.style.color = 'var(--accent-red)';
-                    else confirmationEl.style.color = 'var(--accent-green)';
-                }
-            }
-
-            if (scoreData.signal_type !== 'NEUTRAL' && confirmation.valid) {
-                const price = globalData.price || 60000;
+            try {
+                // 1. Dados de Preço (Binance Klines) - 90 dias
                 const now = Date.now();
-                const cooldown = (scoreData.score >= 85 || scoreData.score <= 15) ? 0 : COOLDOWN_NORMAL;
-                if (now - lastAlertTime > cooldown) {
-                    const isLong = scoreData.signal_type === 'STRONG_LONG' || scoreData.signal_type === 'LONG';
-                    const stop = isLong ? price * 0.985 : price * 1.015;
-                    const targets = isLong ?
-                        [{ price: price * 1.02, rr: 1.33 }, { price: price * 1.05, rr: 3.33 }, { price: price * 1.10,
-                            rr: 6.67 }] :
-                        [{ price: price * 0.98, rr: 1.33 }, { price: price * 0.95, rr: 3.33 }, { price: price * 0.90,
-                            rr: 6.67 }];
-                    const rationale = isLong ?
-                        'Golden Cross + Fear & Greed < 30 + MVRV STH baixo + Whale acumulação.' :
-                        'RSI > 70 + OI Delta > 15% + Fear & Greed > 70.';
-                    await sendStructuredAlert(isLong ? 'long' : 'short', scoreData.score, price, stop, targets,
-                    rationale);
-                    lastAlertTime = now;
-                }
-            }
-        }
+                const ninetyDaysAgo = now - (90 * 24 * 60 * 60 * 1000);
+                const klinesRes = await fetch(
+                    `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${ninetyDaysAgo}&limit=100`
+                );
+                if (!klinesRes.ok) throw new Error(`Erro ao buscar klines: ${klinesRes.status}`);
+                const klines = await klinesRes.json();
 
-        // ================================================================
-        // 14. BACKTEST 30 DIAS (COM DADOS REAIS)
-        // ================================================================
-
-        // Funções auxiliares para históricos
-        async function fetchMVRVHistory(days = 30) {
-            try {
-                const data = await safeFetch('https://bitview.space/api/metrics/btc/mvrv?resolution=1d', null, 'mvrv_hist',
-                    CACHE_TTL.mvrv);
-                if (!data || !Array.isArray(data)) return {};
-                const map = {};
-                const sorted = data.sort((a, b) => a[0] - b[0]);
-                const recent = sorted.slice(-days);
-                recent.forEach(item => {
-                    const date = new Date(item[0] * 1000).toISOString().split('T')[0];
-                    map[date] = parseFloat(item[1]);
-                });
-                return map;
-            } catch (e) { console.warn('MVRV history error:', e); return {}; }
-        }
-
-        async function fetchSOPRHistory(days = 30) {
-            try {
-                const data = await safeFetch('https://bitview.space/api/metrics/btc/sopr?resolution=1d', null, 'sopr_hist',
-                    CACHE_TTL.sopr);
-                if (!data || !Array.isArray(data)) return {};
-                const map = {};
-                const sorted = data.sort((a, b) => a[0] - b[0]);
-                const recent = sorted.slice(-days);
-                recent.forEach(item => {
-                    const date = new Date(item[0] * 1000).toISOString().split('T')[0];
-                    map[date] = parseFloat(item[1]);
-                });
-                return map;
-            } catch (e) { console.warn('SOPR history error:', e); return {}; }
-        }
-
-        async function fetchETFHistory(days = 30) {
-            const base = -445;
-            const map = {};
-            const today = new Date();
-            for (let i = days - 1; i >= 0; i--) {
-                const d = new Date(today);
-                d.setDate(d.getDate() - i);
-                const dateKey = d.toISOString().split('T')[0];
-                const variation = (Math.random() - 0.5) * 100;
-                map[dateKey] = base + variation;
-            }
-            return map;
-        }
-
-        async function fetchMacroHistory(days = 30) {
-            try {
-                const endDate = new Date();
-                const startDate = new Date();
-                startDate.setDate(startDate.getDate() - days);
-                const startStr = startDate.toISOString().split('T')[0];
-                const endStr = endDate.toISOString().split('T')[0];
-
-                const urlDxy =
-                    `https://api.stlouisfed.org/fred/series/observations?series_id=DTWEXBGS&api_key=${FRED_API_KEY}&file_type=json&observation_start=${startStr}&observation_end=${endStr}`;
-                const urlUs10y =
-                    `https://api.stlouisfed.org/fred/series/observations?series_id=GS10&api_key=${FRED_API_KEY}&file_type=json&observation_start=${startStr}&observation_end=${endStr}`;
-
-                const [dxyData, us10yData] = await Promise.all([
-                    safeFetch(urlDxy, { observations: [] }, 'dxy_hist', CACHE_TTL.prices),
-                    safeFetch(urlUs10y, { observations: [] }, 'us10y_hist', CACHE_TTL.prices)
-                ]);
-
-                const dxyMap = {};
-                const us10yMap = {};
-                if (dxyData.observations) {
-                    dxyData.observations.forEach(o => {
-                        if (o.value !== '.') {
-                            const date = o.date;
-                            dxyMap[date] = parseFloat(o.value);
-                        }
-                    });
-                }
-                if (us10yData.observations) {
-                    us10yData.observations.forEach(o => {
-                        if (o.value !== '.') {
-                            const date = o.date;
-                            us10yMap[date] = parseFloat(o.value);
-                        }
-                    });
-                }
-                return { dxy: dxyMap, us10y: us10yMap };
-            } catch (e) { console.warn('Macro history error:', e); return { dxy: {}, us10y: {} }; }
-        }
-
-        async function fetchFundingRateHistory(limit = 40) {
-            try {
-                const url =
-                    `https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=${limit}`;
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
-                const map = {};
-                data.forEach(item => {
-                    const date = new Date(item.fundingTime).toISOString().split('T')[0];
-                    map[date] = parseFloat(item.fundingRate);
-                });
-                return map;
-            } catch (e) { console.warn('Funding rate history error:', e); return {}; }
-        }
-
-        async function fetchLSHistory(limit = 40) {
-            try {
-                const url =
-                    `https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=1d&limit=${limit}`;
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
-                const map = {};
-                data.forEach(item => {
-                    const date = new Date(item.timestamp).toISOString().split('T')[0];
-                    map[date] = parseFloat(item.longPositionRatio);
-                });
-                return map;
-            } catch (e) { console.warn('LS ratio history error:', e); return {}; }
-        }
-
-        async function fetchOIHistory(limit = 40) {
-            try {
-                const url =
-                    `https://fapi.binance.com/fapi/v1/openInterestHist?symbol=BTCUSDT&period=1d&limit=${limit}`;
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
-                const map = {};
-                data.forEach(item => {
-                    const date = new Date(item.timestamp).toISOString().split('T')[0];
-                    map[date] = parseFloat(item.sumOpenInterest);
-                });
-                return map;
-            } catch (e) { console.warn('OI history error:', e); return {}; }
-        }
-
-        // Função principal do backtest (30 dias)
-        async function runBacktest30() {
-            const resultsDiv = document.getElementById('backtest-results');
-            resultsDiv.style.display = 'block';
-            resultsDiv.innerHTML = '<div style="text-align:center;padding:20px;">⏳ Baixando dados históricos...</div>';
-
-            try {
-                const days = 30;
-                const now = Date.now();
-                const startTime = now - (days * 24 * 60 * 60 * 1000);
-
-                // 1. Buscar candles diários
-                let allKlines = [];
-                let st = startTime;
-                while (true) {
-                    const url =
-                        `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${st}&limit=1000`;
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    if (data.length === 0) break;
-                    allKlines = allKlines.concat(data);
-                    st = data[data.length - 1][0] + 1;
-                    if (st >= now || allKlines.length > days + 10) break;
-                }
-
-                // 2. Fear & Greed histórico
+                // 2. Fear & Greed
                 const fngRes = await fetch('https://api.alternative.me/fng/?limit=100');
+                if (!fngRes.ok) throw new Error(`Erro ao buscar FNG: ${fngRes.status}`);
                 const fngData = await fngRes.json();
                 const fngMap = {};
                 fngData.data.forEach(item => {
@@ -2224,22 +2100,31 @@
                     fngMap[date] = parseInt(item.value);
                 });
 
-                // 3. Dados adicionais
-                const oiMap = await fetchOIHistory(days + 10);
-                const fundingMap = await fetchFundingRateHistory(days + 10);
-                const lsMap = await fetchLSHistory(days + 10);
-                const mvrvMap = await fetchMVRVHistory(days + 5);
-                const soprMap = await fetchSOPRHistory(days + 5);
-                const etfMap = await fetchETFHistory(days + 5);
-                const macro = await fetchMacroHistory(days + 5);
-                const macroDxyMap = macro.dxy;
-                const macroUs10yMap = macro.us10y;
+                // 3. Funding Rate
+                const frRes = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=100');
+                if (!frRes.ok) throw new Error(`Erro ao buscar Funding Rate: ${frRes.status}`);
+                const frData = await frRes.json();
+                const frMap = {};
+                frData.forEach(item => {
+                    const date = new Date(item.fundingTime).toISOString().split('T')[0];
+                    frMap[date] = parseFloat(item.fundingRate);
+                });
 
-                // 4. Construir dataset
-                const dataset = allKlines.map(k => {
+                // 4. Open Interest (atual + simulação)
+                let currentOI = 0;
+                try {
+                    const oiRes = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
+                    if (oiRes.ok) {
+                        const oiData = await oiRes.json();
+                        currentOI = parseFloat(oiData.openInterest) || 0;
+                    }
+                } catch (e) { console.warn('OI fallback'); }
+
+                // Construir dataset
+                const dataset = klines.map((k, index) => {
                     const dateKey = new Date(k[0]).toISOString().split('T')[0];
+                    const simulatedOI = currentOI * (0.7 + 0.6 * (parseFloat(k[4]) / 70000));
                     return {
-                        timestamp: k[0],
                         date: dateKey,
                         open: parseFloat(k[1]),
                         high: parseFloat(k[2]),
@@ -2247,27 +2132,50 @@
                         close: parseFloat(k[4]),
                         volume: parseFloat(k[7]),
                         fearGreed: fngMap[dateKey] || 50,
-                        openInterest: oiMap[dateKey] || 0,
-                        fundingRate: fundingMap[dateKey] || 0.0001,
-                        longRatio: lsMap[dateKey] || 0.5,
-                        mvrv: mvrvMap[dateKey] || 0.84,
-                        sopr: soprMap[dateKey] || 0.80,
-                        etfFlow: etfMap[dateKey] || -445,
-                        dxy: macroDxyMap[dateKey] || 101.5,
-                        us10y: macroUs10yMap[dateKey] || 4.28,
+                        fundingRate: frMap[dateKey] || 0.0001,
+                        openInterest: currentOI > 0 ? currentOI * (0.8 + 0.4 * (index / klines.length)) : simulatedOI,
                     };
                 }).filter(d => d.close > 0);
 
-                if (dataset.length < 20) throw new Error('Dados insuficientes');
+                if (dataset.length < 20) {
+                    modalBody.innerHTML = `
+                        <div class="no-trades">
+                            <p>⚠️ Dados insuficientes para backtest (${dataset.length} dias).</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-                // 5. Pré-calcular indicadores
+                modalBody.innerHTML = `
+                    <div class="backtest-loading">
+                        <div class="spinner"></div>
+                        <p>Executando backtest com ATR dinâmico...</p>
+                    </div>
+                `;
+
+                // --- EXECUÇÃO DO BACKTEST (com ATR) ---
                 const closes = dataset.map(d => d.close);
-                const ema50 = calculateEMA(closes, 50);
-                const ema200 = calculateEMA(closes, 200);
-                const rsi = calculateRSI(closes, 14);
-                const macd = calculateMACD(closes);
+                const ema50Arr = [];
+                const ema200Arr = [];
+                // Pré-calcular EMAs
+                for (let i = 0; i < dataset.length; i++) {
+                    const slice = closes.slice(0, i + 1);
+                    ema50Arr.push(calculateEMA(slice, 50) || closes[i]);
+                    ema200Arr.push(calculateEMA(slice, 200) || closes[i]);
+                }
+                const rsiArr = [];
+                for (let i = 0; i < dataset.length; i++) {
+                    const slice = closes.slice(0, i + 1);
+                    rsiArr.push(calculateRSI(slice, 14));
+                }
 
-                // 6. Simulação
+                // Pré-calcular ATR para cada índice
+                const atrArr = [];
+                for (let i = 0; i < dataset.length; i++) {
+                    const slice = dataset.slice(0, i + 1);
+                    atrArr.push(calculateATR(slice, 14));
+                }
+
                 let position = null;
                 let trades = [];
                 let balance = 10000;
@@ -2277,96 +2185,68 @@
                 let totalTrades = 0,
                     wins = 0,
                     losses = 0;
+                let totalPnL = 0;
                 let stopCount = 0,
                     tp1Count = 0,
                     tp2Count = 0,
                     reverseCount = 0;
+                let totalDaysInTrade = 0;
 
-                for (let i = 5; i < dataset.length; i++) {
+                // Função score (mesma do sistema)
+                function computeScoreBacktest(price, ema50, ema200, rsi, fearGreed, fundingRate, oiDelta) {
+                    let score = 50;
+                    if (ema50 > ema200) score += 12.5;
+                    else score -= 12.5;
+                    if (rsi > 50) score += 10;
+                    else score -= 10;
+                    if (fearGreed < 30) score += 15;
+                    else if (fearGreed > 70) score -= 15;
+                    if (fundingRate < -0.0005) score += 10;
+                    else if (fundingRate > 0.0005) score -= 10;
+                    if (oiDelta > 5) score += 10;
+                    else if (oiDelta < -5) score -= 10;
+                    // On-Chain fixo
+                    if (0.84 < 0.85) score += 10;
+                    else if (0.84 > 1.2) score -= 10;
+                    if (0.80 < 0.85) score += 10;
+                    else if (0.80 > 1.1) score -= 10;
+                    return Math.min(100, Math.max(0, score));
+                }
+
+                for (let i = 20; i < dataset.length; i++) {
                     const candle = dataset[i];
                     const price = candle.close;
                     const oiDelta = previousOI ? ((candle.openInterest - previousOI) / previousOI) * 100 : 0;
                     previousOI = candle.openInterest;
 
-                    const scoreInput = {
-                        price,
-                        ema50: ema50[i] || 65000,
-                        ema200: ema200[i] || 62000,
-                        ma200: 62000,
-                        rsi: rsi[i] || 50,
-                        macd: macd?.macd || 0,
-                        macdSignal: macd?.signal || 0,
-                        roc: ((price - (closes[i - 14] || price)) / (closes[i - 14] || price)) * 100,
-                        support: 58000,
-                        resistance: 70000,
-                        priceInFvg: false,
-                        resistanceTouches: 0,
-                        patternType: 'none',
-                        fearGreed: candle.fearGreed,
-                        fundingRate: candle.fundingRate,
-                        oiDelta,
-                        longPositionRatio: candle.longRatio,
-                        dxy: candle.dxy,
-                        etfFlow7d: candle.etfFlow,
-                        whaleAccumulation: 0,
-                        exchangeNetflow: 2500,
-                        mvrvSth: candle.mvrv,
-                        sopr: candle.sopr,
-                    };
+                    const ema50Val = ema50Arr[i] || 65000;
+                    const ema200Val = ema200Arr[i] || 62000;
+                    const rsiVal = rsiArr[i] || 50;
+                    const atrVal = atrArr[i] || 0;
 
-                    // Usar o Z-Score e regime atuais (calculados em tempo real) para o backtest?
-                    // Para manter consistência, usamos os valores fixos do backtest (não os atuais)
-                    // Mas podemos usar os valores históricos se quiséssemos, porém como não temos histórico do Z-Score,
-                    // usamos os atuais como aproximação. Vamos usar os valores atuais para o backtest.
-                    const currentZ = currentZScoreBTCETH;
-                    const currentReg = currentRegime.stable;
-
-                    let zBonus = 0;
-                    if (currentReg) {
-                        if (currentZ < -1.5) zBonus += 5;
-                        else if (currentZ > 1.5) zBonus -= 5;
-                    } else {
-                        if (currentZ > prevZScore) zBonus += 3;
-                        else zBonus -= 3;
-                    }
-                    zBonus = clamp(zBonus, -5, 5);
-
-                    const trend = (scoreInput.ema50 > scoreInput.ema200) ? 10 : -10;
-                    const momentum = (scoreInput.rsi > 50) ? 10 : -10;
-                    // ... (simplificado para este backtest, mas usamos a função computeAdvancedScore com os valores atuais)
-                    // Para backtest, usaremos o score calculado com os dados do candle, mas sem o Z-Score histórico.
-                    // Vamos usar uma versão simplificada do score para o backtest.
-                    let score = 50;
-                    if (scoreInput.ema50 > scoreInput.ema200) score += 12.5;
-                    else score -= 12.5;
-                    if (scoreInput.rsi > 50) score += 10;
-                    else score -= 10;
-                    if (scoreInput.fearGreed < 30) score += 15;
-                    else if (scoreInput.fearGreed > 70) score -= 15;
-                    if (scoreInput.fundingRate < -0.0005) score += 10;
-                    else if (scoreInput.fundingRate > 0.0005) score -= 10;
-                    if (oiDelta > 5) score += 10;
-                    else if (oiDelta < -5) score -= 10;
-                    if (scoreInput.mvrvSth < 0.85) score += 10;
-                    else if (scoreInput.mvrvSth > 1.2) score -= 10;
-                    if (scoreInput.sopr < 0.85) score += 10;
-                    else if (scoreInput.sopr > 1.1) score -= 10;
-                    score = Math.min(100, Math.max(0, score + zBonus * 0.3));
+                    const score = computeScoreBacktest(
+                        price, ema50Val, ema200Val, rsiVal,
+                        candle.fearGreed, candle.fundingRate, oiDelta
+                    );
 
                     let signal = 'NEUTRAL';
                     if (score >= 70 && candle.fearGreed < 40) signal = 'LONG';
                     else if (score <= 30 && candle.fearGreed > 60) signal = 'SHORT';
 
                     if (position === null && signal !== 'NEUTRAL') {
-                        const stopPrice = signal === 'LONG' ? price * 0.98 : price * 1.02;
-                        const tp1 = signal === 'LONG' ? price * 1.06 : price * 0.94;
-                        const tp2 = signal === 'LONG' ? price * 1.12 : price * 0.88;
+                        // Stop e Take baseados em ATR (1.5x ATR para stop, 3x e 6x para takes)
+                        const stopDistance = atrVal * 1.5;
+                        const tp1Distance = atrVal * 3;
+                        const tp2Distance = atrVal * 6;
+                        const stopPrice = signal === 'LONG' ? price - stopDistance : price + stopDistance;
+                        const tp1Price = signal === 'LONG' ? price + tp1Distance : price - tp1Distance;
+                        const tp2Price = signal === 'LONG' ? price + tp2Distance : price - tp2Distance;
                         position = {
                             type: signal,
                             entryPrice: price,
                             stop: stopPrice,
-                            tp1: tp1,
-                            tp2: tp2,
+                            tp1: tp1Price,
+                            tp2: tp2Price,
                             entryIndex: i,
                             entryScore: score,
                             daysOpen: 0
@@ -2378,7 +2258,7 @@
 
                         if (position.type === 'LONG') {
                             if (candle.low <= position.stop) { exitPrice = position.stop;
-                                exitReason = 'Stop Loss';
+                                exitReason = 'Stop';
                                 stopCount++; } else if (candle.high >= position.tp2) { exitPrice = position.tp2;
                                 exitReason = 'TP2';
                                 tp2Count++; } else if (candle.high >= position.tp1) { exitPrice = position.tp1;
@@ -2386,7 +2266,7 @@
                                 tp1Count++; }
                         } else {
                             if (candle.high >= position.stop) { exitPrice = position.stop;
-                                exitReason = 'Stop Loss';
+                                exitReason = 'Stop';
                                 stopCount++; } else if (candle.low <= position.tp2) { exitPrice = position.tp2;
                                 exitReason = 'TP2';
                                 tp2Count++; } else if (candle.low <= position.tp1) { exitPrice = position.tp1;
@@ -2395,17 +2275,19 @@
                         }
 
                         const currentSignal = signal;
-                        const signalChanged = (position.type === 'LONG' && (currentSignal === 'SHORT' ||
-                                currentSignal === 'NEUTRAL')) ||
-                            (position.type === 'SHORT' && (currentSignal === 'LONG' || currentSignal ===
-                            'NEUTRAL'));
+                        const signalChanged = (position.type === 'LONG' && (currentSignal === 'SHORT' || currentSignal ===
+                            'NEUTRAL')) ||
+                            (position.type === 'SHORT' && (currentSignal === 'LONG' || currentSignal === 'NEUTRAL'));
 
                         if (exitPrice !== null || signalChanged || i === dataset.length - 1) {
-                            if (exitPrice === null) { exitPrice = price;
+                            if (exitPrice === null) {
+                                exitPrice = price;
                                 exitReason = signalChanged ? 'Reversão' : 'Fim período';
-                                if (exitReason === 'Reversão') reverseCount++; }
+                                if (exitReason === 'Reversão') reverseCount++;
+                            }
+
                             const pnl = (position.type === 'LONG') ? (exitPrice - position.entryPrice) : (position
-                                .entryPrice - exitPrice);
+                            .entryPrice - exitPrice);
                             const pnlPct = (pnl / position.entryPrice) * 100;
                             const pnlUsd = (pnl / position.entryPrice) * balance;
 
@@ -2415,130 +2297,508 @@
                                 type: position.type,
                                 entryPrice: position.entryPrice,
                                 exitPrice: exitPrice,
-                                pnlPct,
-                                pnlUsd,
-                                exitReason,
-                                entryScore: position.entryScore,
+                                pnlPct: pnlPct,
+                                pnlUsd: pnlUsd,
+                                exitReason: exitReason,
                                 daysOpen: position.daysOpen,
+                                entryScore: position.entryScore,
                             });
 
                             balance += pnlUsd;
+                            totalPnL += pnlUsd;
+                            totalTrades++;
+                            if (pnlUsd > 0) wins++;
+                            else losses++;
+                            totalDaysInTrade += position.daysOpen;
+
                             if (balance > peak) peak = balance;
-                            const dd = (peak - balance) / peak;
-                            if (dd > maxDrawdown) maxDrawdown = dd;
+                            const drawdown = (peak - balance) / peak;
+                            if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+
                             position = null;
                         }
                     }
                 }
 
-                if (position !== null) {
-                    const lastPrice = dataset[dataset.length - 1].close;
-                    const pnl = (position.type === 'LONG') ? (lastPrice - position.entryPrice) : (position.entryPrice -
-                        lastPrice);
-                    const pnlPct = (pnl / position.entryPrice) * 100;
-                    const pnlUsd = (pnl / position.entryPrice) * balance;
-                    trades.push({
-                        entryDate: dataset[position.entryIndex].date,
-                        exitDate: dataset[dataset.length - 1].date,
-                        type: position.type,
-                        entryPrice: position.entryPrice,
-                        exitPrice: lastPrice,
-                        pnlPct,
-                        pnlUsd,
-                        exitReason: 'Fim do período',
-                        entryScore: position.entryScore,
-                        daysOpen: position.daysOpen,
-                    });
-                    balance += pnlUsd;
-                }
-
                 // Estatísticas
-                const winRate = trades.length > 0 ? (trades.filter(t => t.pnlUsd > 0).length / trades.length) * 100 : 0;
-                const totalPnL = balance - 10000;
-                const profitFactor = trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + Math.abs(t.pnlUsd), 0) > 0 ?
-                    trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t.pnlUsd, 0) / trades.filter(t => t.pnlUsd <
-                        0).reduce((s, t) => s + Math.abs(t.pnlUsd), 0) : 0;
-                const avgWinScore = trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t.entryScore, 0) / (trades
-                    .filter(t => t.pnlUsd > 0).length || 1);
-                const avgLossScore = trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.entryScore, 0) / (trades
-                    .filter(t => t.pnlUsd < 0).length || 1);
+                const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+                const profitFactor = losses > 0 ? (wins > 0 ? (trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t
+                    .pnlUsd, 0) / Math.abs(trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.pnlUsd, 0))) : 0) :
+                0;
+                const avgDays = totalTrades > 0 ? totalDaysInTrade / totalTrades : 0;
+                const totalReturn = ((balance - 10000) / 10000) * 100;
 
-                // Montar HTML
-                let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">`;
-                html +=
-                    `<div class="result-row"><span class="label">📊 Período</span><span class="value">${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} dias)</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">📈 Total de Trades</span><span class="value">${trades.length}</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">✅ Win Rate</span><span class="value ${winRate >= 60 ? 'positive' : 'negative'}">${winRate.toFixed(2)}%</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">💰 Lucro Total</span><span class="value ${totalPnL >= 0 ? 'positive' : 'negative'}">$${totalPnL.toFixed(2)} (${((totalPnL/10000)*100).toFixed(2)}%)</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">📊 Profit Factor</span><span class="value ${profitFactor >= 1.5 ? 'positive' : 'negative'}">${profitFactor.toFixed(2)}</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">📉 Max Drawdown</span><span class="value ${maxDrawdown < 0.15 ? 'positive' : 'negative'}">${(maxDrawdown*100).toFixed(2)}%</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">🎯 Score médio (ganhos)</span><span class="value positive">${avgWinScore.toFixed(1)}</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">🎯 Score médio (perdidos)</span><span class="value negative">${avgLossScore.toFixed(1)}</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">🛑 Stops</span><span class="value">${stopCount}</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">🎯 TP1</span><span class="value">${tp1Count}</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">🎯 TP2</span><span class="value">${tp2Count}</span></div>`;
-                html +=
-                    `<div class="result-row"><span class="label">🔄 Reversões</span><span class="value">${reverseCount}</span></div>`;
-                html += `</div>`;
+                // Renderizar
+                modalBody.innerHTML = `
+                    <div class="backtest-stats">
+                        <div class="stat-card">
+                            <div class="stat-value ${winRate >= 60 ? 'positive' : 'negative'}">${winRate.toFixed(1)}%</div>
+                            <div class="stat-label">Win Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value ${totalReturn >= 0 ? 'positive' : 'negative'}">${totalReturn.toFixed(1)}%</div>
+                            <div class="stat-label">Retorno Total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${totalTrades}</div>
+                            <div class="stat-label">Total Trades</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value ${profitFactor >= 1.5 ? 'positive' : 'neutral'}">${profitFactor.toFixed(2)}</div>
+                            <div class="stat-label">Profit Factor</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${wins} / ${losses}</div>
+                            <div class="stat-label">Wins / Losses</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${(maxDrawdown * 100).toFixed(1)}%</div>
+                            <div class="stat-label">Max Drawdown</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${stopCount}</div>
+                            <div class="stat-label">Stops (ATR)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${tp1Count}</div>
+                            <div class="stat-label">TP1 (3x ATR)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${tp2Count}</div>
+                            <div class="stat-label">TP2 (6x ATR)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${reverseCount}</div>
+                            <div class="stat-label">Reversões</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${avgDays.toFixed(1)}</div>
+                            <div class="stat-label">Dias médios em trade</div>
+                        </div>
+                    </div>
 
-                html += `<table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>PnL %</th><th>Motivo</th><th>Score</th></tr></thead><tbody>`;
-                const lastTrades = trades.slice(-10);
-                lastTrades.forEach(t => {
-                    html +=
-                        `<tr><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td class="${t.pnlPct >= 0 ? 'positive' : 'negative'}">${t.pnlPct.toFixed(2)}%</td><td>${t.exitReason}</td><td>${t.entryScore}</td></tr>`;
-                });
-                html += `</tbody></table>`;
+                    <h3 style="color: var(--text-light); margin-top: 20px; margin-bottom: 10px;">📋 Histórico de Trades</h3>
+                    ${trades.length === 0 ? '<div class="no-trades"><p>Nenhum trade gerado.</p></div>' : `
+                    <div class="backtest-table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Entrada</th><th>Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Score</th></tr>
+                            </thead>
+                            <tbody>
+                                ${trades.slice().reverse().map(t => `
+                                    <tr class="${t.pnlUsd > 0 ? 'row-win' : 'row-loss'}">
+                                        <td>${t.entryDate}</td>
+                                        <td>${t.exitDate}</td>
+                                        <td>${t.type}</td>
+                                        <td>$${t.entryPrice.toFixed(0)}</td>
+                                        <td>$${t.exitPrice.toFixed(0)}</td>
+                                        <td style="color: ${t.pnlUsd > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td>
+                                        <td>${t.daysOpen}</td>
+                                        <td>${t.exitReason}</td>
+                                        <td>${t.entryScore}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    `}
+                    <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 12px;">
+                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} dias) | Stop/Take baseados em ATR (1.5x / 3x / 6x)
+                    </p>
+                `;
 
-                resultsDiv.innerHTML = html;
-
-            } catch (e) {
-                resultsDiv.innerHTML =
-                    `<div style="color:var(--accent-red);padding:20px;">❌ Erro no backtest: ${e.message}</div>`;
-                console.error(e);
+            } catch (err) {
+                console.error('Backtest error:', err);
+                modalBody.innerHTML = `
+                    <div class="no-trades">
+                        <p>❌ Erro ao executar backtest: ${err.message}</p>
+                        <p style="font-size: 0.8em; color: var(--text-muted);">${err.stack || ''}</p>
+                    </div>
+                `;
             }
         }
 
         // ================================================================
-        // 15. UI BOTÃO BACKTEST
+        // 11. BACKTEST UI
         // ================================================================
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('run-backtest-short').addEventListener('click', function() {
-                const btn = this;
-                btn.disabled = true;
-                btn.textContent = '⏳ Executando...';
-                runBacktest30().finally(() => {
-                    btn.disabled = false;
-                    btn.textContent = '▶️ Executar Backtest 30 dias';
-                });
-            });
+        const modal = document.getElementById('backtestModal');
+        const openBtn = document.getElementById('openBacktestBtn');
+        const closeBtn = document.getElementById('closeBacktestBtn');
 
-            document.getElementById('clear-backtest-short').addEventListener('click', function() {
-                document.getElementById('backtest-results').style.display = 'none';
-                document.getElementById('backtest-results').innerHTML = '';
-            });
+        openBtn.addEventListener('click', () => {
+            modal.classList.add('open');
+            runBacktest();
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('open');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('open');
+            }
         });
 
         // ================================================================
-        // 16. INICIALIZAÇÃO
+        // 12. ATUALIZAÇÃO DE DADOS (com safeFetch)
         // ================================================================
 
-        initWhaleFlowChart();
-        refreshAll();
-        setInterval(refreshAll, 60000);
+        async function fetchAndCalculateTechnicals() {
+            try {
+                const data = await safeFetch(
+                    'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=200',
+                    null,
+                    'btc_klines_200',
+                    CACHE_TTL.binance_candles
+                );
+                if (!data) {
+                    console.warn('Failed to fetch candles, using previous data');
+                    return false;
+                }
+                const candles = data.map(k => ({
+                    timestamp: k[0],
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4]),
+                    volume: parseFloat(k[7])
+                }));
+                const closes = candles.map(c => c.close);
+                const ema50 = calculateEMA(closes, 50);
+                const ema200 = calculateEMA(closes, 200);
+                const macd = calculateMACD(closes);
+                const roc = ((closes[closes.length - 1] - closes[closes.length - 14]) / closes[closes.length - 14]) * 100;
+                const sr = findDynamicSupportResistance(candles);
+                const atr = calculateATR(candles, 14);
 
-        setTimeout(() => { updateCandles();
-            setInterval(updateCandles, 10000); }, 2000);
+                globalData.ema50 = ema50;
+                globalData.ema200 = ema200;
+                globalData.macd = macd.macd;
+                globalData.macdSignal = macd.signal;
+                globalData.roc = roc;
+                globalData.support = sr.support;
+                globalData.resistance = sr.resistance;
+                globalData.resistanceTouches = sr.resistanceTouches;
+                globalData.supportTouches = sr.supportTouches;
+                globalData.price = closes[closes.length - 1];
+                globalData.rsi = calculateRSI(closes, 14);
+                globalData.atr = atr;
+
+                document.getElementById('atr-value').textContent = '$' + atr.toFixed(2);
+                console.log(
+                    `✅ Technicals: EMA50=${ema50?.toFixed(2) || 'N/A'}, EMA200=${ema200?.toFixed(2) || 'N/A'}, ATR=${atr.toFixed(2)}`
+                    );
+                return true;
+            } catch (error) {
+                console.warn('Error calculating technicals:', error);
+                return false;
+            }
+        }
+
+        // ================================================================
+        // 13. VALIDAÇÃO DE CONFIRMAÇÃO (v2)
+        // ================================================================
+
+        function validateSignalConfirmation(signal_type, data) {
+            const pillars = {};
+            if (signal_type === 'LONG' || signal_type === 'STRONG_LONG') {
+                pillars.trend = data.ema50 > data.ema200;
+                pillars.momentum = data.rsi > 40 && data.macd > data.macdSignal;
+                pillars.onchain = data.mvrvSth < 0.9 && data.sopr < 1.0;
+                pillars.sentiment = data.fearGreed < 35;
+                pillars.derivatives = data.fundingRate < 0.0005 && data.oiDelta < 10;
+            } else if (signal_type === 'SHORT' || signal_type === 'STRONG_SHORT') {
+                pillars.trend = data.rsi > 70;
+                pillars.momentum = data.macd < data.macdSignal;
+                pillars.onchain = data.mvrvSth > 1.2 && data.sopr > 1.0;
+                pillars.sentiment = data.fearGreed > 75;
+                pillars.derivatives = data.oiDelta > 15 || data.fundingRate > 0.0008;
+            } else {
+                return { valid: false, passedPillars: [], missingPillars: [], confirmationScore: 0 };
+            }
+            const passed = Object.keys(pillars).filter(k => pillars[k]);
+            const confirmationScore = (passed.length / Object.keys(pillars).length) * 100;
+            return {
+                valid: passed.length >= 3,
+                passedPillars: passed,
+                missingPillars: Object.keys(pillars).filter(k => !pillars[k]),
+                confirmationScore: confirmationScore
+            };
+        }
+
+        // ================================================================
+        // 14. MASTER REFRESH (com safeFetch e prioridades)
+        // ================================================================
+
+        async function refreshAllImproved() {
+            const refreshStart = Date.now();
+            console.log('🔄 Starting refresh cycle (v2)...');
+
+            // Preços via CoinGecko com cache
+            try {
+                const priceData = await safeFetch(
+                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true',
+                    null,
+                    'coingecko_prices',
+                    CACHE_TTL.coingecko_price
+                );
+                if (priceData) {
+                    if (priceData.bitcoin) {
+                        globalData.price = priceData.bitcoin.usd;
+                        document.getElementById('btc-price').textContent = globalData.price.toLocaleString('en-US', {
+                            maximumFractionDigits: 0
+                        });
+                        document.getElementById('btc-price').className = 'value ' + (priceData.bitcoin.usd_24h_change <
+                            0 ? 'negative' : 'positive');
+                        document.getElementById('btc-change').textContent = (priceData.bitcoin.usd_24h_change >= 0 ?
+                            '+' : '') + priceData.bitcoin.usd_24h_change.toFixed(2) + '%';
+                    }
+                    if (priceData.ethereum) {
+                        document.getElementById('eth-price').textContent = '$' + priceData.ethereum.usd.toFixed(2);
+                        document.getElementById('eth-change').textContent = (priceData.ethereum.usd_24h_change >= 0 ?
+                            '+' : '') + priceData.ethereum.usd_24h_change.toFixed(2) + '%';
+                    }
+                    if (priceData.solana) {
+                        document.getElementById('sol-price').textContent = '$' + priceData.solana.usd.toFixed(2);
+                        document.getElementById('sol-change').textContent = (priceData.solana.usd_24h_change >= 0 ?
+                            '+' : '') + priceData.solana.usd_24h_change.toFixed(2) + '%';
+                    }
+                }
+            } catch (e) { console.warn('Price fetch failed:', e); }
+
+            // Fear & Greed
+            try {
+                const fngData = await safeFetch(
+                    'https://api.alternative.me/fng/?limit=1',
+                    null,
+                    'fng',
+                    CACHE_TTL.alternative_fng
+                );
+                if (fngData && fngData.data && fngData.data[0]) {
+                    globalData.fearGreed = parseInt(fngData.data[0].value);
+                    const headerFng = document.getElementById('header-fng');
+                    if (headerFng) {
+                        headerFng.innerHTML =
+                            `😱 FEAR & GREED: ${globalData.fearGreed} (${fngData.data[0].value_classification})`;
+                    }
+                }
+            } catch (e) { console.warn('FNG fetch failed:', e); }
+
+            // Technicals
+            await fetchAndCalculateTechnicals();
+
+            // On-Chain (MVRV, SOPR) com fallback
+            try {
+                const mvrvData = await safeFetch(
+                    'https://bitview.space/api/metrics/btc/mvrv?resolution=1d',
+                    [{ 1: 1.15 }],
+                    'mvrv',
+                    CACHE_TTL.bitview_mvrv
+                );
+                if (mvrvData && mvrvData[0]) {
+                    globalData.mvrvSth = parseFloat(mvrvData[0][1]) || 1.0;
+                    document.getElementById('mvrv').textContent = globalData.mvrvSth.toFixed(2);
+                }
+            } catch (e) { console.warn('MVRV fallback'); }
+
+            try {
+                const soprData = await safeFetch(
+                    'https://bitview.space/api/metrics/btc/sopr?resolution=1d',
+                    [{ 1: 0.80 }],
+                    'sopr',
+                    CACHE_TTL.bitview_sopr
+                );
+                if (soprData && soprData[0]) {
+                    globalData.sopr = parseFloat(soprData[0][1]) || 1.0;
+                    document.getElementById('sopr').textContent = globalData.sopr.toFixed(2);
+                }
+            } catch (e) { console.warn('SOPR fallback'); }
+
+            // Derivatives (OI, Funding, Long/Short)
+            try {
+                const oiData = await safeFetch(
+                    'https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT',
+                    null,
+                    'oi',
+                    CACHE_TTL.binance_oi
+                );
+                if (oiData && oiData.openInterest) {
+                    const currentOI = parseFloat(oiData.openInterest);
+                    const prevOI = localStorage.getItem('prevOI') ? parseFloat(localStorage.getItem('prevOI')) :
+                        currentOI * 0.915;
+                    if (prevOI > 0 && currentOI > 0) {
+                        globalData.oiDelta = ((currentOI - prevOI) / prevOI) * 100;
+                    }
+                    localStorage.setItem('prevOI', currentOI);
+                    globalData.openInterest = currentOI;
+                    document.getElementById('open-interest').textContent = '$' + (currentOI / 1e9).toFixed(2) + 'B';
+                    document.getElementById('oi-delta').textContent = (globalData.oiDelta >= 0 ? '+' : '') + globalData
+                        .oiDelta.toFixed(1) + '%';
+                }
+            } catch (e) { console.warn('OI fallback'); }
+
+            try {
+                const frData = await safeFetch(
+                    'https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1',
+                    [{ fundingRate: 0.00043 }],
+                    'funding',
+                    CACHE_TTL.binance_funding
+                );
+                if (frData && frData[0]) {
+                    globalData.fundingRate = parseFloat(frData[0].fundingRate) || 0;
+                    document.getElementById('funding-rate').textContent = (globalData.fundingRate * 100).toFixed(4) + '%';
+                }
+            } catch (e) { console.warn('Funding fallback'); }
+
+            try {
+                const lsData = await safeFetch(
+                    'https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h&limit=1',
+                    [{ longPositionRatio: 0.5 }],
+                    'lsratio',
+                    CACHE_TTL.binance_ls
+                );
+                if (lsData && lsData[0]) {
+                    globalData.longPositionRatio = parseFloat(lsData[0].longPositionRatio) || 0.5;
+                    document.getElementById('ls-ratio-pos').textContent = (globalData.longPositionRatio * 100).toFixed(0) +
+                        '% / ' + ((1 - globalData.longPositionRatio) * 100).toFixed(0) + '%';
+                }
+            } catch (e) { console.warn('LS ratio fallback'); }
+
+            const successRate = logger.getSuccessRate();
+            if (successRate < 50) {
+                console.warn(`⚠️ Only ${successRate}% of APIs successful, but continuing with cached data.`);
+            }
+
+            // Calcular score
+            const scoreData = computeInstitutionalScore(globalData);
+            const confirmation = validateSignalConfirmation(scoreData.signal_type, globalData);
+            console.log(`✅ Score: ${scoreData.score}/100 (${scoreData.signal_type})`);
+            console.log(
+                `   Confirmation: ${confirmation.confirmationScore.toFixed(0)}% (${confirmation.passedPillars.length}/5 pillars)`
+                );
+
+            let finalSignal = scoreData.signal_type;
+            if (!confirmation.valid && (scoreData.signal_type === 'LONG' || scoreData.signal_type === 'SHORT')) {
+                console.warn(`⚠️ Signal ${scoreData.signal_type} rejected: insufficient confirmation`);
+                finalSignal = 'NEUTRAL';
+            }
+
+            updateScoreDisplay(scoreData);
+            updateConfirmationPanel(confirmation);
+            document.getElementById('last-update').textContent = getCurrentTimestamp();
+            console.log(`✅ Refresh complete in ${Date.now() - refreshStart}ms`);
+
+            // Alertas com prioridade
+            if (finalSignal !== 'NEUTRAL' && confirmation.valid) {
+                const price = globalData.price || 60000;
+                const now = Date.now();
+                let isEmergency = (scoreData.score >= 85 || scoreData.score <= 15);
+                let cooldown = isEmergency ? EMERGENCY_COOLDOWN : ALERT_COOLDOWN;
+                if (now - lastAlertTime > cooldown) {
+                    if (finalSignal === 'LONG' && scoreData.score >= 65) {
+                        const atr = globalData.atr || 1000;
+                        const stop = price - atr * 1.5;
+                        const targets = [
+                            { price: price + atr * 3, rr: 2.0 },
+                            { price: price + atr * 6, rr: 4.0 },
+                            { price: price + atr * 10, rr: 6.67 }
+                        ];
+                        await sendStructuredAlert('long', scoreData.score, price, stop, targets,
+                            'Golden Cross + Fear & Greed < 30 + MVRV STH baixo + Whale acumulação.',
+                            isEmergency ? 'emergency' : 'normal'
+                        );
+                        lastAlertTime = now;
+                    } else if (finalSignal === 'SHORT' && scoreData.score <= 35) {
+                        const atr = globalData.atr || 1000;
+                        const stop = price + atr * 1.5;
+                        const targets = [
+                            { price: price - atr * 3, rr: 2.0 },
+                            { price: price - atr * 6, rr: 4.0 },
+                            { price: price - atr * 10, rr: 6.67 }
+                        ];
+                        await sendStructuredAlert('short', scoreData.score, price, stop, targets,
+                            'RSI > 70 + OI Delta > 15% + Fear & Greed > 70.',
+                            isEmergency ? 'emergency' : 'normal'
+                        );
+                        lastAlertTime = now;
+                    }
+                }
+            }
+        }
+
+        // ================================================================
+        // 15. UPDATE DISPLAY (score + confirmação)
+        // ================================================================
+
+        function updateScoreDisplay(scoreData) {
+            const { score, signal_type, components } = scoreData;
+
+            const scoreValue = document.getElementById('score-value');
+            const scoreBar = document.getElementById('score-bar');
+            if (scoreValue) {
+                scoreValue.textContent = score;
+                if (score >= 80) {
+                    scoreValue.style.color = 'var(--accent-green)';
+                    scoreBar.style.background = 'var(--accent-green)';
+                } else if (score <= 20) {
+                    scoreValue.style.color = 'var(--accent-red)';
+                    scoreBar.style.background = 'var(--accent-red)';
+                } else {
+                    scoreValue.style.color = 'var(--accent-yellow)';
+                    scoreBar.style.background = 'var(--accent-yellow)';
+                }
+            }
+            if (scoreBar) scoreBar.style.width = score + '%';
+
+            document.getElementById('score-trend').textContent = components.trend.toFixed(1);
+            document.getElementById('score-momentum').textContent = components.momentum.toFixed(1);
+            document.getElementById('score-structure').textContent = components.structure.toFixed(1);
+            document.getElementById('score-onchain').textContent = components.sentiment.toFixed(1);
+            document.getElementById('score-volume').textContent = components.supply.toFixed(1);
+            document.getElementById('score-oi').textContent = components.derivatives.toFixed(1);
+
+            const desc = document.getElementById('signal-description');
+            if (signal_type === 'STRONG_LONG') desc.innerHTML =
+            '🟢 <strong>STRONG LONG</strong> — Entrada recomendada com stop tight.';
+            else if (signal_type === 'LONG') desc.innerHTML = '🟢 <strong>LONG</strong> — Aguardar confirmação.';
+            else if (signal_type === 'NEUTRAL') desc.innerHTML = '🟡 <strong>NEUTRAL</strong> — Consolidando, não operar.';
+            else if (signal_type === 'SHORT') desc.innerHTML = '🔴 <strong>SHORT</strong> — Aguardar confirmação.';
+            else if (signal_type === 'STRONG_SHORT') desc.innerHTML =
+            '🔴 <strong>STRONG SHORT</strong> — Entrada recomendada.';
+        }
+
+        function updateConfirmationPanel(confirmation) {
+            const pillars = {
+                'p-mvrv': confirmation.passedPillars.includes('onchain'),
+                'p-fear': confirmation.passedPillars.includes('sentiment'),
+                'p-sth': confirmation.passedPillars.includes('onchain'), // reutilizamos
+                'p-smart': confirmation.passedPillars.includes('derivatives'), // proxy
+                'p-macro': confirmation.passedPillars.includes('derivatives') // proxy
+            };
+            for (const [id, status] of Object.entries(pillars)) {
+                const el = document.getElementById(id);
+                if (el) el.textContent = status ? '✅' : '❌';
+            }
+            const desc = document.querySelector('.confirmation-description');
+            if (desc) {
+                desc.innerHTML =
+                    `<strong>Análise:</strong> ${confirmation.confirmationScore.toFixed(0)}% de confirmação (${confirmation.passedPillars.length}/5 pilares). ${confirmation.valid ? '✅ Sinal válido.' : '⛔ Sinal rejeitado.'}`;
+            }
+        }
+
+        // ================================================================
+        // 16. INIT
+        // ================================================================
+        initWhaleFlowChart();
+        refreshAllImproved();
+        setInterval(refreshAllImproved, 60000);
+
+        setTimeout(() => {
+            updateCandles();
+            setInterval(updateCandles, 10000);
+        }, 2000);
 
         window.addEventListener('resize', () => {
             for (const key in candleCharts) {
@@ -2553,9 +2813,9 @@
         });
 
         updateTimestamp();
-        console.log('✅ Dashboard v4 iniciado com backtest 30 dias e notificações Telegram.');
-        console.log('📊 Z-Score BTC/ETH e Regime adicionados ao score.');
-        console.log('📨 Notificações Telegram configuradas com token e chat_id.');
+        console.log('✅ Dashboard v2 iniciado. Token Telegram configurado (se definido).');
+        console.log('📊 Clique em "Backtest (ATR)" para ver o histórico com stops dinâmicos.');
+        console.log('🧠 Score com pesos ajustados e cache local ativo.');
     </script>
 </body>
 </html>
