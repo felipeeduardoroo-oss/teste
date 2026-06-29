@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Score + Alertas</title>
+    <title>Dashboard Institucional — Score + Alertas (FIX)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
     </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js">
@@ -826,7 +826,7 @@
         ============================================================ -->
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas (FIX)</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -1235,11 +1235,11 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT — COMPLETO COM CORREÇÕES
+    JAVASCRIPT — COMPLETO CORRIGIDO (SCOPE GLOBAL)
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAÇÃO DO TELEGRAM
+        // 0. CONFIGURAÇÃO DO TELEGRAM (GLOBAL)
         // ================================================================
         const TELEGRAM_TOKEN = '8643573887:AAEu1d_RPy8vKl_-XYTd9ygdvN_yD4gF5gE';
         const TELEGRAM_CHAT_ID = '1137196768';
@@ -1247,6 +1247,11 @@
         // ================================================================
         // 0.1 FUNÇÃO DE ENVIO (GLOBAL)
         // ================================================================
+        /**
+         * Envia uma mensagem para o Telegram via API pública.
+         * @param {string} message - Texto da mensagem (suporta HTML básico)
+         * @returns {Promise<Object>} - { success: boolean, error?: string }
+         */
         async function sendTelegramAlert(message) {
             console.log('📤 Tentando enviar alerta para o Telegram...');
             try {
@@ -1257,17 +1262,19 @@
                     parse_mode: 'HTML'
                 };
                 console.log('📦 Payload:', payload);
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
                 const responseText = await response.text();
                 console.log('📨 Resposta da API do Telegram:', response.status, responseText);
 
                 if (response.ok) {
                     console.log('✅ Alerta enviado com sucesso!');
-                    return { success: true };
+                    return { success: true, response: responseText };
                 } else {
                     console.warn('❌ Falha ao enviar alerta:', responseText);
                     return { success: false, error: responseText };
@@ -1279,7 +1286,7 @@
         }
 
         // ================================================================
-        // 0.2 BOTÃO DE TESTE (CHAMA sendTelegramAlert DIRETAMENTE)
+        // 0.2 BOTÃO DE TESTE (SEMPRE CHAMA A FUNÇÃO GLOBAL)
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             const btn = document.getElementById('test-telegram-btn');
@@ -1291,6 +1298,7 @@
             }
 
             btn.addEventListener('click', async function() {
+                // Coleta dados atuais para a mensagem de teste
                 const score = document.getElementById('score-value')?.textContent || '--';
                 const price = document.getElementById('btc-price')?.textContent || '--';
                 const timestamp = getCurrentTimestamp();
@@ -1308,10 +1316,11 @@
         ⏰ Enviado em: ${timestamp}
                 `.trim();
 
+                // Feedback visual
                 label.innerHTML = '<span class="spinner"></span> Enviando...';
                 btn.disabled = true;
 
-                // Chama a função GLOBAL sendTelegramAlert
+                // Chama a função GLOBAL
                 const result = await window.sendTelegramAlert(testMessage);
 
                 if (result.success) {
@@ -1865,7 +1874,7 @@
         };
 
         let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 3600000;
+        const ALERT_COOLDOWN = 3600000; // 1 hora
 
         // ================================================================
         // 8. UPDATE DISPLAY + ALERTAS
@@ -2325,8 +2334,10 @@
 
         updateTimestamp();
 
+        // Log inicial para debug
         console.log('✅ Dashboard iniciado. Token Telegram configurado.');
         console.log('ℹ️ Limiares de alerta: LONG >= 65, SHORT <= 35 (modo teste).');
+        console.log('ℹ️ Função sendTelegramAlert está disponível globalmente.');
     </script>
 </body>
 </html>
