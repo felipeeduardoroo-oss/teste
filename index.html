@@ -10,7 +10,7 @@
     </script>
     <style>
         /* ============================================================
-           ESTILOS COMPLETOS
+           ESTILOS COMPLETOS (MANTIDOS)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -1235,7 +1235,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT — COMPLETO
+    JAVASCRIPT — COMPLETO COM CORREÇÕES
     ============================================================ -->
     <script>
         // ================================================================
@@ -1243,11 +1243,9 @@
         // ================================================================
         const TELEGRAM_TOKEN = '8643573887:AAEu1d_RPy8vKl_-XYTd9ygdvN_yD4gF5gE';
         const TELEGRAM_CHAT_ID = '1137196768';
-        let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 3600000; // 1 hora
 
         // ================================================================
-        // 0.1 FUNÇÃO DE ENVIO (com logs detalhados)
+        // 0.1 FUNÇÃO DE ENVIO (GLOBAL)
         // ================================================================
         async function sendTelegramAlert(message) {
             console.log('📤 Tentando enviar alerta para o Telegram...');
@@ -1281,7 +1279,7 @@
         }
 
         // ================================================================
-        // 0.2 BOTÃO DE TESTE — TELEGRAM
+        // 0.2 BOTÃO DE TESTE (CHAMA sendTelegramAlert DIRETAMENTE)
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             const btn = document.getElementById('test-telegram-btn');
@@ -1313,7 +1311,8 @@
                 label.innerHTML = '<span class="spinner"></span> Enviando...';
                 btn.disabled = true;
 
-                const result = await sendTelegramAlert(testMessage);
+                // Chama a função GLOBAL sendTelegramAlert
+                const result = await window.sendTelegramAlert(testMessage);
 
                 if (result.success) {
                     label.textContent = '✅ Enviado!';
@@ -1865,8 +1864,8 @@
             volumeRel: 1.0
         };
 
-        let lastScore = 50;
-        let lastSignal = 'NEUTRAL';
+        let lastAlertTime = 0;
+        const ALERT_COOLDOWN = 3600000;
 
         // ================================================================
         // 8. UPDATE DISPLAY + ALERTAS
@@ -2189,8 +2188,6 @@
                 const scoreData = computeInstitutionalScore(globalData);
                 updateScoreDisplay(scoreData);
                 await checkAndSendAlert(scoreData);
-                lastScore = scoreData.score;
-                lastSignal = scoreData.signal_type;
 
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
@@ -2300,8 +2297,6 @@
             const scoreData = computeInstitutionalScore(globalData);
             updateScoreDisplay(scoreData);
             await checkAndSendAlert(scoreData);
-            lastScore = scoreData.score;
-            lastSignal = scoreData.signal_type;
         }
 
         // ================================================================
@@ -2330,9 +2325,8 @@
 
         updateTimestamp();
 
-        // Log inicial para debug
         console.log('✅ Dashboard iniciado. Token Telegram configurado.');
         console.log('ℹ️ Limiares de alerta: LONG >= 65, SHORT <= 35 (modo teste).');
     </script>
 </body>
-    </html>
+</html>
