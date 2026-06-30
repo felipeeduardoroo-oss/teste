@@ -292,13 +292,13 @@ footer { background:var(--primary); border-top:2px solid var(--accent-blue); pad
 <div class="chart-wrapper"><canvas id="chart_allocation"></canvas></div>
 </section>
 <section>
-<h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V11</h2>
+<h2 class="section-title">📊 BACKTEST — V12 (REGIME BEAR CORRIGIDO)</h2>
 <div class="backtest-section">
-<div class="backtest-header"><div><span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Regime: <strong style="color:var(--text-light);">Adaptativo</strong></span></div><button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V11</button></div>
+<div class="backtest-header"><div><span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Regime: <strong style="color:var(--text-light);">BEAR corrigido</strong></span></div><button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V12</button></div>
 <div id="backtestResults"><div class="backtest-loading"><div class="spinner"></div><p>Carregando dados históricos (4h) + on-chain...</p></div></div>
 </div>
 </section>
-<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V11</h4><p>Correção do backtest: agora usa o mesmo motor de score do live (computeScore) em vez de cruzamento EMA20/50+RSI; MTF histórico construído a partir dos próprios candles do backtest, sem look-ahead; estatísticas de significância reportadas. Telegram ativo.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
+<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V12</h4><p>Correção crítica: regime BEAR agora é detectado (slope calculado corretamente). Regime atualizado antes do computeScore. Backtest usa mesmo motor de sinal que produção. Telegram ativo.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
 </div>
 <button class="telegram-test-btn" id="test-telegram-btn"><span id="test-btn-label">📨 Testar Alerta</span></button>
 <script>
@@ -349,6 +349,9 @@ let globalData = {
     mvrv: 1.2, sopr: 0.95, volumeRel: 1.0, oiDelta: 0.0
 };
 let componentWeights = { trend: 0.25, momentum: 0.20, structure: 0.15, onchain: 0.10, volume: 0.15, oi: 0.15 };
+
+// Histórico de EMA50 para o modo live (correção defasagem)
+let ema50History = [];
 
 // ================================================================
 // TELEGRAM
@@ -481,11 +484,10 @@ function calculateKellySizingByRegime(regime) {
 }
 
 // ================================================================
-// DETECTOR DE REGIME
+// DETECTOR DE REGIME CORRIGIDO (V12)
 // ================================================================
-function detectMarketRegime(price, ema50, ema200, adx, atrPct, atrPctHistory) {
-    const prevEma = ema50.prev || ema50 * 0.99;
-    const slope = (ema50 - prevEma) / prevEma;
+function detectMarketRegimeFixed(price, ema50, ema50Prev, ema200, adx) {
+    const slope = (ema50Prev !== undefined && ema50Prev > 0) ? (ema50 - ema50Prev) / ema50Prev : 0;
     const isTrend = adx > 25;
     const isBullish = price > ema50 && ema50 > ema200 && slope > 0.0005;
     const isBearish = price < ema50 && ema50 < ema200 && slope < -0.0005;
@@ -493,6 +495,7 @@ function detectMarketRegime(price, ema50, ema200, adx, atrPct, atrPctHistory) {
     if (isBearish && isTrend) return 'BEAR';
     return 'RANGE';
 }
+
 function updateRegimeDisplay(regime) {
     const el = document.getElementById('header-regime');
     if (!el) return;
@@ -589,7 +592,7 @@ function loadWeightsV6() {
 }
 
 // ================================================================
-// MTF DATA HISTÓRICO (backtest) e ao vivo
+// MTF DATA (histórico e ao vivo)
 // ================================================================
 async function fetchMTFData(symbol = 'BTCUSDT') {
     try {
@@ -602,13 +605,9 @@ async function fetchMTFData(symbol = 'BTCUSDT') {
     } catch (e) { console.warn('MTF fetch error:', e); return { c1h: [], c4h: [], c1d: [] }; }
 }
 
-// Função para construir MTF histórico a partir do dataset 4h do backtest
 function buildHistoricalMTF(dataset4h, uptoIndex) {
     const slice = dataset4h.slice(0, uptoIndex + 1);
-    // 4h é o próprio dataset
     const c4h = slice.slice(-50);
-    // Aproximar 1h como 4h (não temos 1h real, então usamos o mesmo)
-    // Para 1d, agrupar blocos de 6 candles de 4h
     const c1d = [];
     for (let i = slice.length - 1; i >= 5 && c1d.length < 50; i -= 6) {
         const block = slice.slice(Math.max(0, i - 5), i + 1);
@@ -619,7 +618,6 @@ function buildHistoricalMTF(dataset4h, uptoIndex) {
             low: Math.min(...block.map(c => c.low))
         });
     }
-    // Se não houver candles suficientes para 1d, usar os mesmos c4h
     return { c1h: c4h, c4h: c4h, c1d: c1d.length > 0 ? c1d : c4h };
 }
 
@@ -716,7 +714,7 @@ function updateLiveSupportResistance() {
 }
 
 // ================================================================
-// CONFIRMAÇÃO DE SINAL V11 (CORRIGIDO MTF HISTÓRICO)
+// CONFIRMAÇÃO DE SINAL V12 (COM REGIME CORRIGIDO)
 // ================================================================
 function getDynamicWeights(regime) { return regimeWeights[regime] || regimeWeights.BULL; }
 function getDynamicFilterWeights(regime) {
@@ -848,7 +846,7 @@ function getTrendStrength(candles) {
     const slope = ema20 && ema50 ? (ema20 - ema50) / ema50 * 100 : 0;
     return { adx, slope, trending: adx > 25 && Math.abs(slope) > 0.5 };
 }
-async function confirmSignalV11(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false, clusterData = null) {
+async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false, clusterData = null) {
     if (!signal || signal === 'NEUTRAL') {
         return { approved: false, score: 0, reasons: ['Sinal neutro'], regime: 'NEUTRO', required: 60, scoreBonus: 0,
             scoreComponents: {} };
@@ -868,7 +866,10 @@ async function confirmSignalV11(signal, data, candles, rsiVals, macdVals, obvVal
     const atrPct = (atr / data.price) * 100;
     atrPercentHistory.push(atrPct);
     if (atrPercentHistory.length > 100) atrPercentHistory.shift();
-    const regime = detectMarketRegime(data.price, ema50, ema200, adx, atrPct, atrPercentHistory);
+
+    // Para regime, precisamos do EMA50 anterior. No backtest, passamos pelo data.ema50Prev.
+    const ema50Prev = data.ema50Prev !== undefined ? data.ema50Prev : ema50;
+    const regime = detectMarketRegimeFixed(data.price, ema50, ema50Prev, ema200, adx);
     updateRegimeDisplay(regime);
     currentRegime = regime;
 
@@ -913,7 +914,6 @@ async function confirmSignalV11(signal, data, candles, rsiVals, macdVals, obvVal
             scoreBonus: 0, scoreComponents: {} };
     }
 
-    // MTF Alignment com dados históricos (não snapshot)
     let mtfPenalty = 0;
     if (mtfData && mtfData.c1h && mtfData.c1h.length > 0 && mtfData.c4h && mtfData.c4h.length > 0 && mtfData.c1d && mtfData
         .c1d.length > 0) {
@@ -1154,13 +1154,13 @@ function updateScoreDisplay(scoreData) {
     document.getElementById('score-onchain').textContent = components.onchain;
     document.getElementById('score-volume').textContent = components.volume;
     document.getElementById('score-oi').textContent = components.oi;
-    checkAdditionalAlertsV11(score, components);
+    checkAdditionalAlertsV12(score, components);
 }
 
 // ================================================================
-// ALERTA EM TEMPO REAL V11
+// ALERTA EM TEMPO REAL V12 (com regime corrigido e defasagem)
 // ================================================================
-async function checkAdditionalAlertsV11(score, components) {
+async function checkAdditionalAlertsV12(score, components) {
     const now = Date.now();
     if (now - lastAlertTime < ALERT_COOLDOWN) return;
     const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
@@ -1200,10 +1200,21 @@ async function checkAdditionalAlertsV11(score, components) {
     globalData.support = data.support;
     globalData.resistance = data.resistance;
 
+    // Calcular ema50 e ema50Prev para o regime correto (live)
+    const closesLive = candles.map(c => c.close);
+    const ema50Live = calculateEMA(closesLive, 50) || price;
+    const ema50PrevLive = ema50History.length >= 2 ? ema50History[ema50History.length - 2] : ema50Live;
+    data.ema50Prev = ema50PrevLive;
+
+    // Atualizar regime antes de computeScore
+    const regimeLive = detectMarketRegimeFixed(price, ema50Live, ema50PrevLive, calculateEMA(closesLive, 200) || price, data.adx);
+    updateRegimeDisplay(regimeLive);
+    currentRegime = regimeLive;
+
     const side = signal === 'LONG' ? 'BUY' : 'SELL';
     const cluster = await checkClusterOrders('BTCUSDT', data.price, side);
 
-    const conf = await confirmSignalV11(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false, cluster);
+    const conf = await confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false, cluster);
     if (!conf.approved) {
         console.log(`Sinal bloqueado: score ${conf.score.toFixed(0)}/100 (requerido ≥${conf.required})`);
         return;
@@ -1222,13 +1233,13 @@ async function checkAdditionalAlertsV11(score, components) {
     let finalScore = score + conf.scoreBonus;
     finalScore = Math.min(100, Math.max(0, finalScore));
     const rationale =
-        `Filtros V11: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
+        `Filtros V12: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
     await sendStructuredAlert(signal, finalScore, price, stop, targets, rationale, components);
     lastAlertTime = now;
 }
 
 // ================================================================
-// BACKTEST V11 (CORRIGIDO: SCORE + MTF HISTÓRICO)
+// BACKTEST V12 (REGIME CORRIGIDO, SEM DEFASAGEM)
 // ================================================================
 async function fetchOnChainSeriesForBacktest(candles4h) {
     if (!candles4h || candles4h.length < 2) return new Map();
@@ -1308,14 +1319,13 @@ async function runBacktest() {
                 `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest V11';
+            btn.textContent = '▶ Executar Backtest V12';
             return;
         }
         console.log('📥 Buscando on-chain histórico...');
         const onChainMap = await fetchOnChainSeriesForBacktest(dataset);
         console.log(`✅ On-chain carregado: ${onChainMap.size} dias`);
 
-        console.log('📥 Pré-carregando MTF (para fallback) ...');
         const initialCapital = 10000;
         let balance = initialCapital,
             peak = balance,
@@ -1346,19 +1356,21 @@ async function runBacktest() {
             atrValues.push(calcATR(slice, 14));
         }
 
-        // Loop principal do backtest
         for (let i = 20; i < dataset.length; i++) {
             const candle = dataset[i],
                 price = candle.close,
                 atr = atrValues[i] || price * 0.02;
             const closes = dataset.slice(0, i + 1).map(d => d.close);
-            const ema50 = calculateEMA(closes, 50) || price,
-                ema200 = calculateEMA(closes, 200) || price,
-                rsi = calculateRSI(closes, 14) || 50,
-                macdVal = calculateMACD(closes) || 0,
-                obvVal = calculateOBV(dataset.slice(0, i + 1));
+            const ema50 = calculateEMA(closes, 50) || price;
+            const ema200 = calculateEMA(closes, 200) || price;
+            // Calcular ema50Prev a partir do candle anterior (sem look-ahead)
+            const closesPrev = dataset.slice(0, i).map(d => d.close);
+            const ema50Prev = calculateEMA(closesPrev, 50) || ema50;
+            const rsi = calculateRSI(closes, 14) || 50;
+            const macdVal = calculateMACD(closes) || 0;
+            const obvVal = calculateOBV(dataset.slice(0, i + 1));
 
-            // ---------- UNIFICAR SINAL: USAR computeScore (achado #2) ----------
+            // Dados para simData (será passado para computeScore)
             const simData = {
                 price: price,
                 ema50: ema50,
@@ -1376,19 +1388,27 @@ async function runBacktest() {
                 oiDelta: 0,
                 fvgZones: [{ low: Math.min(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.low)), high: Math
                         .max(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.high))
-                    }]
+                    }],
+                ema50Prev: ema50Prev // necessário para regime corrigido
             };
             const candleDay = Math.floor(new Date(dataset[i].date).getTime() / 1000 / 86400) * 86400;
             const oc = onChainMap.get(candleDay) || { mvrv: 1.0, sopr: 1.0 };
             simData.mvrv = oc.mvrv;
             simData.sopr = oc.sopr;
-            // Calcular score e obter sinal
+
+            // Atualizar regime ANTES de chamar computeScore (corrige defasagem)
+            const trend = getTrendStrength(dataset.slice(0, i + 1));
+            const adx = trend.adx || 25;
+            const regimeNow = detectMarketRegimeFixed(price, ema50, ema50Prev, ema200, adx);
+            currentRegime = regimeNow;
+
+            // Obter sinal usando computeScore (que usa currentRegime atualizado)
             const scoreData = computeScore(simData);
             let signal = 'NEUTRAL';
             if (scoreData.score >= 75) signal = 'LONG';
             else if (scoreData.score <= 25) signal = 'SHORT';
 
-            // Preparar dados para confirmSignalV11
+            // Preparar dados para confirmSignalV12
             const fullData = {
                 price,
                 rsi,
@@ -1404,19 +1424,19 @@ async function runBacktest() {
                 minerOutflow: 500,
                 positionSize: 0.01,
                 atr: atr,
-                adx: 25,
+                adx: adx,
                 support: simData.support,
-                resistance: simData.resistance
+                resistance: simData.resistance,
+                ema50Prev: ema50Prev
             };
             const rsiSlice = closes.map(c => calculateRSI(closes.slice(0, i + 1)));
             const macdSlice = closes.map(c => calculateMACD(closes.slice(0, i + 1)) || 0);
             const obvSlice = dataset.slice(0, i + 1).map((_, idx) => calculateOBV(dataset.slice(0, idx + 1)));
 
-            // Construir MTF histórico para este ponto (achado #1)
             const mtfDataPoint = buildHistoricalMTF(dataset, i);
             const clusterData = { cluster: false, volume: 0 };
 
-            const conf = await confirmSignalV11(signal, fullData, dataset.slice(0, i + 1), rsiSlice, macdSlice, obvSlice,
+            const conf = await confirmSignalV12(signal, fullData, dataset.slice(0, i + 1), rsiSlice, macdSlice, obvSlice,
                 mtfDataPoint, true, clusterData);
             if (!conf.approved) {
                 rejectedCount++;
@@ -1554,7 +1574,6 @@ async function runBacktest() {
             profitFactor = losses ? trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t.pnlUsd, 0) / Math.abs(trades
                 .filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.pnlUsd, 0)) : (wins ? Infinity : 0);
 
-        // Estatística de significância (achado #3)
         function assessSignificance(N, wr) {
             if (N < 30) return { sufficient: false, margin: null, warning: `Apenas ${N} trades — amostra insuficiente. Mínimo 30.` };
             const p = wr / 100;
@@ -1572,10 +1591,10 @@ async function runBacktest() {
         '<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>';
         else {
             html +=
-                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V11 (4h)</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
+                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V12 (4h)</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
         }
         html +=
-            `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • On-chain real • Sinal via computeScore • MTF histórico • Significância calculada.</p>`;
+            `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • On-chain real • Regime BEAR corrigido • Sem defasagem.</p>`;
         container.innerHTML = html;
     } catch (err) {
         console.error('Backtest error:', err);
@@ -1583,7 +1602,7 @@ async function runBacktest() {
     }
     backtestRunning = false;
     btn.disabled = false;
-    btn.textContent = '▶ Executar Backtest V11';
+    btn.textContent = '▶ Executar Backtest V12';
 }
 
 // ================================================================
@@ -1825,6 +1844,12 @@ function initCandleWebSocket() {
                         volume: parseFloat(candle.v) || 0 });
                     if (candleHistory.length > 50) candleHistory.shift();
                     updateLiveSupportResistance();
+
+                    // Atualizar histórico de EMA50 para o regime live
+                    const closesLive = candleHistory.map(c => c.close);
+                    const ema50Live = calculateEMA(closesLive, 50);
+                    if (ema50Live !== null) ema50History.push(ema50Live);
+                    if (ema50History.length > 100) ema50History.shift();
 
                     const closes = candleHistory.map(c => c.close);
                     rsiHistory.push(calculateRSI(closes));
