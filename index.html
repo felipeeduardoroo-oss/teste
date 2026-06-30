@@ -10,7 +10,7 @@
     </script>
     <style>
         /* ============================================================
-           ESTILOS (MANTIDOS – NENHUMA ALTERAÇÃO)
+           ESTILOS (MANTIDOS + NOVOS PARA DEBUG)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -823,6 +823,27 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Botão flutuante de Debug */
+        .debug-btn {
+            position: fixed;
+            bottom: 80px; /* acima do botão do Telegram */
+            right: 24px;
+            z-index: 999;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+        }
+        .debug-btn:hover {
+            transform: scale(1.05);
+        }
+
         /* Indicador de status do Telegram no header */
         .telegram-status {
             display: inline-block;
@@ -969,6 +990,22 @@
             color: var(--text-muted);
         }
 
+        /* Debug panel no rodapé */
+        #debug-panel {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.75em;
+            color: var(--text-light);
+            margin-top: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
         @media (max-width: 768px) {
             .backtest-stats-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -976,6 +1013,11 @@
             }
             .backtest-table-wrap {
                 max-height: 300px;
+            }
+            .debug-btn {
+                bottom: 75px;
+                padding: 10px 14px;
+                font-size: 1em;
             }
         }
     </style>
@@ -1405,17 +1447,38 @@
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
+
+                <!-- ============================================================
+                PAINEL DE DEBUG
+                ============================================================ -->
+                <div class="footer-section" id="debug-section">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <h4 style="cursor:pointer;" onclick="toggleDebugPanel()">🐞 DEBUG <span id="debug-toggle-icon">▶</span></h4>
+                        <div>
+                            <button onclick="clearDebugLogs()" style="background:var(--secondary); border:none; color:var(--text-light); padding:4px 12px; border-radius:12px; font-size:0.75em; cursor:pointer;">Limpar</button>
+                            <span id="debug-count" style="font-size:0.7em; color:var(--text-muted); margin-left:8px;">0</span>
+                        </div>
+                    </div>
+                    <div id="debug-panel" style="display:none; background:var(--bg-dark); border:1px solid var(--border); border-radius:6px; padding:8px; max-height:200px; overflow-y:auto; font-family:monospace; font-size:0.75em; color:var(--text-light); margin-top:8px; white-space:pre-wrap; word-break:break-all;">
+                        <div id="debug-log"></div>
+                    </div>
+                </div>
+
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
             </div>
         </footer>
     </div>
 
     <!-- ============================================================
-    BOTÃO FLUTUANTE — TESTAR TELEGRAM
+    BOTÕES FLUTUANTES
     ============================================================ -->
+    <!-- Botão Telegram -->
     <button class="telegram-test-btn" id="test-telegram-btn">
         <span id="test-btn-label">📨 Testar Alerta</span>
     </button>
+
+    <!-- Botão Debug -->
+    <button class="debug-btn" id="debug-toggle-btn" onclick="toggleDebugPanel()">🐞</button>
 
     <!-- ============================================================
     JAVASCRIPT COMPLETO
@@ -2141,6 +2204,7 @@
                 updateLiveTime();
             } catch (e) {
                 console.warn('Prices (live) unavailable, keeping static');
+                debugLog('warn', 'Prices (live) unavailable, keeping static', e.message);
             }
         }
 
@@ -2165,6 +2229,7 @@
                 updateLiveTime();
             } catch (e) {
                 console.warn('FNG (live) unavailable, keeping static');
+                debugLog('warn', 'FNG (live) unavailable', e.message);
             }
         }
 
@@ -2201,6 +2266,7 @@
                 updateLiveTime();
             } catch (e) {
                 console.warn('DeFi data unavailable, keeping static');
+                debugLog('warn', 'DeFi data unavailable', e.message);
             }
         }
 
@@ -2335,6 +2401,7 @@
 
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
+                debugLog('warn', 'Binance derivatives unavailable', e.message);
             }
         }
 
@@ -2381,6 +2448,7 @@
                     }
                 } catch (err) {
                     console.warn('BRK error for ' + m.id, err);
+                    debugLog('error', 'BRK error for ' + m.id, err.message);
                 }
             });
             await Promise.all(promises);
@@ -2401,6 +2469,7 @@
                 }
             } catch (e) {
                 console.warn('Hashrate unavailable, keeping static');
+                debugLog('warn', 'Hashrate unavailable', e.message);
             }
         }
 
@@ -2421,6 +2490,7 @@
                 }
             } catch (e) {
                 console.warn('Gas price unavailable, keeping static');
+                debugLog('warn', 'Gas price unavailable', e.message);
             }
         }
 
@@ -2474,11 +2544,13 @@
                 let klines;
                 if (!response.ok) {
                     console.warn('Falha ao buscar dados da Binance, usando dados simulados.');
+                    debugLog('warn', 'Falha ao buscar dados da Binance, usando dados simulados.', response.status);
                     klines = gerarDadosSimulados(30);
                 } else {
                     klines = await response.json();
                     if (!klines || klines.length < 10) {
                         console.warn('Dados insuficientes, usando simulados.');
+                        debugLog('warn', 'Dados insuficientes, usando simulados.');
                         klines = gerarDadosSimulados(30);
                     }
                 }
@@ -2516,6 +2588,7 @@
                 })).filter(d => d.close > 0);
 
                 console.log(`Backtest: ${dataset.length} dias obtidos.`);
+                debugLog('info', `Backtest: ${dataset.length} dias obtidos.`);
 
                 if (dataset.length < 10) {
                     container.innerHTML =
@@ -2751,6 +2824,7 @@
 
             } catch (err) {
                 console.error('Backtest error:', err);
+                debugLog('error', 'Backtest error:', err.message);
                 container.innerHTML = `
                     <div class="no-trades">
                         <p>❌ Erro ao executar backtest: ${err.message}</p>
@@ -2824,15 +2898,107 @@
             if (savedLog) {
                 try { alertLog = JSON.parse(savedLog); } catch (e) { /* ignore */ }
             }
+
+            // Debug: iniciar painel
+            debugLog('info', '🚀 Painel de debug iniciado');
         });
 
         updateTimestamp();
+
+        // ================================================================
+        // 13. SISTEMA DE DEBUG
+        // ================================================================
+        let debugLogs = [];
+        const MAX_DEBUG_LOGS = 200;
+
+        function debugLog(level, message, ...extra) {
+            const timestamp = getCurrentTimestamp();
+            const entry = { timestamp, level, message, extra: extra.length ? extra : undefined };
+            debugLogs.push(entry);
+            if (debugLogs.length > MAX_DEBUG_LOGS) debugLogs.shift();
+            renderDebugPanel();
+            // mantém console para referência
+            const consoleMethod = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
+            consoleMethod(`[${timestamp}] [${level.toUpperCase()}] ${message}`, ...extra);
+        }
+
+        function renderDebugPanel() {
+            const container = document.getElementById('debug-log');
+            const count = document.getElementById('debug-count');
+            if (!container) return;
+            container.innerHTML = debugLogs.map(e =>
+                `<div style="border-bottom:1px solid var(--border); padding:2px 0; color:${e.level === 'error' ? 'var(--accent-red)' : e.level === 'warn' ? 'var(--accent-yellow)' : 'var(--text-muted)'}">
+                    <span style="opacity:0.6;">${e.timestamp}</span>
+                    <strong>[${e.level.toUpperCase()}]</strong> ${e.message}
+                    ${e.extra ? ' <span style="opacity:0.5;">' + JSON.stringify(e.extra).slice(0,100) + '</span>' : ''}
+                </div>`
+            ).join('');
+            if (debugLogs.length === 0) container.innerHTML = '<div style="color:var(--text-muted);">Nenhum log registrado.</div>';
+            if (count) count.textContent = debugLogs.length;
+            // auto-scroll
+            const panel = document.getElementById('debug-panel');
+            if (panel && panel.style.display !== 'none') {
+                panel.scrollTop = panel.scrollHeight;
+            }
+        }
+
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            const icon = document.getElementById('debug-toggle-icon');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                if (icon) icon.textContent = '▼';
+                renderDebugPanel();
+            } else {
+                panel.style.display = 'none';
+                if (icon) icon.textContent = '▶';
+            }
+        }
+
+        function clearDebugLogs() {
+            debugLogs = [];
+            renderDebugPanel();
+        }
+
+        // Captura erros globais
+        window.onerror = function(message, source, lineno, colno, error) {
+            debugLog('error', `${message} (${source}:${lineno}:${colno})`, error?.stack || '');
+            return false;
+        };
+
+        window.addEventListener('unhandledrejection', function(event) {
+            debugLog('error', `Promise rejeitada: ${event.reason}`, event.promise);
+        });
+
+        // Wrapper fetch para capturar erros de rede
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            return originalFetch.apply(this, args).catch(err => {
+                debugLog('error', `Fetch falhou: ${err.message}`, args[0]);
+                throw err;
+            });
+        };
+
+        // Substitui console.warn e console.error para também logar no debug (opcional)
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            debugLog('warn', args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' '));
+        };
+        const originalError = console.error;
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            debugLog('error', args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' '));
+        };
 
         // Expor funções para debug
         window.sendTelegramAlert = sendTelegramAlert;
         window.sendTestAlert = sendTestAlert;
         window.refreshAll = refreshAll;
         window.runBacktest = runBacktest;
+        window.debugLog = debugLog;
+        window.toggleDebugPanel = toggleDebugPanel;
+        window.clearDebugLogs = clearDebugLogs;
     </script>
 </body>
 </html>
