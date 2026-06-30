@@ -1066,19 +1066,19 @@
                     <h3>Bitcoin</h3>
                     <div class="value negative" id="btc-price">$60.000</div>
                     <div class="subtext" id="btc-change">↓ 5,94% (referência)</div>
-                    <span class="source-with-time" id="btc-source">CoinGecko • estático</span>
+                    <span class="source-with-time" id="btc-source">Binance (WebSocket) • estático</span>
                 </div>
                 <div class="summary-card">
                     <h3>Ethereum</h3>
                     <div class="value negative" id="eth-price">$1.573,53</div>
                     <div class="subtext" id="eth-change">↓ 0,15% (referência)</div>
-                    <span class="source-with-time" id="eth-source">CoinGecko • estático</span>
+                    <span class="source-with-time" id="eth-source">Binance (WebSocket) • estático</span>
                 </div>
                 <div class="summary-card">
                     <h3>Solana</h3>
                     <div class="value negative" id="sol-price">$170,00</div>
                     <div class="subtext" id="sol-change">↓ 2,30% (referência)</div>
-                    <span class="source-with-time" id="sol-source">CoinGecko • estático</span>
+                    <span class="source-with-time" id="sol-source">Binance (WebSocket) • estático</span>
                 </div>
                 <div class="summary-card">
                     <h3>Sentiment Macro</h3>
@@ -1431,10 +1431,10 @@
         </section>
 
         <!-- ============================================================
-        BACKTEST 30 DIAS (CORRIGIDO)
+        BACKTEST 4H (CORRIGIDO)
         ============================================================ -->
         <section>
-            <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (1H)</h2>
+            <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H)</h2>
             <div class="backtest-section">
                 <div class="backtest-header">
                     <div>
@@ -1442,12 +1442,12 @@
                         <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span>
                         <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Kelly: <strong style="color:var(--text-light);">rampa 1.5%→2%→Kelly</strong></span>
                     </div>
-                    <button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest</button>
+                    <button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest (4h)</button>
                 </div>
                 <div id="backtestResults">
                     <div class="backtest-loading">
                         <div class="spinner"></div>
-                        <p>Carregando dados históricos (1h)...</p>
+                        <p>Carregando dados históricos (4h)...</p>
                     </div>
                 </div>
             </div>
@@ -1460,7 +1460,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score institucional com pesos otimizados. Backtest V3 com Kelly rampa, regime por percentis, breakeven com buffer ATR, targets com custos e confirmação scoreada. Gráficos com botões de timeframe e preços instantâneos via WebSocket.</p>
+                    <p>Score institucional com pesos otimizados. Backtest 4h com Kelly rampa, regime por percentis, breakeven com buffer ATR, targets com custos e confirmação scoreada. Gráficos com botões de timeframe e preços instantâneos via WebSocket. Notificações Telegram com cooldown de 1 minuto.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
@@ -1477,7 +1477,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT COMPLETO (COM MELHORIAS)
+    JAVASCRIPT COMPLETO (COM CORREÇÕES)
     ============================================================ -->
     <script>
         // ================================================================
@@ -1505,7 +1505,7 @@
         // ================================================================
         let lastAlertScore = 50;
         let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 1800000;
+        const ALERT_COOLDOWN = 60000; // 1 minuto (corrigido)
         let alertLog = [];
         let telegramStatus = 'online';
 
@@ -1700,14 +1700,26 @@
             return num >= 0 ? 'positive' : 'negative';
         }
 
+        // Nova função para atualizar timestamps de todos os indicadores
+        function updateAllSourceTimestamps() {
+            document.querySelectorAll('.data-source').forEach(el => {
+                const current = el.textContent;
+                if (!current.includes('•')) {
+                    el.textContent = current + ' • ' + getCurrentTimestamp();
+                } else {
+                    el.textContent = current.replace(/•.*$/, '• ' + getCurrentTimestamp());
+                }
+            });
+        }
+
         function updateSourceTimestamp(elementId) {
             const el = document.getElementById(elementId);
             if (el) {
-                const currentText = el.textContent;
-                if (currentText.includes('•')) {
-                    el.textContent = currentText.replace(/•.*$/, '• ' + getCurrentTimestamp());
+                const current = el.textContent;
+                if (!current.includes('•')) {
+                    el.textContent = current + ' • ' + getCurrentTimestamp();
                 } else {
-                    el.textContent = currentText + ' • ' + getCurrentTimestamp();
+                    el.textContent = current.replace(/•.*$/, '• ' + getCurrentTimestamp());
                 }
             }
         }
@@ -1864,7 +1876,7 @@
         }
 
         // ================================================================
-        // 0.10 CONFIRMAÇÃO SCOREADA
+        // 0.10 CONFIRMAÇÃO SCOREADA (SIMPLIFICADA)
         // ================================================================
         async function confirmSignalV3(signal, data, candles, rsiVals) {
             const { approve, score, reasons } = await advancedConfirmation(signal, data, candles, rsiVals);
@@ -1896,7 +1908,6 @@
                 ml_probability: 0.20
             };
 
-            // Simulação simplificada
             let pa_score = 0;
             if (data.price && data.support && data.resistance) {
                 const pos = (data.price - data.support) / (data.resistance - data.support);
@@ -2183,6 +2194,7 @@
             const ts = getCurrentTimestamp();
             document.getElementById('header-timestamp').textContent = '📅 ' + ts + ' UTC-3';
             document.getElementById('last-update').textContent = ts;
+            updateAllSourceTimestamps();
         }
 
         function updateLiveTime() {
@@ -2194,7 +2206,7 @@
         }
 
         // ================================================================
-        // 4. CANDLESTICK COM TIMEFRAME
+        // 4. CANDLESTICK COM TIMEFRAME (MANTIDO)
         // ================================================================
         let candleCharts = {};
 
@@ -2248,14 +2260,12 @@
             if (data && data.length > 0) {
                 chartObj.candleSeries.setData(data);
                 chartObj.chart.timeScale().fitContent();
-                // Atualizar label do timeframe
                 const labelId = containerId.replace('candle-', '') + '-tf-label';
                 const label = document.getElementById(labelId);
                 if (label) label.textContent = interval;
             }
         }
 
-        // Inicializar gráficos com 1h
         async function initCandles() {
             const pairs = [
                 { id: 'candle-btc', symbol: 'BTCUSDT', color: '#00d98e' },
@@ -2269,7 +2279,6 @@
                     await updateCandleChart(p.id, p.symbol, '1h');
                 }
             }
-            // Atualizar stats diários
             await updateDailyStats();
         }
 
@@ -2316,7 +2325,6 @@
             }
         }
 
-        // Eventos dos botões de timeframe
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('.tf-btn');
             if (!btn) return;
@@ -2326,16 +2334,14 @@
             const containerId = parent.closest('.candle-card').querySelector('.candle-container').id;
             const interval = btn.dataset.tf;
 
-            // Atualizar classe ativa
             parent.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            // Atualizar gráfico
             updateCandleChart(containerId, symbol, interval);
         });
 
         // ================================================================
-        // 5. WEBSOCKET TICKERS PARA PREÇOS INSTANTÂNEOS (BTC, ETH, SOL)
+        // 5. WEBSOCKET TICKERS (PREÇOS INSTANTÂNEOS)
         // ================================================================
         let wsTickers = {};
 
@@ -2558,6 +2564,7 @@
                 headerSentiment.className = 'badge ' + (parseInt(value) <= 25 ? 'sentiment-bearish' :
                     'sentiment-bullish');
                 updateLiveTime();
+                updateSourceTimestamp('header-fng');
             } catch (e) {
                 console.warn('FNG (live) unavailable, keeping static');
             }
@@ -2822,7 +2829,7 @@
         }
 
         // ================================================================
-        // 8. BACKTEST CORRIGIDO (COM TIMEOUT E FALLBACK)
+        // 8. BACKTEST 4H (CORRIGIDO)
         // ================================================================
         let backtestRunning = false;
 
@@ -2837,13 +2844,12 @@
             container.innerHTML = `
                 <div class="backtest-loading">
                     <div class="spinner"></div>
-                    <p>Baixando dados de 1h dos últimos 30 dias...</p>
+                    <p>Baixando dados de 4h dos últimos 30 dias...</p>
                 </div>
             `;
 
             try {
-                // Usar Promise com timeout para evitar bloqueio
-                const fetchWithTimeout = (url, timeout = 15000) => {
+                const fetchWithTimeout = (url, timeout = 20000) => {
                     return Promise.race([
                         fetch(url),
                         new Promise((_, reject) =>
@@ -2857,8 +2863,8 @@
                 let klines;
                 try {
                     const response = await fetchWithTimeout(
-                        `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&startTime=${thirtyDaysAgo}&limit=750`,
-                        10000
+                        `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&startTime=${thirtyDaysAgo}&limit=200`,
+                        20000
                     );
                     if (response.ok) {
                         klines = await response.json();
@@ -2866,13 +2872,13 @@
                         throw new Error('HTTP ' + response.status);
                     }
                 } catch (e) {
-                    console.warn('Falha ao buscar dados da Binance, usando dados simulados.', e);
-                    klines = gerarDadosSimulados(720);
+                    console.warn('Falha ao buscar dados 4h, usando dados simulados.', e);
+                    klines = gerarDadosSimulados(180);
                 }
 
-                if (!klines || klines.length < 50) {
+                if (!klines || klines.length < 20) {
                     console.warn('Dados insuficientes, usando simulados.');
-                    klines = gerarDadosSimulados(720);
+                    klines = gerarDadosSimulados(180);
                 }
 
                 function gerarDadosSimulados(num) {
@@ -2880,19 +2886,19 @@
                     let preco = 60000;
                     const agora = Date.now();
                     for (let i = num; i >= 0; i--) {
-                        const variacao = (Math.random() - 0.5) * 0.01;
+                        const variacao = (Math.random() - 0.5) * 0.02;
                         preco = preco * (1 + variacao);
-                        const data = new Date(agora - i * 60 * 60 * 1000);
+                        const data = new Date(agora - i * 4 * 60 * 60 * 1000);
                         const open = preco * (1 + (Math.random() - 0.5) * 0.005);
-                        const high = Math.max(open, preco) * (1 + Math.random() * 0.005);
-                        const low = Math.min(open, preco) * (1 - Math.random() * 0.005);
+                        const high = Math.max(open, preco) * (1 + Math.random() * 0.01);
+                        const low = Math.min(open, preco) * (1 - Math.random() * 0.01);
                         dados.push([
                             data.getTime(),
                             open.toFixed(2),
                             high.toFixed(2),
                             low.toFixed(2),
                             preco.toFixed(2),
-                            (Math.random() * 100 + 50).toFixed(0)
+                            (Math.random() * 200 + 100).toFixed(0)
                         ]);
                     }
                     return dados;
@@ -2907,12 +2913,12 @@
                     volume: parseFloat(k[5])
                 })).filter(d => d.close > 0);
 
-                if (dataset.length < 50) {
+                if (dataset.length < 20) {
                     container.innerHTML =
-                        `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles).</p></div>`;
+                        `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
                     backtestRunning = false;
                     btn.disabled = false;
-                    btn.textContent = '▶ Executar Backtest';
+                    btn.textContent = '▶ Executar Backtest (4h)';
                     return;
                 }
 
@@ -2947,11 +2953,10 @@
                     atrValues.push(calcATR(slice, 14));
                 }
 
-                // Loop principal
-                for (let i = 50; i < dataset.length; i++) {
+                for (let i = 20; i < dataset.length; i++) {
                     const candle = dataset[i];
                     const price = candle.close;
-                    const atr = atrValues[i] || price * 0.01;
+                    const atr = atrValues[i] || price * 0.02;
 
                     const closes = dataset.slice(0, i + 1).map(d => d.close);
                     const ema20 = calculateEMA(closes, 20) || price;
@@ -2962,8 +2967,6 @@
                     if (ema20 > ema50 && rsi > 50) signal = 'LONG';
                     else if (ema20 < ema50 && rsi < 50) signal = 'SHORT';
 
-                    // Confirmação simplificada
-                    let confScore = 50;
                     const simData = { price, rsi, volumeRatio: 1, fundingRate: 0, mvrv: 1.2, sopr: 0.95, oiDelta: 0 };
                     const conf = await confirmSignalV3(signal, simData, dataset.slice(0, i + 1), closes.map(c =>
                         calculateRSI(closes.slice(0, i + 1))));
@@ -3087,7 +3090,7 @@
                                 pnlUsd: pnlUsd,
                                 exitReason: exitReason,
                                 size: exitSize,
-                                daysOpen: (i - position.entryIndex) / 24,
+                                daysOpen: (i - position.entryIndex) / 6,
                                 regime: position.regime,
                                 confScore: conf.score || 50
                             });
@@ -3161,10 +3164,10 @@
                 `;
 
                 if (trades.length === 0) {
-                    html += `<div class="no-trades"><p>Nenhum trade gerado no período.</p></div>`;
+                    html += `<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>`;
                 } else {
                     html += `
-                        <h4 style="color:var(--text-light); margin: 20px 0 10px 0;">📋 Histórico de Trades</h4>
+                        <h4 style="color:var(--text-light); margin: 20px 0 10px 0;">📋 Histórico de Trades (4h)</h4>
                         <div class="backtest-table-wrap">
                             <table>
                                 <thead>
@@ -3204,7 +3207,7 @@
 
                 html += `
                     <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 12px;">
-                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles de 1h) • Capital inicial: US$ ${initialCapital.toFixed(0)}
+                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • Capital inicial: US$ ${initialCapital.toFixed(0)}
                         • Comissão: 0,1% • Slippage: 0,05% • Kelly rampa • Regime percentis • Breakeven buffer ATR • 3 parciais com fees • Confirmação scoreada
                     </p>
                 `;
@@ -3223,7 +3226,7 @@
 
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest';
+            btn.textContent = '▶ Executar Backtest (4h)';
         }
 
         // ================================================================
@@ -3239,7 +3242,6 @@
                         const data = JSON.parse(event.data);
                         const candle = data.k;
                         if (candle.x) {
-                            // Atualizar apenas o gráfico BTC (já que temos 1m)
                             const chartObj = candleCharts['candle-btc'];
                             if (chartObj && document.querySelector('#candle-btc .tf-btn.active')?.dataset.tf === '1m') {
                                 const newCandle = {
@@ -3262,7 +3264,6 @@
                                 }
                                 chartObj.chart.timeScale().fitContent();
                             }
-                            // Atualizar histórico
                             const close = parseFloat(candle.c);
                             candleHistory.push({ time: candle.t / 1000, open: parseFloat(candle.o), high: parseFloat(
                                     candle.h), low: parseFloat(candle.l), close: close });
@@ -3289,24 +3290,19 @@
             updateTimestamp();
             initWhaleFlowChart();
 
-            // Iniciar tickers para BTC, ETH, SOL
             initTickerWebSocket('BTCUSDT', 'btc-price', 'btc-change', 'btc-source');
             initTickerWebSocket('ETHUSDT', 'eth-price', 'eth-change', 'eth-source');
             initTickerWebSocket('SOLUSDT', 'sol-price', 'sol-change', 'sol-source');
 
-            // Iniciar gráficos de candle
             await initCandles();
-
-            // WebSocket candle para BTC (1m)
             initCandleWebSocket();
 
-            // Atualizações periódicas
             setInterval(() => {
                 updateTimestamp();
                 updateLiveTime();
+                updateAllSourceTimestamps();
             }, 10000);
 
-            // Polling para dados estáticos (a cada 5 min)
             setInterval(async () => {
                 await fetchFearGreed();
                 await fetchDeFiData();
@@ -3316,7 +3312,6 @@
                 await fetchBinanceDerivatives();
             }, 300000);
 
-            // Carregar dados iniciais
             await fetchFearGreed();
             await fetchDeFiData();
             await fetchBRK();
@@ -3324,11 +3319,9 @@
             await fetchGasPrice();
             await fetchBinanceDerivatives();
 
-            // Score inicial
             const scoreData = computeScore(globalData);
             updateScoreDisplay(scoreData);
 
-            // Eventos do backtest
             document.getElementById('runBacktestBtn').addEventListener('click', runBacktest);
             setTimeout(runBacktest, 2000);
 
@@ -3337,6 +3330,23 @@
             if (savedLog) {
                 try { alertLog = JSON.parse(savedLog); } catch (e) { /* ignore */ }
             }
+
+            // Botão de teste Telegram
+            document.getElementById('test-telegram-btn').addEventListener('click', async function() {
+                const label = document.getElementById('test-btn-label');
+                label.innerHTML = '<span class="spinner"></span> Enviando...';
+                this.disabled = true;
+                const success = await sendTestAlert();
+                if (success) {
+                    label.textContent = '✅ Enviado!';
+                    setTimeout(() => { label.textContent = '📨 Testar Alerta';
+                        this.disabled = false; }, 2500);
+                } else {
+                    label.textContent = '❌ Falha';
+                    setTimeout(() => { label.textContent = '📨 Testar Alerta';
+                        this.disabled = false; }, 3000);
+                }
+            });
         }
 
         document.addEventListener('DOMContentLoaded', init);
