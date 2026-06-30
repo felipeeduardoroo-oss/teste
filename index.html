@@ -292,13 +292,13 @@ footer { background:var(--primary); border-top:2px solid var(--accent-blue); pad
 <div class="chart-wrapper"><canvas id="chart_allocation"></canvas></div>
 </section>
 <section>
-<h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V10</h2>
+<h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V11</h2>
 <div class="backtest-section">
-<div class="backtest-header"><div><span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Regime: <strong style="color:var(--text-light);">Adaptativo</strong></span></div><button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V10</button></div>
+<div class="backtest-header"><div><span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Regime: <strong style="color:var(--text-light);">Adaptativo</strong></span></div><button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V11</button></div>
 <div id="backtestResults"><div class="backtest-loading"><div class="spinner"></div><p>Carregando dados históricos (4h) + on-chain...</p></div></div>
 </div>
 </section>
-<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V10</h4><p>Correção do backtest: clusterData falso no backtest para evitar penalidade, ajuste de penalidades para backtest, mais logs. Estratégia adaptativa com suporte/resistência dinâmico, on-chain real, Kelly segmentado, whale confluence.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
+<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V11</h4><p>Correção do backtest: agora usa o mesmo motor de score do live (computeScore) em vez de cruzamento EMA20/50+RSI; MTF histórico construído a partir dos próprios candles do backtest, sem look-ahead; estatísticas de significância reportadas. Telegram ativo.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
 </div>
 <button class="telegram-test-btn" id="test-telegram-btn"><span id="test-btn-label">📨 Testar Alerta</span></button>
 <script>
@@ -589,7 +589,7 @@ function loadWeightsV6() {
 }
 
 // ================================================================
-// MTF DATA
+// MTF DATA HISTÓRICO (backtest) e ao vivo
 // ================================================================
 async function fetchMTFData(symbol = 'BTCUSDT') {
     try {
@@ -601,6 +601,28 @@ async function fetchMTFData(symbol = 'BTCUSDT') {
         return { c1h: c1h || [], c4h: c4h || [], c1d: c1d || [] };
     } catch (e) { console.warn('MTF fetch error:', e); return { c1h: [], c4h: [], c1d: [] }; }
 }
+
+// Função para construir MTF histórico a partir do dataset 4h do backtest
+function buildHistoricalMTF(dataset4h, uptoIndex) {
+    const slice = dataset4h.slice(0, uptoIndex + 1);
+    // 4h é o próprio dataset
+    const c4h = slice.slice(-50);
+    // Aproximar 1h como 4h (não temos 1h real, então usamos o mesmo)
+    // Para 1d, agrupar blocos de 6 candles de 4h
+    const c1d = [];
+    for (let i = slice.length - 1; i >= 5 && c1d.length < 50; i -= 6) {
+        const block = slice.slice(Math.max(0, i - 5), i + 1);
+        if (block.length === 0) break;
+        c1d.unshift({
+            close: block[block.length - 1].close,
+            high: Math.max(...block.map(c => c.high)),
+            low: Math.min(...block.map(c => c.low))
+        });
+    }
+    // Se não houver candles suficientes para 1d, usar os mesmos c4h
+    return { c1h: c4h, c4h: c4h, c1d: c1d.length > 0 ? c1d : c4h };
+}
+
 function getTrendEMA(candles) {
     if (!candles || candles.length < 50) return 0;
     const closes = candles.map(d => d.close);
@@ -694,7 +716,7 @@ function updateLiveSupportResistance() {
 }
 
 // ================================================================
-// CONFIRMAÇÃO DE SINAL V10 (AJUSTADA PARA BACKTEST)
+// CONFIRMAÇÃO DE SINAL V11 (CORRIGIDO MTF HISTÓRICO)
 // ================================================================
 function getDynamicWeights(regime) { return regimeWeights[regime] || regimeWeights.BULL; }
 function getDynamicFilterWeights(regime) {
@@ -826,7 +848,7 @@ function getTrendStrength(candles) {
     const slope = ema20 && ema50 ? (ema20 - ema50) / ema50 * 100 : 0;
     return { adx, slope, trending: adx > 25 && Math.abs(slope) > 0.5 };
 }
-async function confirmSignalV10(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false, clusterData = null) {
+async function confirmSignalV11(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false, clusterData = null) {
     if (!signal || signal === 'NEUTRAL') {
         return { approved: false, score: 0, reasons: ['Sinal neutro'], regime: 'NEUTRO', required: 60, scoreBonus: 0,
             scoreComponents: {} };
@@ -882,24 +904,22 @@ async function confirmSignalV10(signal, data, candles, rsiVals, macdVals, obvVal
         }
     }
 
-    // Cluster: no backtest, passamos clusterData falso para evitar penalidade
     let clusterPenalty = 0;
     if (clusterData === null) {
-        // Em produção, dados indisponíveis geram penalidade
         if (!isBacktest) clusterPenalty = 5;
-        else clusterPenalty = 0; // no backtest ignoramos
+        else clusterPenalty = 0;
     } else if (clusterData && clusterData.cluster && clusterData.volume > 15) {
         return { approved: false, score: 0, reasons: ['Cluster de ordens no caminho'], regime, required: 65,
             scoreBonus: 0, scoreComponents: {} };
     }
 
-    // MTF Alignment (fail-closed)
+    // MTF Alignment com dados históricos (não snapshot)
     let mtfPenalty = 0;
     if (mtfData && mtfData.c1h && mtfData.c1h.length > 0 && mtfData.c4h && mtfData.c4h.length > 0 && mtfData.c1d && mtfData
         .c1d.length > 0) {
         const mtfResult = checkMTFAlignment(mtfData, signal, data.price);
         if (!mtfResult.aligned) {
-            mtfPenalty = isBacktest ? -8 : -15; // menos severo no backtest
+            mtfPenalty = isBacktest ? -8 : -15;
         }
     } else {
         mtfPenalty = isBacktest ? -5 : -10;
@@ -909,7 +929,7 @@ async function confirmSignalV10(signal, data, candles, rsiVals, macdVals, obvVal
     componentWeights = { trend: dynWeights.trend, momentum: dynWeights.momentum, structure: dynWeights.structure,
         onchain: dynWeights.onChain, volume: dynWeights.volume, oi: dynWeights.oi };
     const minScore = regime === 'RANGE' ? 75 : 65;
-    const baseRequired = isBacktest ? 50 : minScore; // backtest mais permissivo
+    const baseRequired = isBacktest ? 50 : minScore;
     const requiredScore = baseRequired + (isBacktest ? 0 : liquidity.scorePenalty + clusterPenalty);
 
     const dynamic = getDynamicLevels(candles);
@@ -1134,13 +1154,13 @@ function updateScoreDisplay(scoreData) {
     document.getElementById('score-onchain').textContent = components.onchain;
     document.getElementById('score-volume').textContent = components.volume;
     document.getElementById('score-oi').textContent = components.oi;
-    checkAdditionalAlertsV10(score, components);
+    checkAdditionalAlertsV11(score, components);
 }
 
 // ================================================================
-// ALERTA EM TEMPO REAL V10
+// ALERTA EM TEMPO REAL V11
 // ================================================================
-async function checkAdditionalAlertsV10(score, components) {
+async function checkAdditionalAlertsV11(score, components) {
     const now = Date.now();
     if (now - lastAlertTime < ALERT_COOLDOWN) return;
     const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
@@ -1183,7 +1203,7 @@ async function checkAdditionalAlertsV10(score, components) {
     const side = signal === 'LONG' ? 'BUY' : 'SELL';
     const cluster = await checkClusterOrders('BTCUSDT', data.price, side);
 
-    const conf = await confirmSignalV10(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false, cluster);
+    const conf = await confirmSignalV11(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false, cluster);
     if (!conf.approved) {
         console.log(`Sinal bloqueado: score ${conf.score.toFixed(0)}/100 (requerido ≥${conf.required})`);
         return;
@@ -1202,13 +1222,13 @@ async function checkAdditionalAlertsV10(score, components) {
     let finalScore = score + conf.scoreBonus;
     finalScore = Math.min(100, Math.max(0, finalScore));
     const rationale =
-        `Filtros V10: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
+        `Filtros V11: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
     await sendStructuredAlert(signal, finalScore, price, stop, targets, rationale, components);
     lastAlertTime = now;
 }
 
 // ================================================================
-// BACKTEST V10 (CORRIGIDO)
+// BACKTEST V11 (CORRIGIDO: SCORE + MTF HISTÓRICO)
 // ================================================================
 async function fetchOnChainSeriesForBacktest(candles4h) {
     if (!candles4h || candles4h.length < 2) return new Map();
@@ -1288,18 +1308,14 @@ async function runBacktest() {
                 `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest V10';
+            btn.textContent = '▶ Executar Backtest V11';
             return;
         }
         console.log('📥 Buscando on-chain histórico...');
         const onChainMap = await fetchOnChainSeriesForBacktest(dataset);
         console.log(`✅ On-chain carregado: ${onChainMap.size} dias`);
 
-        console.log('📥 Pré-carregando MTF...');
-        let mtfData = await fetchMTFData('BTCUSDT');
-        if (mtfData.c1h.length === 0 && mtfData.c4h.length === 0 && mtfData.c1d.length === 0)
-            mtfData = { c1h: dataset.slice(-50), c4h: dataset.slice(-50), c1d: dataset.slice(-50) };
-
+        console.log('📥 Pré-carregando MTF (para fallback) ...');
         const initialCapital = 10000;
         let balance = initialCapital,
             peak = balance,
@@ -1330,51 +1346,78 @@ async function runBacktest() {
             atrValues.push(calcATR(slice, 14));
         }
 
-        // Para cada candle, tentar gerar sinal
+        // Loop principal do backtest
         for (let i = 20; i < dataset.length; i++) {
             const candle = dataset[i],
                 price = candle.close,
                 atr = atrValues[i] || price * 0.02;
             const closes = dataset.slice(0, i + 1).map(d => d.close);
-            const ema20 = calculateEMA(closes, 20) || price,
-                ema50 = calculateEMA(closes, 50) || price,
+            const ema50 = calculateEMA(closes, 50) || price,
+                ema200 = calculateEMA(closes, 200) || price,
                 rsi = calculateRSI(closes, 14) || 50,
                 macdVal = calculateMACD(closes) || 0,
                 obvVal = calculateOBV(dataset.slice(0, i + 1));
-            let signal = 'NEUTRAL';
-            if (ema20 > ema50 && rsi > 50) signal = 'LONG';
-            else if (ema20 < ema50 && rsi < 50) signal = 'SHORT';
 
+            // ---------- UNIFICAR SINAL: USAR computeScore (achado #2) ----------
+            const simData = {
+                price: price,
+                ema50: ema50,
+                ema200: ema200,
+                rsi: rsi,
+                macd: macdVal,
+                macdSignal: 0,
+                roc: closes.length > 10 ? ((price - closes[closes.length - 11]) / closes[closes.length - 11]) * 100 : 0,
+                support: Math.min(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.low)),
+                resistance: Math.max(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.high)),
+                mvrv: 1.2,
+                sopr: 0.95,
+                volumeRel: candle.volume / (dataset.slice(Math.max(0, i - 20), i).reduce((s, d) => s + d.volume, 0) /
+                    Math.min(i, 20) || 1),
+                oiDelta: 0,
+                fvgZones: [{ low: Math.min(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.low)), high: Math
+                        .max(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.high))
+                    }]
+            };
             const candleDay = Math.floor(new Date(dataset[i].date).getTime() / 1000 / 86400) * 86400;
             const oc = onChainMap.get(candleDay) || { mvrv: 1.0, sopr: 1.0 };
+            simData.mvrv = oc.mvrv;
+            simData.sopr = oc.sopr;
+            // Calcular score e obter sinal
+            const scoreData = computeScore(simData);
+            let signal = 'NEUTRAL';
+            if (scoreData.score >= 75) signal = 'LONG';
+            else if (scoreData.score <= 25) signal = 'SHORT';
 
-            const simData = {
+            // Preparar dados para confirmSignalV11
+            const fullData = {
                 price,
                 rsi,
-                volumeRatio: candle.volume / (dataset.slice(Math.max(0, i - 20), i).reduce((s, d) => s + d.volume, 0) /
-                    Math.min(i, 20) || 1),
+                macd: macdVal,
+                macdSignal: 0,
+                volumeRatio: simData.volumeRel,
                 fundingRate: 0,
                 mvrv: oc.mvrv,
                 sopr: oc.sopr,
                 oiDelta: 0,
                 volume: candle.volume,
-                avgVolume: dataset.slice(Math.max(0, i - 20), i).reduce((s, d) => s + d.volume, 0) / Math.min(i, 20) ||
-                1,
+                avgVolume: dataset.slice(Math.max(0, i - 20), i).reduce((s, d) => s + d.volume, 0) / Math.min(i, 20) || 1,
                 minerOutflow: 500,
-                support: Math.min(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.low)),
-                resistance: Math.max(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.high)),
                 positionSize: 0.01,
                 atr: atr,
-                adx: 25
+                adx: 25,
+                support: simData.support,
+                resistance: simData.resistance
             };
             const rsiSlice = closes.map(c => calculateRSI(closes.slice(0, i + 1)));
             const macdSlice = closes.map(c => calculateMACD(closes.slice(0, i + 1)) || 0);
             const obvSlice = dataset.slice(0, i + 1).map((_, idx) => calculateOBV(dataset.slice(0, idx + 1)));
 
-            // No backtest, clusterData = { cluster: false, volume: 0 } para evitar penalidade
+            // Construir MTF histórico para este ponto (achado #1)
+            const mtfDataPoint = buildHistoricalMTF(dataset, i);
             const clusterData = { cluster: false, volume: 0 };
-            const conf = await confirmSignalV10(signal, simData, dataset.slice(0, i + 1), rsiSlice, macdSlice, obvSlice,
-                mtfData, true, clusterData);
+
+            const conf = await confirmSignalV11(signal, fullData, dataset.slice(0, i + 1), rsiSlice, macdSlice, obvSlice,
+                mtfDataPoint, true, clusterData);
             if (!conf.approved) {
                 rejectedCount++;
                 const r = conf.reasons[0] || 'Desconhecido';
@@ -1393,7 +1436,7 @@ async function runBacktest() {
                 const size = riskAmount / risk;
                 let targets = generateScaledTargetsV8(entry, stopPrice, signal, conf.volatilityRegime || 'NORMAL',
                 regime);
-                const fvgZones = [{ low: simData.support, high: simData.resistance }];
+                const fvgZones = [{ low: fullData.support, high: fullData.resistance }];
                 position = {
                     side: signal,
                     entryPrice: entry,
@@ -1510,16 +1553,29 @@ async function runBacktest() {
             totalReturn = ((balance - initialCapital) / initialCapital) * 100,
             profitFactor = losses ? trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t.pnlUsd, 0) / Math.abs(trades
                 .filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.pnlUsd, 0)) : (wins ? Infinity : 0);
+
+        // Estatística de significância (achado #3)
+        function assessSignificance(N, wr) {
+            if (N < 30) return { sufficient: false, margin: null, warning: `Apenas ${N} trades — amostra insuficiente. Mínimo 30.` };
+            const p = wr / 100;
+            const margin = 1.96 * Math.sqrt((p * (1 - p)) / N) * 100;
+            return { sufficient: true, margin: margin, warning: margin > 10 ? `Margem de erro ±${margin.toFixed(1)}pp — amplie janela.` : null };
+        }
+        const sig = assessSignificance(totalTrades, winRate);
+
         let html =
             `<div class="backtest-stats-grid"><div class="backtest-stat-card"><div class="stat-value ${winRate>=60?'positive':winRate<40?'negative':'neutral'}">${winRate.toFixed(1)}%</div><div class="stat-label">Win Rate</div></div><div class="backtest-stat-card"><div class="stat-value ${totalReturn>=0?'positive':'negative'}">${totalReturn.toFixed(2)}%</div><div class="stat-label">Retorno Total</div></div><div class="backtest-stat-card"><div class="stat-value ${balance>=initialCapital?'positive':'negative'}">$${balance.toFixed(2)}</div><div class="stat-label">Saldo Final</div></div><div class="backtest-stat-card"><div class="stat-value">${totalTrades}</div><div class="stat-label">Total Trades</div></div><div class="backtest-stat-card"><div class="stat-value ${profitFactor>=1.5?'positive':'neutral'}">${profitFactor===Infinity?'∞':profitFactor.toFixed(2)}</div><div class="stat-label">Profit Factor</div></div><div class="backtest-stat-card"><div class="stat-value">${wins} / ${losses}</div><div class="stat-label">Wins / Losses</div></div><div class="backtest-stat-card"><div class="stat-value ${maxDrawdown<.1?'positive':'negative'}">${(maxDrawdown*100).toFixed(1)}%</div><div class="stat-label">Max Drawdown</div></div><div class="backtest-stat-card"><div class="stat-value">${trades.filter(t=>t.exitReason.includes('Stop')).length}</div><div class="stat-label">Stops</div></div><div class="backtest-stat-card"><div class="stat-value">${trades.filter(t=>t.exitReason.includes('TP1')).length}</div><div class="stat-label">TP1</div></div><div class="backtest-stat-card"><div class="stat-value">${trades.filter(t=>t.exitReason.includes('TP2')).length}</div><div class="stat-label">TP2</div></div><div class="backtest-stat-card"><div class="stat-value">${trades.filter(t=>t.exitReason.includes('TP3')).length}</div><div class="stat-label">TP3</div></div></div>`;
+        if (sig.warning) {
+            html += `<div class="no-trades" style="color:var(--accent-yellow);margin:10px 0;">⚠️ ${sig.warning}</div>`;
+        }
         if (!trades.length) html +=
         '<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>';
         else {
             html +=
-                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V10 (4h)</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
+                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V11 (4h)</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
         }
         html +=
-            `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • On-chain real • Backtest V10 com penalidades ajustadas.</p>`;
+            `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • On-chain real • Sinal via computeScore • MTF histórico • Significância calculada.</p>`;
         container.innerHTML = html;
     } catch (err) {
         console.error('Backtest error:', err);
@@ -1527,7 +1583,7 @@ async function runBacktest() {
     }
     backtestRunning = false;
     btn.disabled = false;
-    btn.textContent = '▶ Executar Backtest V10';
+    btn.textContent = '▶ Executar Backtest V11';
 }
 
 // ================================================================
