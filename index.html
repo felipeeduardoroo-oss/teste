@@ -292,13 +292,13 @@ footer { background:var(--primary); border-top:2px solid var(--accent-blue); pad
 <div class="chart-wrapper"><canvas id="chart_allocation"></canvas></div>
 </section>
 <section>
-<h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V9</h2>
+<h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V9.1</h2>
 <div class="backtest-section">
-<div class="backtest-header"><div><span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Regime: <strong style="color:var(--text-light);">Adaptativo</strong></span></div><button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V9</button></div>
+<div class="backtest-header"><div><span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Regime: <strong style="color:var(--text-light);">Adaptativo</strong></span></div><button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V9.1</button></div>
 <div id="backtestResults"><div class="backtest-loading"><div class="spinner"></div><p>Carregando dados históricos (4h) + on-chain...</p></div></div>
 </div>
 </section>
-<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V9</h4><p>Estratégia adaptativa por regime com correções: suporte/resistência dinâmico, order book real, on-chain histórico no backtest, liquidez de fim de semana como modificador, confluência whale e Kelly segmentado.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
+<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V9.1</h4><p>Correção do erro "cluster is not defined". Estratégia adaptativa por regime com suporte/resistência dinâmico, order book real, on-chain histórico no backtest, liquidez de fim de semana como modificador, confluência whale e Kelly segmentado.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
 </div>
 <button class="telegram-test-btn" id="test-telegram-btn"><span id="test-btn-label">📨 Testar Alerta</span></button>
 <script>
@@ -322,7 +322,7 @@ let tradeHistory = [];
 let tradeCounter = 0;
 const OPTIMIZATION_INTERVAL = 50;
 let currentRegime = 'NEUTRO';
-let currentWhaleState = 'accumulating'; // 'accumulating' ou 'distributing'
+let currentWhaleState = 'accumulating';
 let filterWeights = {
     price_action: 0.12, momentum: 0.12, macro_crypto: 0.10,
     liquidity_spread: 0.08, ml_probability: 0.08, mtf_alignment: 0.10,
@@ -463,7 +463,7 @@ function formatCurrency(v) { return '$' + Number(v).toLocaleString('en-US', { mi
 function getChangeClass(v) { return parseFloat(v) >= 0 ? 'positive' : 'negative'; }
 
 // ================================================================
-// KELLY SEGMENTADO POR REGIME (MELHORIA 4.6)
+// KELLY SEGMENTADO POR REGIME
 // ================================================================
 function calculateKellySizingByRegime(regime) {
     const baseRisk = regime === 'RANGE' ? 0.005 : 0.02;
@@ -610,7 +610,6 @@ function getTrendEMA(candles) {
 }
 function checkMTFAlignment(mtf, signal, price) {
     const { c1h, c4h, c1d } = mtf;
-    // Falha fechada: se dados insuficientes, penaliza (não libera)
     if (c1h.length < 50 || c4h.length < 50 || c1d.length < 50) return { aligned: false, reason: 'MTF data insufficient' };
     const t1h = getTrendEMA(c1h), t4h = getTrendEMA(c4h), t1d = getTrendEMA(c1d);
     if (t1h === 0 || t4h === 0 || t1d === 0) return { aligned: false, reason: 'MTF trend undefined' };
@@ -622,7 +621,7 @@ function checkMTFAlignment(mtf, signal, price) {
 }
 
 // ================================================================
-// BOOK DEPTH REAL (MELHORIA 4.2)
+// BOOK DEPTH REAL
 // ================================================================
 async function fetchOrderBookDepth(symbol, limit = 20) {
     try {
@@ -637,7 +636,7 @@ async function fetchOrderBookDepth(symbol, limit = 20) {
 }
 async function checkClusterOrders(symbol, price, side, tolerance = 0.005) {
     const depth = await fetchOrderBookDepth(symbol, 10);
-    if (!depth) return null; // indica indisponível
+    if (!depth) return null;
     const levels = side === 'BUY' ? depth.asks : depth.bids;
     const targetPrice = side === 'BUY' ? price * (1 + tolerance) : price * (1 - tolerance);
     let volume = 0;
@@ -661,7 +660,7 @@ function calculateBollingerBandWidth(candles, period = 20, mult = 2) {
 }
 
 // ================================================================
-// CONFLUÊNCIA WHALE (MELHORIA 4.5)
+// CONFLUÊNCIA WHALE
 // ================================================================
 function getWhaleConfluenceMultiplier(signal, whaleAction) {
     const whaleBullish = whaleAction === 'accumulating';
@@ -672,7 +671,7 @@ function getWhaleConfluenceMultiplier(signal, whaleAction) {
 }
 
 // ================================================================
-// LIQUIDEZ DE FIM DE SEMANA (MELHORIA 4.4)
+// LIQUIDEZ DE FIM DE SEMANA
 // ================================================================
 function getLiquidityRegime() {
     const now = new Date();
@@ -685,7 +684,7 @@ function getLiquidityRegime() {
 }
 
 // ================================================================
-// SUPORTE/RESISTÊNCIA DINÂMICO LIVE (MELHORIA 4.1)
+// SUPORTE/RESISTÊNCIA DINÂMICO LIVE
 // ================================================================
 function updateLiveSupportResistance() {
     if (candleHistory.length < 20) return;
@@ -695,7 +694,7 @@ function updateLiveSupportResistance() {
 }
 
 // ================================================================
-// CONFIRMAÇÃO DE SINAL V9 (COM TODAS AS MELHORIAS)
+// CONFIRMAÇÃO DE SINAL V9.1 (CORRIGIDO: clusterData opcional)
 // ================================================================
 function getDynamicWeights(regime) { return regimeWeights[regime] || regimeWeights.BULL; }
 function getDynamicFilterWeights(regime) {
@@ -827,13 +826,12 @@ function getTrendStrength(candles) {
     const slope = ema20 && ema50 ? (ema20 - ema50) / ema50 * 100 : 0;
     return { adx, slope, trending: adx > 25 && Math.abs(slope) > 0.5 };
 }
-async function confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false) {
+async function confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false, clusterData = null) {
     if (!signal || signal === 'NEUTRAL') {
         return { approved: false, score: 0, reasons: ['Sinal neutro'], regime: 'NEUTRO', required: 60, scoreBonus: 0,
             scoreComponents: {} };
     }
 
-    // Liquidez de fim de semana (M4.4)
     const liquidity = getLiquidityRegime();
     if (!liquidity.tradeable) {
         return { approved: false, score: 0, reasons: ['Madrugada UTC — book fino'], regime: 'NEUTRO', required: 60,
@@ -852,7 +850,6 @@ async function confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals
     updateRegimeDisplay(regime);
     currentRegime = regime;
 
-    // Choppiness (apenas live)
     if (!isBacktest && regime === 'RANGE') {
         const ci = choppinessIndex(candles, 14);
         if (ci > 60) {
@@ -861,7 +858,6 @@ async function confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals
         }
     }
 
-    // Squeeze detection via Band Width (conecta STOP_PARAMS_V8)
     const bbWidth = calculateBollingerBandWidth(candles, 20, 2);
     let volatilityRegime = 'NORMAL';
     if (bbWidth > 0 && bbWidth < 0.05) volatilityRegime = 'SQUEEZE';
@@ -869,7 +865,6 @@ async function confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals
     else if (bbWidth > 0.08) volatilityRegime = 'NORMAL';
     else volatilityRegime = 'LOW';
 
-    // Volume (mais brando no backtest)
     if (data.volume && data.avgVolume) {
         const volRel = data.volume / data.avgVolume;
         const threshold = isBacktest ? 1.0 : 1.4;
@@ -887,46 +882,37 @@ async function confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals
         }
     }
 
-    // Cluster real (M4.2) - falha fechada: se dados indisponíveis, penaliza
-    if (!isBacktest) {
-        const side = signal === 'LONG' ? 'BUY' : 'SELL';
-        const cluster = await checkClusterOrders('BTCUSDT', data.price, side);
-        if (cluster === null) {
-            // dados indisponíveis: penaliza 5 pontos
-            // será aplicado depois no ajuste final
-        } else if (cluster.cluster && cluster.volume > 15) {
-            return { approved: false, score: 0, reasons: ['Cluster de ordens no caminho'], regime, required: 65,
-                scoreBonus: 0, scoreComponents: {} };
-        }
+    // Cluster: se clusterData for null (indisponível), penaliza; se clusterData.cluster true, rejeita
+    let clusterPenalty = 0;
+    if (clusterData === null) {
+        clusterPenalty = 5; // penalidade por indisponibilidade
+    } else if (clusterData && clusterData.cluster && clusterData.volume > 15) {
+        return { approved: false, score: 0, reasons: ['Cluster de ordens no caminho'], regime, required: 65,
+            scoreBonus: 0, scoreComponents: {} };
     }
 
-    // MTF Alignment (fail-closed, M4.1)
+    // MTF Alignment (fail-closed)
     let mtfPenalty = 0;
     if (mtfData && mtfData.c1h && mtfData.c1h.length > 0 && mtfData.c4h && mtfData.c4h.length > 0 && mtfData.c1d && mtfData
         .c1d.length > 0) {
         const mtfResult = checkMTFAlignment(mtfData, signal, data.price);
-        if (!mtfResult.aligned) {
-            mtfPenalty = -15; // penalidade forte
-        }
+        if (!mtfResult.aligned) mtfPenalty = -15;
     } else {
-        mtfPenalty = -10; // dados insuficientes
+        mtfPenalty = -10;
     }
 
-    // Pesos dinâmicos
     const dynWeights = getDynamicWeights(regime);
     componentWeights = { trend: dynWeights.trend, momentum: dynWeights.momentum, structure: dynWeights.structure,
         onchain: dynWeights.onChain, volume: dynWeights.volume, oi: dynWeights.oi };
     const minScore = regime === 'RANGE' ? 75 : 65;
     const baseRequired = isBacktest ? 55 : minScore;
-    const requiredScore = baseRequired + liquidity.scorePenalty + (cluster === null ? 5 : 0); // cluster null penaliza +5
+    const requiredScore = baseRequired + liquidity.scorePenalty + clusterPenalty;
 
-    // Suporte/resistência dinâmico via horizontal (já atualizado em tempo real)
     const dynamic = getDynamicLevels(candles);
     const horizontal = getHorizontalSR(candles);
     const support = Math.max(dynamic.support, horizontal.support);
     const resistance = Math.min(dynamic.resistance, horizontal.resistance);
 
-    // Scores (iguais à V8)
     let pa_score = 50;
     if (data.price && support && resistance) {
         const range = resistance - support;
@@ -1000,7 +986,7 @@ async function confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals
         divergence_penalty: fw.divergence_penalty || 0.10, trend_strength: fw.trend_strength || 0.14 };
     let finalScore = 0;
     for (const [key, w] of Object.entries(weights)) finalScore += (scores[key] || 50) * w;
-    finalScore = Math.min(100, Math.max(0, finalScore + mtfPenalty + (cluster === null ? -5 : 0)));
+    finalScore = Math.min(100, Math.max(0, finalScore + mtfPenalty - clusterPenalty));
     const approve = finalScore >= requiredScore;
     const reasons = [`PA: ${scores.price_action.toFixed(0)}`, `Trend: ${scores.trend_strength.toFixed(0)}`,
         `Mom: ${scores.momentum.toFixed(0)}`, `Vol: ${scores.volume_liquidity.toFixed(0)}`,
@@ -1039,10 +1025,9 @@ function getVolumeStats(candles) {
 }
 
 // ================================================================
-// SCORE INSTITUCIONAL (USANDO SUPORTE/RESISTÊNCIA DINÂMICO)
+// SCORE INSTITUCIONAL
 // ================================================================
 function computeScore(data) {
-    // Otimização de pesos (existente)
     const hist = alertLog.filter(t => t.win !== null);
     if (hist.length > 20) {
         const comps = ['trend', 'momentum', 'structure', 'onchain', 'volume', 'oi'];
@@ -1081,7 +1066,6 @@ function computeScore(data) {
     const macd = data.macd || 120;
     const macdSignal = data.macdSignal || 100;
     const roc = data.roc || -2.5;
-    // USANDO SUPORTE/RESISTÊNCIA DINÂMICO ATUALIZADO
     const support = data.support || globalData.support || 58000;
     const resistance = data.resistance || globalData.resistance || 70000;
     const fvgZones = data.fvgZones || [{ low: 62000, high: 63500 }];
@@ -1179,7 +1163,6 @@ async function checkAdditionalAlertsV9(score, components) {
     const macdVals = macdHistory.length > 0 ? macdHistory : [];
     const obvVals = obvHistory.length > 0 ? obvHistory : [];
 
-    // Suporte/resistência dinâmico
     const dynamic = getDynamicLevels(candles);
     const volStats = getVolumeStats(candles);
     data.support = dynamic.support;
@@ -1190,18 +1173,19 @@ async function checkAdditionalAlertsV9(score, components) {
     data.atr = atr;
     const trend = getTrendStrength(candles);
     data.adx = trend.adx || 25;
-
-    // Atualiza globalData com suporte/resistência real
     globalData.support = data.support;
     globalData.resistance = data.resistance;
 
-    const conf = await confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false);
+    // Cluster (apenas live)
+    const side = signal === 'LONG' ? 'BUY' : 'SELL';
+    const cluster = await checkClusterOrders('BTCUSDT', data.price, side);
+
+    const conf = await confirmSignalV9(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false, cluster);
     if (!conf.approved) {
         console.log(`Sinal bloqueado: score ${conf.score.toFixed(0)}/100 (requerido ≥${conf.required})`);
         return;
     }
 
-    // Confluência whale (M4.5)
     const whaleMult = getWhaleConfluenceMultiplier(signal, currentWhaleState);
 
     tradeHistory.push({ outcome: false, features: conf.scoreComponents || {} });
@@ -1214,16 +1198,14 @@ async function checkAdditionalAlertsV9(score, components) {
     let targets = generateScaledTargetsV8(price, stop, signal, conf.volatilityRegime || 'NORMAL', regime);
     let finalScore = score + conf.scoreBonus;
     finalScore = Math.min(100, Math.max(0, finalScore));
-    // Ajusta tamanho pela confluência whale
-    const adjustedSize = whaleMult; // será aplicado na mensagem
     const rationale =
-        `Filtros V9: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
+        `Filtros V9.1: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
     await sendStructuredAlert(signal, finalScore, price, stop, targets, rationale, components);
     lastAlertTime = now;
 }
 
 // ================================================================
-// BACKTEST V9 (COM ON-CHAIN HISTÓRICO REAL)
+// BACKTEST V9.1 (ON-CHAIN REAL + CLUSTER NULL)
 // ================================================================
 async function fetchOnChainSeriesForBacktest(candles4h) {
     if (!candles4h || candles4h.length < 2) return new Map();
@@ -1303,7 +1285,7 @@ async function runBacktest() {
                 `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest V9';
+            btn.textContent = '▶ Executar Backtest V9.1';
             return;
         }
         console.log('📥 Buscando on-chain histórico...');
@@ -1359,7 +1341,6 @@ async function runBacktest() {
             if (ema20 > ema50 && rsi > 50) signal = 'LONG';
             else if (ema20 < ema50 && rsi < 50) signal = 'SHORT';
 
-            // On-chain real
             const candleDay = Math.floor(new Date(dataset[i].date).getTime() / 1000 / 86400) * 86400;
             const oc = onChainMap.get(candleDay) || { mvrv: 1.0, sopr: 1.0 };
 
@@ -1386,8 +1367,9 @@ async function runBacktest() {
             const macdSlice = closes.map(c => calculateMACD(closes.slice(0, i + 1)) || 0);
             const obvSlice = dataset.slice(0, i + 1).map((_, idx) => calculateOBV(dataset.slice(0, idx + 1)));
 
+            // No backtest, clusterData = null (penalidade)
             const conf = await confirmSignalV9(signal, simData, dataset.slice(0, i + 1), rsiSlice, macdSlice, obvSlice,
-                mtfData, true);
+                mtfData, true, null);
             if (!conf.approved) {
                 rejectedCount++;
                 const r = conf.reasons[0] || 'Desconhecido';
@@ -1529,7 +1511,7 @@ async function runBacktest() {
         '<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>';
         else {
             html +=
-                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V9 (4h)</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
+                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V9.1 (4h)</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
         }
         html +=
             `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • On-chain real • Liquidez fim de semana como modificador • Kelly segmentado • Whale confluence • Squeeze detection.</p>`;
@@ -1540,7 +1522,7 @@ async function runBacktest() {
     }
     backtestRunning = false;
     btn.disabled = false;
-    btn.textContent = '▶ Executar Backtest V9';
+    btn.textContent = '▶ Executar Backtest V9.1';
 }
 
 // ================================================================
@@ -1762,7 +1744,6 @@ function initCandleWebSocket() {
                 const data = JSON.parse(event.data),
                     candle = data.k;
                 if (candle.x) {
-                    // Atualiza gráfico
                     const chartObj = candleCharts['candle-btc'];
                     if (chartObj && document.querySelector('#candle-btc .tf-btn.active')?.dataset.tf === '1m') {
                         const newCandle = { time: candle.t / 1000, open: parseFloat(candle.o),
@@ -1777,13 +1758,11 @@ function initCandleWebSocket() {
                             ]); }
                         chartObj.chart.timeScale().fitContent();
                     }
-                    // Atualiza histórico e suporte/resistência dinâmico (M4.1)
                     const close = parseFloat(candle.c);
                     candleHistory.push({ time: candle.t / 1000, open: parseFloat(candle.o),
                         high: parseFloat(candle.h), low: parseFloat(candle.l), close: close,
                         volume: parseFloat(candle.v) || 0 });
                     if (candleHistory.length > 50) candleHistory.shift();
-                    // Atualiza suporte/resistência global
                     updateLiveSupportResistance();
 
                     const closes = candleHistory.map(c => c.close);
@@ -1804,7 +1783,7 @@ function initCandleWebSocket() {
 }
 
 // ================================================================
-// FUNÇÕES DE API (F&G, DeFi, Derivativos, etc.)
+// FUNÇÕES DE API
 // ================================================================
 async function fetchFearGreed() {
     try {
@@ -2041,7 +2020,6 @@ async function init() {
     updateTimestamp();
     initWhaleFlowChart();
 
-    // Atualiza whale state a partir do DOM (exemplo)
     const whaleBtc = document.querySelector('#whale-btc .whale-action');
     if (whaleBtc) currentWhaleState = whaleBtc.textContent.trim().toLowerCase().includes('acumulando') ?
         'accumulating' : 'distributing';
@@ -2063,7 +2041,6 @@ async function init() {
         await fetchHashrate();
         await fetchGasPrice();
         await fetchBinanceDerivatives();
-        // Atualiza whale state
         const whaleBtc2 = document.querySelector('#whale-btc .whale-action');
         if (whaleBtc2) currentWhaleState = whaleBtc2.textContent.trim().toLowerCase().includes('acumulando') ?
             'accumulating' : 'distributing';
@@ -2104,7 +2081,6 @@ async function init() {
 }
 document.addEventListener('DOMContentLoaded', init);
 
-// EXPOSIÇÃO PARA DEBUG
 window.sendTelegramAlert = sendTelegramAlert;
 window.sendTestAlert = sendTestAlert;
 window.runBacktest = runBacktest;
