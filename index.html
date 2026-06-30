@@ -292,13 +292,26 @@ footer { background:var(--primary); border-top:2px solid var(--accent-blue); pad
 <div class="chart-wrapper"><canvas id="chart_allocation"></canvas></div>
 </section>
 <section>
-<h2 class="section-title">📊 BACKTEST — V12 (REGIME BEAR CORRIGIDO)</h2>
+<h2 class="section-title">📊 BACKTEST — V13 (MELHORIAS ESTRATÉGICAS)</h2>
 <div class="backtest-section">
-<div class="backtest-header"><div><span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span><span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Regime: <strong style="color:var(--text-light);">BEAR corrigido</strong></span></div><button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V12</button></div>
+<div class="backtest-header">
+<div>
+<span style="color:var(--text-muted);font-size:.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span>
+<span style="color:var(--text-muted);font-size:.9em;margin-left:20px;">Período: <strong style="color:var(--text-light);">
+<select id="backtestPeriod" style="background:var(--bg-card);color:var(--text-light);border:1px solid var(--border);border-radius:6px;padding:2px 8px;">
+<option value="30">30 dias</option>
+<option value="60">60 dias</option>
+<option value="90" selected>90 dias</option>
+<option value="180">180 dias</option>
+</select>
+</strong></span>
+</div>
+<button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V13</button>
+</div>
 <div id="backtestResults"><div class="backtest-loading"><div class="spinner"></div><p>Carregando dados históricos (4h) + on-chain...</p></div></div>
 </div>
 </section>
-<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V12</h4><p>Correção crítica: regime BEAR agora é detectado (slope calculado corretamente). Regime atualizado antes do computeScore. Backtest usa mesmo motor de sinal que produção. Telegram ativo.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
+<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V13</h4><p>Melhorias estratégicas: lógica de entrada diferenciada por regime (mean-reversion em RANGE, pullback em BULL/BEAR); BOS/CHoCH no price action; funding z-score; OI direcional. Período selecionável (30 a 180 dias). Telegram ativo.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
 </div>
 <button class="telegram-test-btn" id="test-telegram-btn"><span id="test-btn-label">📨 Testar Alerta</span></button>
 <script>
@@ -349,12 +362,10 @@ let globalData = {
     mvrv: 1.2, sopr: 0.95, volumeRel: 1.0, oiDelta: 0.0
 };
 let componentWeights = { trend: 0.25, momentum: 0.20, structure: 0.15, onchain: 0.10, volume: 0.15, oi: 0.15 };
-
-// Histórico de EMA50 para o modo live (correção defasagem)
 let ema50History = [];
 
 // ================================================================
-// TELEGRAM
+// TELEGRAM (MANTIDO)
 // ================================================================
 async function sendTelegramAlert(message) {
     try {
@@ -403,7 +414,7 @@ function updateTelegramStatus() {
 }
 
 // ================================================================
-// HELPERS
+// HELPERS BASE
 // ================================================================
 function getHistoricalWinrate(cond) {
     const log = alertLog.filter(t => t.type === cond.signal && t.win !== null);
@@ -466,7 +477,7 @@ function formatCurrency(v) { return '$' + Number(v).toLocaleString('en-US', { mi
 function getChangeClass(v) { return parseFloat(v) >= 0 ? 'positive' : 'negative'; }
 
 // ================================================================
-// KELLY SEGMENTADO POR REGIME
+// KELLY SEGMENTADO
 // ================================================================
 function calculateKellySizingByRegime(regime) {
     const baseRisk = regime === 'RANGE' ? 0.005 : 0.02;
@@ -484,7 +495,7 @@ function calculateKellySizingByRegime(regime) {
 }
 
 // ================================================================
-// DETECTOR DE REGIME CORRIGIDO (V12)
+// REGIME CORRIGIDO (V12)
 // ================================================================
 function detectMarketRegimeFixed(price, ema50, ema50Prev, ema200, adx) {
     const slope = (ema50Prev !== undefined && ema50Prev > 0) ? (ema50 - ema50Prev) / ema50Prev : 0;
@@ -495,7 +506,6 @@ function detectMarketRegimeFixed(price, ema50, ema50Prev, ema200, adx) {
     if (isBearish && isTrend) return 'BEAR';
     return 'RANGE';
 }
-
 function updateRegimeDisplay(regime) {
     const el = document.getElementById('header-regime');
     if (!el) return;
@@ -534,7 +544,7 @@ function getHorizontalSR(candles) {
 }
 
 // ================================================================
-// OTIMIZAÇÃO DE PESOS
+// OTIMIZAÇÃO DE PESOS (mantida)
 // ================================================================
 function evalWeights(weights, dataset) {
     const names = Object.keys(filterWeights);
@@ -592,7 +602,7 @@ function loadWeightsV6() {
 }
 
 // ================================================================
-// MTF DATA (histórico e ao vivo)
+// MTF (histórico e live)
 // ================================================================
 async function fetchMTFData(symbol = 'BTCUSDT') {
     try {
@@ -604,7 +614,6 @@ async function fetchMTFData(symbol = 'BTCUSDT') {
         return { c1h: c1h || [], c4h: c4h || [], c1d: c1d || [] };
     } catch (e) { console.warn('MTF fetch error:', e); return { c1h: [], c4h: [], c1d: [] }; }
 }
-
 function buildHistoricalMTF(dataset4h, uptoIndex) {
     const slice = dataset4h.slice(0, uptoIndex + 1);
     const c4h = slice.slice(-50);
@@ -620,7 +629,6 @@ function buildHistoricalMTF(dataset4h, uptoIndex) {
     }
     return { c1h: c4h, c4h: c4h, c1d: c1d.length > 0 ? c1d : c4h };
 }
-
 function getTrendEMA(candles) {
     if (!candles || candles.length < 50) return 0;
     const closes = candles.map(d => d.close);
@@ -641,7 +649,7 @@ function checkMTFAlignment(mtf, signal, price) {
 }
 
 // ================================================================
-// BOOK DEPTH REAL
+// BOOK DEPTH
 // ================================================================
 async function fetchOrderBookDepth(symbol, limit = 20) {
     try {
@@ -669,7 +677,7 @@ async function checkClusterOrders(symbol, price, side, tolerance = 0.005) {
 }
 
 // ================================================================
-// BAND WIDTH (SQUEEZE DETECTION)
+// BAND WIDTH (SQUEEZE)
 // ================================================================
 function calculateBollingerBandWidth(candles, period = 20, mult = 2) {
     if (candles.length < period) return 0;
@@ -714,7 +722,66 @@ function updateLiveSupportResistance() {
 }
 
 // ================================================================
-// CONFIRMAÇÃO DE SINAL V12 (COM REGIME CORRIGIDO)
+// NOVAS FUNÇÕES ESTRATÉGICAS (MELHORIAS)
+// ================================================================
+
+// 1. Lógica de entrada diferenciada por regime
+function getRegimeAwareSignal(simData, regime) {
+    if (regime === 'RANGE') {
+        const range = simData.resistance - simData.support;
+        if (range <= 0) return 'NEUTRAL';
+        const pos = (simData.price - simData.support) / range;
+        if (pos < 0.15 && simData.rsi < 35) return 'LONG';
+        if (pos > 0.85 && simData.rsi > 65) return 'SHORT';
+        return 'NEUTRAL';
+    }
+    // BULL / BEAR
+    const distFromEma50Pct = simData.ema50 ? Math.abs(simData.price - simData.ema50) / simData.ema50 * 100 : 100;
+    const isPullback = distFromEma50Pct < 2;
+    if (regime === 'BULL' && isPullback && simData.rsi > 45 && simData.rsi < 65) return 'LONG';
+    if (regime === 'BEAR' && isPullback && simData.rsi < 55 && simData.rsi > 35) return 'SHORT';
+    return 'NEUTRAL';
+}
+
+// 2. BOS/CHoCH detection
+function detectStructureBreak(candles, lookback = 10) {
+    if (!candles || candles.length < lookback + 2) return { type: null, level: null };
+    const recent = candles.slice(-lookback - 1, -1);
+    const current = candles[candles.length - 1];
+    const swingHigh = Math.max(...recent.map(c => c.high));
+    const swingLow = Math.min(...recent.map(c => c.low));
+    if (current.close > swingHigh) return { type: 'BOS_UP', level: swingHigh };
+    if (current.close < swingLow) return { type: 'BOS_DOWN', level: swingLow };
+    return { type: null, level: null };
+}
+function getPriceActionScore(candles, signal) {
+    const sb = detectStructureBreak(candles, 10);
+    if (signal === 'LONG' && sb.type === 'BOS_UP') return 80;
+    if (signal === 'SHORT' && sb.type === 'BOS_DOWN') return 80;
+    if (sb.type === null) return 45;
+    return 25;
+}
+
+// 3. Funding z-score
+function getFundingZScore(currentFunding, fundingHistory) {
+    if (!fundingHistory || fundingHistory.length < 10) return 0;
+    const values = fundingHistory.map(f => f.fundingRate);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const std = Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length);
+    if (std === 0) return 0;
+    return (currentFunding - mean) / std;
+}
+
+// 4. OI direcional
+function classifyOIRisk(oiDeltaPct, priceDeltaPct) {
+    if (oiDeltaPct > 10 && priceDeltaPct > 1) return 'HEALTHY_LONG';
+    if (oiDeltaPct > 10 && priceDeltaPct < -1) return 'SQUEEZE_RISK_SHORT';
+    if (oiDeltaPct > 10 && Math.abs(priceDeltaPct) <= 1) return 'SQUEEZE_RISK_LONG';
+    return 'NEUTRAL';
+}
+
+// ================================================================
+// CONFIRMAÇÃO DE SINAL V13 (INTEGRA MELHORIAS)
 // ================================================================
 function getDynamicWeights(regime) { return regimeWeights[regime] || regimeWeights.BULL; }
 function getDynamicFilterWeights(regime) {
@@ -846,7 +913,7 @@ function getTrendStrength(candles) {
     const slope = ema20 && ema50 ? (ema20 - ema50) / ema50 * 100 : 0;
     return { adx, slope, trending: adx > 25 && Math.abs(slope) > 0.5 };
 }
-async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false, clusterData = null) {
+async function confirmSignalV13(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false, clusterData = null) {
     if (!signal || signal === 'NEUTRAL') {
         return { approved: false, score: 0, reasons: ['Sinal neutro'], regime: 'NEUTRO', required: 60, scoreBonus: 0,
             scoreComponents: {} };
@@ -867,7 +934,6 @@ async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVal
     atrPercentHistory.push(atrPct);
     if (atrPercentHistory.length > 100) atrPercentHistory.shift();
 
-    // Para regime, precisamos do EMA50 anterior. No backtest, passamos pelo data.ema50Prev.
     const ema50Prev = data.ema50Prev !== undefined ? data.ema50Prev : ema50;
     const regime = detectMarketRegimeFixed(data.price, ema50, ema50Prev, ema200, adx);
     updateRegimeDisplay(regime);
@@ -932,13 +998,15 @@ async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVal
     const baseRequired = isBacktest ? 50 : minScore;
     const requiredScore = baseRequired + (isBacktest ? 0 : liquidity.scorePenalty + clusterPenalty);
 
+    // Suporte/resistência dinâmico + horizontal
     const dynamic = getDynamicLevels(candles);
     const horizontal = getHorizontalSR(candles);
     const support = Math.max(dynamic.support, horizontal.support);
     const resistance = Math.min(dynamic.resistance, horizontal.resistance);
 
-    let pa_score = 50;
-    if (data.price && support && resistance) {
+    // PRICE ACTION melhorado (BOS/CHoCH)
+    let pa_score = getPriceActionScore(candles, signal);
+    if (data.price && support && resistance && pa_score === 45) { // fallback se sem rompimento
         const range = resistance - support;
         const pos = (data.price - support) / range;
         if (signal === 'LONG') {
@@ -953,25 +1021,30 @@ async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVal
             else pa_score = 55;
         }
     }
+
     const rsi = data.rsi || 50;
     let momentum_score = 50;
     const over = (signal === 'LONG' && rsi > 70) || (signal === 'SHORT' && rsi < 30);
     const ali = (signal === 'LONG' && rsi > 50) || (signal === 'SHORT' && rsi < 50);
     if (over) momentum_score = 35;
     else if (ali) momentum_score = 65;
+
     let macro_score = 50;
     const good = (data.mvrv && data.mvrv < 0.85) && (data.sopr && data.sopr < 0.9);
     const bad = (data.mvrv && data.mvrv > 1.3) && (data.sopr && data.sopr > 1.1);
     if (good) macro_score = 75;
     else if (bad) macro_score = 25;
+
     let liq_score = isBacktest ? 60 : 50;
     const ml_prob = predictDirectionV3(data);
     const ml_score = 20 + ml_prob * 60;
+
     let mtf_score = 50;
     if (mtfData && mtfData.c1h && mtfData.c1h.length > 0) {
         const mtfResult = checkMTFAlignment(mtfData, signal, data.price);
         mtf_score = mtfResult.aligned ? 85 : 20;
     }
+
     let vol_score = 50;
     if (data.volume && data.avgVolume) {
         const volRel = data.volume / data.avgVolume;
@@ -979,11 +1052,26 @@ async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVal
         else if (volRel > 1.0) vol_score = 60;
         else vol_score = 40;
     }
+
+    // FUNDING Z-SCORE (melhoria)
+    const fundingZ = getFundingZScore(data.fundingRate || 0, fundingHistory);
     let funding_score = 50;
-    const faligned = (signal === 'LONG' && data.fundingRate < -0.0005) || (signal === 'SHORT' && data.fundingRate > 0.0005);
-    if (faligned) funding_score = 70;
-    else if ((signal === 'LONG' && data.fundingRate > 0.0008) || (signal === 'SHORT' && data.fundingRate < -0.0008))
-        funding_score = 30;
+    if (signal === 'LONG' && fundingZ < -2) funding_score = 75;
+    else if (signal === 'SHORT' && fundingZ > 2) funding_score = 75;
+    else if (signal === 'LONG' && fundingZ > 2) funding_score = 30;
+    else if (signal === 'SHORT' && fundingZ < -2) funding_score = 30;
+    else if (Math.abs(fundingZ) > 1 && Math.abs(fundingZ) < 2) funding_score = 55;
+    else funding_score = 50;
+
+    // OI DIRECIONAL (melhoria)
+    const oiRisk = classifyOIRisk(data.oiDelta || 0, data.priceDeltaPct || 0);
+    let oi_score = 50;
+    if (signal === 'LONG' && oiRisk === 'HEALTHY_LONG') oi_score = 80;
+    else if (signal === 'SHORT' && oiRisk === 'SQUEEZE_RISK_SHORT') oi_score = 80;
+    else if (signal === 'LONG' && oiRisk === 'SQUEEZE_RISK_LONG') oi_score = 30;
+    else if (signal === 'SHORT' && oiRisk === 'SQUEEZE_RISK_SHORT') oi_score = 30;
+    else oi_score = 50;
+
     let div_score = 50;
     if (candles && candles.length > 0 && rsiVals && rsiVals.length > 0) {
         const divPenalty = detectDivergenceMultiV8(candles, rsiVals, macdVals, obvVals, signal, atr);
@@ -991,6 +1079,7 @@ async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVal
         const vdd = detectVolumeDeltaDivergence(candles, obvVals, signal);
         div_score = clamp(div_score + vdd, 20, 90);
     }
+
     let trend_score = 50;
     if (candles && candles.length > 0) {
         const { adx, trending } = getTrendStrength(candles);
@@ -999,22 +1088,46 @@ async function confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVal
         else if (adx < 20) trend_score = 30;
         else trend_score = 50;
     }
+
+    // Substituir funding_onchain e oi por scores mais refinados
     const fw = getDynamicFilterWeights(regime);
-    const scores = { price_action: pa_score, momentum: momentum_score, macro_crypto: macro_score,
-        liquidity_spread: liq_score, ml_probability: ml_score, mtf_alignment: mtf_score, volume_liquidity: vol_score,
-        funding_onchain: funding_score, divergence_penalty: div_score, trend_strength: trend_score };
-    const weights = { price_action: fw.price_action || 0.12, momentum: fw.momentum || 0.12,
-        macro_crypto: fw.macro_crypto || 0.10, liquidity_spread: fw.liquidity_spread || 0.08,
-        ml_probability: fw.ml_probability || 0.08, mtf_alignment: fw.mtf_alignment || 0.10,
-        volume_liquidity: fw.volume_liquidity || 0.12, funding_onchain: fw.funding_onchain || 0.14,
-        divergence_penalty: fw.divergence_penalty || 0.10, trend_strength: fw.trend_strength || 0.14 };
+    const scores = {
+        price_action: pa_score,
+        momentum: momentum_score,
+        macro_crypto: macro_score,
+        liquidity_spread: liq_score,
+        ml_probability: ml_score,
+        mtf_alignment: mtf_score,
+        volume_liquidity: vol_score,
+        funding_onchain: funding_score,
+        divergence_penalty: div_score,
+        trend_strength: trend_score
+    };
+    // Adicionar oi_score como componente extra? Como não temos peso no array, faremos merge
+    // Usaremos oi_score para ajustar o score final (bônus/penalidade)
+    let oiBonus = (oi_score - 50) * 0.08; // ±2.4 pontos
+
+    const weights = {
+        price_action: fw.price_action || 0.12,
+        momentum: fw.momentum || 0.12,
+        macro_crypto: fw.macro_crypto || 0.10,
+        liquidity_spread: fw.liquidity_spread || 0.08,
+        ml_probability: fw.ml_probability || 0.08,
+        mtf_alignment: fw.mtf_alignment || 0.10,
+        volume_liquidity: fw.volume_liquidity || 0.12,
+        funding_onchain: fw.funding_onchain || 0.14,
+        divergence_penalty: fw.divergence_penalty || 0.10,
+        trend_strength: fw.trend_strength || 0.14
+    };
     let finalScore = 0;
-    for (const [key, w] of Object.entries(weights)) finalScore += (scores[key] || 50) * w;
-    finalScore = Math.min(100, Math.max(0, finalScore + mtfPenalty - clusterPenalty));
+    for (const [key, w] of Object.entries(weights)) {
+        finalScore += (scores[key] || 50) * w;
+    }
+    finalScore = Math.min(100, Math.max(0, finalScore + mtfPenalty - clusterPenalty + oiBonus));
     const approve = finalScore >= requiredScore;
     const reasons = [`PA: ${scores.price_action.toFixed(0)}`, `Trend: ${scores.trend_strength.toFixed(0)}`,
         `Mom: ${scores.momentum.toFixed(0)}`, `Vol: ${scores.volume_liquidity.toFixed(0)}`,
-        `MTF: ${scores.mtf_alignment.toFixed(0)}`
+        `MTF: ${scores.mtf_alignment.toFixed(0)}`, `OI: ${oi_score.toFixed(0)}`
     ];
     return {
         approved: approve,
@@ -1049,7 +1162,7 @@ function getVolumeStats(candles) {
 }
 
 // ================================================================
-// SCORE INSTITUCIONAL
+// SCORE INSTITUCIONAL (compatível com regimeAware)
 // ================================================================
 function computeScore(data) {
     const hist = alertLog.filter(t => t.win !== null);
@@ -1154,13 +1267,13 @@ function updateScoreDisplay(scoreData) {
     document.getElementById('score-onchain').textContent = components.onchain;
     document.getElementById('score-volume').textContent = components.volume;
     document.getElementById('score-oi').textContent = components.oi;
-    checkAdditionalAlertsV12(score, components);
+    checkAdditionalAlertsV13(score, components);
 }
 
 // ================================================================
-// ALERTA EM TEMPO REAL V12 (com regime corrigido e defasagem)
+// ALERTA EM TEMPO REAL V13
 // ================================================================
-async function checkAdditionalAlertsV12(score, components) {
+async function checkAdditionalAlertsV13(score, components) {
     const now = Date.now();
     if (now - lastAlertTime < ALERT_COOLDOWN) return;
     const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
@@ -1200,21 +1313,31 @@ async function checkAdditionalAlertsV12(score, components) {
     globalData.support = data.support;
     globalData.resistance = data.resistance;
 
-    // Calcular ema50 e ema50Prev para o regime correto (live)
     const closesLive = candles.map(c => c.close);
     const ema50Live = calculateEMA(closesLive, 50) || price;
     const ema50PrevLive = ema50History.length >= 2 ? ema50History[ema50History.length - 2] : ema50Live;
     data.ema50Prev = ema50PrevLive;
+    data.priceDeltaPct = closesLive.length > 1 ? (price - closesLive[closesLive.length - 2]) / closesLive[closesLive
+        .length - 2] * 100 : 0;
 
-    // Atualizar regime antes de computeScore
-    const regimeLive = detectMarketRegimeFixed(price, ema50Live, ema50PrevLive, calculateEMA(closesLive, 200) || price, data.adx);
+    const regimeLive = detectMarketRegimeFixed(price, ema50Live, ema50PrevLive, calculateEMA(closesLive, 200) || price, data
+        .adx);
     updateRegimeDisplay(regimeLive);
     currentRegime = regimeLive;
+
+    // Usar regime-aware para gerar sinal (opcional, mas mantemos o score original)
+    // O sinal já vem do score, mas podemos verificar se está alinhado com a lógica de regime
+    const regimeSignal = getRegimeAwareSignal(data, regimeLive);
+    if (regimeSignal !== 'NEUTRAL' && regimeSignal !== signal) {
+        // Divergência entre score e regime-aware: reduz confiança
+        // Apenas um aviso, não bloqueia
+        console.log('⚠️ Sinal do score diverge da lógica de regime-aware');
+    }
 
     const side = signal === 'LONG' ? 'BUY' : 'SELL';
     const cluster = await checkClusterOrders('BTCUSDT', data.price, side);
 
-    const conf = await confirmSignalV12(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false, cluster);
+    const conf = await confirmSignalV13(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false, cluster);
     if (!conf.approved) {
         console.log(`Sinal bloqueado: score ${conf.score.toFixed(0)}/100 (requerido ≥${conf.required})`);
         return;
@@ -1233,13 +1356,13 @@ async function checkAdditionalAlertsV12(score, components) {
     let finalScore = score + conf.scoreBonus;
     finalScore = Math.min(100, Math.max(0, finalScore));
     const rationale =
-        `Filtros V12: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
+        `Filtros V13: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Vol: ${conf.volatilityRegime}. Whale confluence: ${whaleMult.toFixed(2)}x. MTF: ${conf.reasons[4]}`;
     await sendStructuredAlert(signal, finalScore, price, stop, targets, rationale, components);
     lastAlertTime = now;
 }
 
 // ================================================================
-// BACKTEST V12 (REGIME CORRIGIDO, SEM DEFASAGEM)
+// BACKTEST V13 (PERÍODO SELECIONÁVEL)
 // ================================================================
 async function fetchOnChainSeriesForBacktest(candles4h) {
     if (!candles4h || candles4h.length < 2) return new Map();
@@ -1275,21 +1398,27 @@ async function runBacktest() {
     btn.disabled = true;
     btn.textContent = '⏳ Carregando...';
     container.innerHTML = '<div class="backtest-loading"><div class="spinner"></div><p>Carregando dados 4h + on-chain...</p></div>';
+
+    // Obter período selecionado
+    const periodSelect = document.getElementById('backtestPeriod');
+    const days = parseInt(periodSelect ? periodSelect.value : 90);
+    const limit = Math.floor(days * 6); // 4h candles por dia
+
     try {
-        const fetchWithTimeout = (url, timeout = 20000) => Promise.race([fetch(url), new Promise((_, reject) =>
+        const fetchWithTimeout = (url, timeout = 30000) => Promise.race([fetch(url), new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Timeout')), timeout))]);
         const now = Date.now(),
-            thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+            startTime = now - days * 24 * 60 * 60 * 1000;
         let klines;
         try {
             const r = await fetchWithTimeout(
-                `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&startTime=${thirtyDaysAgo}&limit=200`,
-                20000);
+                `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&startTime=${startTime}&limit=${limit}`,
+                30000);
             if (r.ok) klines = await r.json();
             else throw new Error('HTTP ' + r.status);
         } catch (e) { console.warn('Falha dados 4h, usando simulados.', e);
-            klines = gerarDadosSimulados(180); }
-        if (!klines || klines.length < 20) klines = gerarDadosSimulados(180);
+            klines = gerarDadosSimulados(limit); }
+        if (!klines || klines.length < 20) klines = gerarDadosSimulados(limit);
         function gerarDadosSimulados(num) {
             const dados = [];
             let preco = 60000;
@@ -1312,17 +1441,18 @@ async function runBacktest() {
             high: parseFloat(k[2]),
             low: parseFloat(k[3]),
             close: parseFloat(k[4]),
-            volume: parseFloat(k[5])
+            volume: parseFloat(k[5]),
+            time: k[0] / 1000
         })).filter(d => d.close > 0);
         if (dataset.length < 20) {
             container.innerHTML =
                 `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest V12';
+            btn.textContent = '▶ Executar Backtest V13';
             return;
         }
-        console.log('📥 Buscando on-chain histórico...');
+        console.log(`📥 Buscando on-chain histórico para ${days} dias...`);
         const onChainMap = await fetchOnChainSeriesForBacktest(dataset);
         console.log(`✅ On-chain carregado: ${onChainMap.size} dias`);
 
@@ -1363,14 +1493,12 @@ async function runBacktest() {
             const closes = dataset.slice(0, i + 1).map(d => d.close);
             const ema50 = calculateEMA(closes, 50) || price;
             const ema200 = calculateEMA(closes, 200) || price;
-            // Calcular ema50Prev a partir do candle anterior (sem look-ahead)
             const closesPrev = dataset.slice(0, i).map(d => d.close);
             const ema50Prev = calculateEMA(closesPrev, 50) || ema50;
             const rsi = calculateRSI(closes, 14) || 50;
             const macdVal = calculateMACD(closes) || 0;
             const obvVal = calculateOBV(dataset.slice(0, i + 1));
 
-            // Dados para simData (será passado para computeScore)
             const simData = {
                 price: price,
                 ema50: ema50,
@@ -1389,26 +1517,33 @@ async function runBacktest() {
                 fvgZones: [{ low: Math.min(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.low)), high: Math
                         .max(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.high))
                     }],
-                ema50Prev: ema50Prev // necessário para regime corrigido
+                ema50Prev: ema50Prev
             };
             const candleDay = Math.floor(new Date(dataset[i].date).getTime() / 1000 / 86400) * 86400;
             const oc = onChainMap.get(candleDay) || { mvrv: 1.0, sopr: 1.0 };
             simData.mvrv = oc.mvrv;
             simData.sopr = oc.sopr;
 
-            // Atualizar regime ANTES de chamar computeScore (corrige defasagem)
+            // Regime
             const trend = getTrendStrength(dataset.slice(0, i + 1));
             const adx = trend.adx || 25;
             const regimeNow = detectMarketRegimeFixed(price, ema50, ema50Prev, ema200, adx);
             currentRegime = regimeNow;
 
-            // Obter sinal usando computeScore (que usa currentRegime atualizado)
+            // Sinal: usar regime-aware se possível, senão computeScore
             const scoreData = computeScore(simData);
             let signal = 'NEUTRAL';
-            if (scoreData.score >= 75) signal = 'LONG';
-            else if (scoreData.score <= 25) signal = 'SHORT';
+            // Se regime-aware tem sinal forte, usar ele
+            const regSignal = getRegimeAwareSignal(simData, regimeNow);
+            if (regSignal !== 'NEUTRAL') {
+                signal = regSignal;
+            } else {
+                // Fallback para computeScore
+                if (scoreData.score >= 75) signal = 'LONG';
+                else if (scoreData.score <= 25) signal = 'SHORT';
+            }
 
-            // Preparar dados para confirmSignalV12
+            // Dados para confirmSignalV13
             const fullData = {
                 price,
                 rsi,
@@ -1427,7 +1562,8 @@ async function runBacktest() {
                 adx: adx,
                 support: simData.support,
                 resistance: simData.resistance,
-                ema50Prev: ema50Prev
+                ema50Prev: ema50Prev,
+                priceDeltaPct: i > 0 ? (price - dataset[i - 1].close) / dataset[i - 1].close * 100 : 0
             };
             const rsiSlice = closes.map(c => calculateRSI(closes.slice(0, i + 1)));
             const macdSlice = closes.map(c => calculateMACD(closes.slice(0, i + 1)) || 0);
@@ -1436,7 +1572,7 @@ async function runBacktest() {
             const mtfDataPoint = buildHistoricalMTF(dataset, i);
             const clusterData = { cluster: false, volume: 0 };
 
-            const conf = await confirmSignalV12(signal, fullData, dataset.slice(0, i + 1), rsiSlice, macdSlice, obvSlice,
+            const conf = await confirmSignalV13(signal, fullData, dataset.slice(0, i + 1), rsiSlice, macdSlice, obvSlice,
                 mtfDataPoint, true, clusterData);
             if (!conf.approved) {
                 rejectedCount++;
@@ -1591,10 +1727,10 @@ async function runBacktest() {
         '<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>';
         else {
             html +=
-                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V12 (4h)</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
+                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V13</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
         }
         html +=
-            `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • On-chain real • Regime BEAR corrigido • Sem defasagem.</p>`;
+            `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • ${days} dias • On-chain real • Regime-aware • BOS/CHoCH • Funding z-score • OI direcional.</p>`;
         container.innerHTML = html;
     } catch (err) {
         console.error('Backtest error:', err);
@@ -1602,7 +1738,7 @@ async function runBacktest() {
     }
     backtestRunning = false;
     btn.disabled = false;
-    btn.textContent = '▶ Executar Backtest V12';
+    btn.textContent = '▶ Executar Backtest V13';
 }
 
 // ================================================================
@@ -1845,7 +1981,6 @@ function initCandleWebSocket() {
                     if (candleHistory.length > 50) candleHistory.shift();
                     updateLiveSupportResistance();
 
-                    // Atualizar histórico de EMA50 para o regime live
                     const closesLive = candleHistory.map(c => c.close);
                     const ema50Live = calculateEMA(closesLive, 50);
                     if (ema50Live !== null) ema50History.push(ema50Live);
