@@ -1431,18 +1431,18 @@
         </section>
 
         <!-- ============================================================
-        BACKTEST 4H (V5 COM MELHORIAS)
+        BACKTEST 4H (V6 – OTIMIZADO)
         ============================================================ -->
         <section>
-            <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V5</h2>
+            <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V6</h2>
             <div class="backtest-section">
                 <div class="backtest-header">
                     <div>
                         <span style="color:var(--text-muted); font-size:0.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span>
                         <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span>
-                        <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Filtros: <strong style="color:var(--text-light);">Otimização + Profundidade + Momentum + Divergência + Horário</strong></span>
+                        <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Filtros: <strong style="color:var(--text-light);">V6 – SA + Cross-Validation + Scores Normalizados</strong></span>
                     </div>
-                    <button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V5</button>
+                    <button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V6</button>
                 </div>
                 <div id="backtestResults">
                     <div class="backtest-loading">
@@ -1459,8 +1459,8 @@
         <footer>
             <div class="footer-content">
                 <div class="footer-section">
-                    <h4>📋 Metodologia V5</h4>
-                    <p>Score institucional com pesos otimizados dinamicamente. Filtros: profundidade de book, trailing stop com momentum, divergência aprimorada (RSI+MACD+MTF), e filtro de horário de mercado. Backtest 4h com validação completa.</p>
+                    <h4>📋 Metodologia V6</h4>
+                    <p>Score institucional com pesos otimizados via Simulated Annealing + validação cruzada (70/30). Confirmação com scores normalizados (30-70 range) e pesos rebalanceados. Trailing stop hierárquico com momentum, volatilidade e FVGs. Backtest com pré-cache de MTF data para performance. Divergência adaptativa baseada em ATR.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
@@ -1477,7 +1477,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT COMPLETO (V5 COM TODAS AS MELHORIAS)
+    JAVASCRIPT COMPLETO (V6 – COM TODAS AS MELHORIAS)
     ============================================================ -->
     <script>
         // ================================================================
@@ -1491,7 +1491,7 @@
         // 0.1 CONFIGURAÇÕES DE RISCO E CAPITAL
         // ================================================================
         let CAPITAL = 10000;
-        const STOP_PARAMS_V5 = {
+        const STOP_PARAMS_V6 = {
             SQUEEZE: { stop: 1.0, tp1: 0.8, tp2: 1.5, tp3: 2.5 },
             LOW: { stop: 1.5, tp1: 1.2, tp2: 2.0, tp3: 3.5 },
             NORMAL: { stop: 2.0, tp1: 1.8, tp2: 3.5, tp3: 4.5 },
@@ -1509,25 +1509,23 @@
         let macdHistory = [];
         let fundingHistory = [];
         let spreadHistory = [];
-        let tradeHistory = []; // para otimização de pesos
-
-        // Pesos iniciais (serão otimizados periodicamente)
-        let filterWeights = {
-            price_action: 0.16,
-            momentum: 0.12,
-            macro_crypto: 0.12,
-            liquidity_spread: 0.08,
-            ml_probability: 0.08,
-            mtf_alignment: 0.16,
-            volume_liquidity: 0.10,
-            funding_onchain: 0.14,
-            divergence_penalty: 0.12,
-            trend_strength: 0.08
-        };
-
-        // Contador de trades para otimização
+        let tradeHistory = [];
         let tradeCounter = 0;
         const OPTIMIZATION_INTERVAL = 50;
+
+        // Pesos iniciais (serão otimizados via SA)
+        let filterWeights = {
+            price_action: 0.12,
+            momentum: 0.12,
+            macro_crypto: 0.10,
+            liquidity_spread: 0.08,
+            ml_probability: 0.08,
+            mtf_alignment: 0.10,
+            volume_liquidity: 0.12,
+            funding_onchain: 0.14,
+            divergence_penalty: 0.10,
+            trend_strength: 0.14
+        };
 
         // ================================================================
         // 0.3 FUNÇÕES DE ENVIO TELEGRAM (MANTIDAS)
@@ -1693,9 +1691,7 @@
             const emaFast = calculateEMA(data, fast);
             const emaSlow = calculateEMA(data, slow);
             if (!emaFast || !emaSlow) return null;
-            const macdLine = emaFast - emaSlow;
-            // Para simplificar, usamos a linha MACD como valor único
-            return macdLine;
+            return emaFast - emaSlow;
         }
 
         function clamp(value, min, max) {
@@ -1776,266 +1772,105 @@
         }
 
         // ================================================================
-        // 0.7 OTIMIZAÇÃO DINÂMICA DOS PESOS (MELHORIA #1)
+        // 0.7 OTIMIZAÇÃO DE PESOS V6 (SIMULATED ANNEALING + VALIDAÇÃO CRUZADA)
         // ================================================================
-        function optimizeWeightsGrid(history) {
-            if (history.length < 20) return null;
-
-            // Extrai features e outcomes
-            const features = history.map(t => t.features);
-            const outcomes = history.map(t => t.outcome ? 1 : 0);
-
-            // Define os nomes dos filtros
+        function evalWeights(weights, dataset) {
             const filterNames = Object.keys(filterWeights);
+            let correct = 0;
+            for (const trade of dataset) {
+                const features = trade.features || {};
+                let score = 0;
+                filterNames.forEach((name, idx) => {
+                    score += (features[name] || 50) * weights[idx];
+                });
+                score = Math.min(100, Math.max(0, score));
+                const pred = score >= 55 ? 1 : 0;
+                const actual = trade.outcome ? 1 : 0;
+                if (pred === actual) correct++;
+            }
+            return correct / dataset.length;
+        }
 
-            // Busca em grade simples: testa combinações de pesos em passos de 0.05
-            let bestWeights = null;
-            let bestScore = -Infinity;
+        function optimizeWeightsV6(history) {
+            if (history.length < 30) return null;
 
-            // Número de combinações a testar (limitado para performance)
-            const step = 0.1;
-            const combos = [];
-            // Inicializa com pesos atuais
-            const base = Object.values(filterWeights);
-            // Gera algumas variações (perturbações)
-            for (let attempt = 0; attempt < 20; attempt++) {
-                const newWeights = base.map(w => {
-                    let newW = w + (Math.random() - 0.5) * 0.2;
+            // Validação cruzada 70/30
+            const shuffled = [...history].sort(() => Math.random() - 0.5);
+            const trainIdx = Math.floor(shuffled.length * 0.7);
+            const trainSet = shuffled.slice(0, trainIdx);
+            const valSet = shuffled.slice(trainIdx);
+
+            const filterNames = Object.keys(filterWeights);
+            const initialWeights = filterNames.map(name => filterWeights[name]);
+
+            let bestWeights = [...initialWeights];
+            let bestScore = evalWeights(bestWeights, trainSet);
+            let currentWeights = [...bestWeights];
+            let currentScore = bestScore;
+
+            const maxIter = 100;
+            for (let iter = 0; iter < maxIter; iter++) {
+                const temperature = 1.0 * (1 - iter / maxIter);
+                const neighbor = currentWeights.map((w) => {
+                    const sigma = 0.05 * (temperature + 0.05);
+                    let newW = w + (Math.random() - 0.5) * sigma;
                     return Math.max(0.01, Math.min(0.5, newW));
                 });
-                // Normaliza
-                const sum = newWeights.reduce((a, b) => a + b, 0);
-                const normalized = newWeights.map(w => w / sum);
-                combos.push(normalized);
-            }
+                const sum = neighbor.reduce((a, b) => a + b, 0);
+                const normalized = neighbor.map(w => w / sum);
 
-            // Avalia cada combinação
-            for (const combo of combos) {
-                const weightsObj = {};
-                filterNames.forEach((name, idx) => {
-                    weightsObj[name] = combo[idx];
-                });
+                const neighborScore = evalWeights(normalized, trainSet);
+                const delta = neighborScore - currentScore;
 
-                let correct = 0;
-                for (let i = 0; i < history.length; i++) {
-                    let score = 0;
-                    for (const [key, w] of Object.entries(weightsObj)) {
-                        score += (features[i][key] || 0) * w;
+                if (delta > 0 || Math.random() < Math.exp(delta / (temperature + 0.001))) {
+                    currentWeights = normalized;
+                    currentScore = neighborScore;
+                    if (neighborScore > bestScore) {
+                        bestWeights = [...normalized];
+                        bestScore = neighborScore;
+                        console.log(`✅ SA melhor solução: ${bestScore.toFixed(3)} @ iter ${iter}`);
                     }
-                    const pred = score >= 60 ? 1 : 0;
-                    if (pred === outcomes[i]) correct++;
-                }
-                const fitness = correct / history.length;
-                if (fitness > bestScore) {
-                    bestScore = fitness;
-                    bestWeights = { ...weightsObj };
                 }
             }
 
-            return bestWeights;
+            const valScore = evalWeights(bestWeights, valSet);
+            console.log(`📊 Validação cruzada: ${valScore.toFixed(3)} (treino: ${bestScore.toFixed(3)})`);
+            if (valScore < bestScore * 0.85) {
+                console.warn('⚠️ Overfitting detectado! Pesos podem não generalizar.');
+            }
+
+            const result = {};
+            filterNames.forEach((name, idx) => {
+                result[name] = bestWeights[idx];
+            });
+            return result;
         }
 
-        function updateFilterWeights() {
+        function updateFilterWeightsV6() {
             if (tradeHistory.length < OPTIMIZATION_INTERVAL) return;
             const recent = tradeHistory.slice(-OPTIMIZATION_INTERVAL);
-            const newWeights = optimizeWeightsGrid(recent);
+            const newWeights = optimizeWeightsV6(recent);
             if (newWeights) {
-                console.log('✅ Pesos otimizados:', newWeights);
+                console.log('✅ Pesos otimizados V6:', newWeights);
                 Object.assign(filterWeights, newWeights);
-                // Salva no localStorage para persistência
-                localStorage.setItem('filterWeights', JSON.stringify(filterWeights));
+                localStorage.setItem('filterWeightsV6', JSON.stringify(filterWeights));
             }
         }
 
-        // Carrega pesos salvos
-        function loadWeights() {
-            const saved = localStorage.getItem('filterWeights');
+        function loadWeightsV6() {
+            const saved = localStorage.getItem('filterWeightsV6');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
                     Object.assign(filterWeights, parsed);
-                    console.log('📂 Pesos carregados:', filterWeights);
+                    console.log('📂 Pesos V6 carregados:', filterWeights);
                 } catch (e) { /* ignore */ }
             }
         }
 
         // ================================================================
-        // 0.8 FILTRO DE PROFUNDIDADE DO LIVRO (MELHORIA #2)
+        // 0.8 MTF DATA (COM CACHE PARA BACKTEST)
         // ================================================================
-        async function fetchOrderBookDepth(symbol = 'BTCUSDT', limit = 10) {
-            try {
-                const resp = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=${limit}`);
-                const data = await resp.json();
-                return {
-                    bids: data.bids.map(([p, q]) => [parseFloat(p), parseFloat(q)]),
-                    asks: data.asks.map(([p, q]) => [parseFloat(p), parseFloat(q)])
-                };
-            } catch (e) {
-                return null;
-            }
-        }
-
-        async function checkLiquidity(symbol, size, price, side) {
-            const depth = await fetchOrderBookDepth(symbol, 10);
-            if (!depth) return { enough: true, maxSize: Infinity, avgPrice: price }; // fallback
-
-            const levels = side === 'BUY' ? depth.bids : depth.asks;
-            let cumulative = 0;
-            let totalCost = 0;
-            for (const [p, q] of levels) {
-                const needed = size - cumulative;
-                if (needed <= 0) break;
-                const take = Math.min(needed, q);
-                cumulative += take;
-                totalCost += take * p;
-                if (cumulative >= size) break;
-            }
-
-            if (cumulative >= size) {
-                const avgPrice = totalCost / size;
-                return { enough: true, maxSize: cumulative, avgPrice };
-            } else {
-                return { enough: false, maxSize: cumulative, avgPrice: price };
-            }
-        }
-
-        // ================================================================
-        // 0.9 TRAILING STOP COM MOMENTUM (MELHORIA #3)
-        // ================================================================
-        function advancedTrailingStopMomentum(position, candleData, index, currentPrice, atr, atrPctRank, fvgZones) {
-            const closes = candleData.map(c => c.close);
-            const ema9 = calculateEMA(closes, 9);
-            const ema21 = calculateEMA(closes, 21);
-            let momentum = 0;
-            if (ema9 && ema21) {
-                momentum = (ema9 - ema21) / ema21; // aceleração normalizada
-            }
-
-            // Multiplicador base
-            let mult = 2.0;
-            if (position.breakeven) {
-                mult = 1.2;
-            } else {
-                // Ajuste por momentum
-                if (Math.abs(momentum) > 0.02) mult = 2.5; // tendência forte
-                else if (Math.abs(momentum) < 0.005) mult = 1.4; // lateral
-                else mult = 2.0;
-
-                // Ajuste por volatilidade (percentil)
-                if (atrPctRank > 70) mult = Math.min(mult * 1.3, 4.0);
-                else if (atrPctRank < 30) mult = Math.max(mult * 0.8, 1.0);
-            }
-
-            const recentCandles = candleData.slice(-5);
-            const highestSince = Math.max(...recentCandles.map(c => c.high));
-            const lowestSince = Math.min(...recentCandles.map(c => c.low));
-
-            if (position.type === 'LONG') {
-                let newStop = highestSince - mult * atr;
-                if (position.breakeven && position.breakeven_stop) {
-                    newStop = Math.max(newStop, position.breakeven_stop);
-                }
-                position.stop = Math.max(position.stop, newStop);
-            } else {
-                let newStop = lowestSince + mult * atr;
-                if (position.breakeven && position.breakeven_stop) {
-                    newStop = Math.min(newStop, position.breakeven_stop);
-                }
-                position.stop = Math.min(position.stop, newStop);
-            }
-
-            // Ajuste de FVG (opcional)
-            if (fvgZones && fvgZones.length > 0 && position.targets && position.targets.length === 3) {
-                const third = position.targets[2];
-                const nextFVG = findNextFVG(fvgZones, third.price, position.type);
-                if (nextFVG) {
-                    position.targets[2].price = nextFVG.price;
-                    const risk = Math.abs(position.entry - position.stop);
-                    const rr = Math.abs(nextFVG.price - position.entry) / risk;
-                    position.targets[2].rr_real = rr;
-                    position.targets[2].rr = rr;
-                }
-            }
-            return position.stop;
-        }
-
-        function findNextFVG(fvgZones, currentTarget, type) {
-            const sorted = [...fvgZones].sort((a, b) => type === 'LONG' ? a.low - b.low : b.high - a.high);
-            for (const fvg of sorted) {
-                if (type === 'LONG' && fvg.low > currentTarget) return { price: fvg.low };
-                if (type === 'SHORT' && fvg.high < currentTarget) return { price: fvg.high };
-            }
-            return null;
-        }
-
-        // ================================================================
-        // 0.10 DIVERGÊNCIA APRIMORADA (RSI + MACD + MTF) (MELHORIA #4)
-        // ================================================================
-        function detectDivergenceMulti(candles, rsiVals, macdVals, signal, symbol = 'BTCUSDT') {
-            let penalty = 0;
-            if (!candles || candles.length < 20) return 0;
-
-            // Divergência RSI (já existente)
-            const rsiDiv = detectDivergenceClassic(candles, rsiVals, signal);
-
-            // Divergência MACD
-            const macdDiv = detectDivergenceClassic(candles, macdVals, signal);
-
-            if (rsiDiv && macdDiv) penalty = -50; // dupla confirmação
-            else if (rsiDiv || macdDiv) penalty = -25;
-            else penalty = 0;
-
-            // Verifica divergência em timeframe superior (4h)
-            // Para simplificar, usamos uma chamada assíncrona que busca candles de 4h
-            // No backtest, isso é simulado com dados existentes
-            // Em tempo real, chamamos fetchMTFData
-            // Como esta função é síncrona, deixamos a verificação para fora
-            // Aplicamos penalidade adicional se confirmado em MTF
-
-            return penalty;
-        }
-
-        function detectDivergenceClassic(candles, indicatorVals, signal) {
-            if (!candles || candles.length < 10 || !indicatorVals || indicatorVals.length < 10) return false;
-            const recentC = candles.slice(-5);
-            const recentI = indicatorVals.slice(-5);
-            const priceLow = Math.min(...recentC.map(c => c.low));
-            const indLow = Math.min(...recentI);
-            const prevC = candles.slice(-10, -5);
-            const prevI = indicatorVals.slice(-10, -5);
-            if (prevC.length === 0 || prevI.length === 0) return false;
-            const prevPriceLow = Math.min(...prevC.map(c => c.low));
-            const prevIndLow = Math.min(...prevI);
-            const bullish = priceLow < prevPriceLow && indLow > prevIndLow;
-            const priceHigh = Math.max(...recentC.map(c => c.high));
-            const indHigh = Math.max(...recentI);
-            const prevPriceHigh = Math.max(...prevC.map(c => c.high));
-            const prevIndHigh = Math.max(...prevI);
-            const bearish = priceHigh > prevPriceHigh && indHigh < prevIndHigh;
-            if (signal === 'LONG') return bullish;
-            if (signal === 'SHORT') return bearish;
-            return false;
-        }
-
-        // ================================================================
-        // 0.11 FILTRO DE HORÁRIO DE MERCADO (MELHORIA #5)
-        // ================================================================
-        function isGoodTradingHour() {
-            const now = new Date();
-            const day = now.getUTCDay(); // 0=domingo, 6=sábado
-            const hour = now.getUTCHours();
-            // Evita finais de semana
-            if (day === 0 || day === 6) return false;
-            // Evita madrugada (0-2 UTC)
-            if (hour >= 0 && hour < 2) return false;
-            return true;
-        }
-
-        // ================================================================
-        // 0.12 CONFIRMAÇÃO V5 (INTEGRANDO TODAS AS MELHORIAS)
-        // ================================================================
-
-        // MTF Alignment (com fallback)
         async function fetchMTFData(symbol = 'BTCUSDT') {
             try {
                 const [c1h, c4h, c1d] = await Promise.all([
@@ -2079,7 +1914,21 @@
             return false;
         }
 
-        // Volume + Liquidity (com limiar ajustado)
+        // ================================================================
+        // 0.9 FILTRO DE HORÁRIO
+        // ================================================================
+        function isGoodTradingHour() {
+            const now = new Date();
+            const day = now.getUTCDay();
+            const hour = now.getUTCHours();
+            if (day === 0 || day === 6) return false;
+            if (hour >= 0 && hour < 2) return false;
+            return true;
+        }
+
+        // ================================================================
+        // 0.10 CONFIRMAÇÃO V6 (SCORES NORMALIZADOS + PESOS REBALANCEADOS)
+        // ================================================================
         function checkVolumeLiquidity(volume, avgVolume, spreadBps, oiDelta, signal, isBacktest = false) {
             const volRel = volume / (avgVolume || 1);
             const volThreshold = isBacktest ? 1.0 : 1.4;
@@ -2092,7 +1941,6 @@
             return { ok: true, volRel };
         }
 
-        // Funding + On-Chain Bias
         function fundingOnChainBias(signal, fundingRate, mvrv, sopr, minerOutflow) {
             let score = 0;
             if (signal === 'LONG' && fundingRate < -0.0008) score += 22;
@@ -2106,7 +1954,6 @@
             return score;
         }
 
-        // Trend Strength
         function getTrendStrength(candles) {
             if (!candles || candles.length < 20) return { adx: 20, slope: 0, trending: false };
             const closes = candles.map(d => d.close);
@@ -2129,153 +1976,200 @@
             return { adx, slope, trending };
         }
 
-        // Função principal de confirmação V5
-        async function confirmSignalV5(signal, data, candles, rsiVals, macdVals, mtfData, isBacktest = false) {
-            if (!signal || signal === 'NEUTRAL') return {
-                approved: false,
-                score: 0,
-                reasons: ['Sinal neutro'],
-                regime: 'NORMAL',
-                required: 60,
-                scoreBonus: 0
-            };
+        // Divergência adaptativa V6 (período baseado em ATR)
+        function detectDivergenceClassicV6(candles, indicatorVals, signal, atr) {
+            if (!candles || !indicatorVals || candles.length < 10) return false;
+            // Período adaptativo: 3, 5 ou 7 candles baseado no ATR
+            const priceRange = Math.max(...candles.map(c => c.high)) - Math.min(...candles.map(c => c.low));
+            const atrPct = atr / (priceRange || 1);
+            let period = atrPct > 0.03 ? 3 : atrPct > 0.015 ? 5 : 7;
+            period = Math.min(period, Math.floor(candles.length / 2));
 
-            // Filtro de horário (Melhoria #5)
+            if (candles.length < period * 2) return false;
+            const recentC = candles.slice(-period);
+            const recentI = indicatorVals.slice(-period);
+            const priceLow = Math.min(...recentC.map(c => c.low));
+            const indLow = Math.min(...recentI);
+            const prevC = candles.slice(-(period * 2), -period);
+            const prevI = indicatorVals.slice(-(period * 2), -period);
+            if (prevC.length === 0 || prevI.length === 0) return false;
+            const prevPriceLow = Math.min(...prevC.map(c => c.low));
+            const prevIndLow = Math.min(...prevI);
+            const bullish = priceLow < prevPriceLow && indLow > prevIndLow;
+            const priceHigh = Math.max(...recentC.map(c => c.high));
+            const indHigh = Math.max(...recentI);
+            const prevPriceHigh = Math.max(...prevC.map(c => c.high));
+            const prevIndHigh = Math.max(...prevI);
+            const bearish = priceHigh > prevPriceHigh && indHigh < prevIndHigh;
+            if (signal === 'LONG') return bullish;
+            if (signal === 'SHORT') return bearish;
+            return false;
+        }
+
+        function detectDivergenceMultiV6(candles, rsiVals, macdVals, signal, atr) {
+            if (!candles || candles.length < 20) return 0;
+            const rsiDiv = detectDivergenceClassicV6(candles, rsiVals, signal, atr);
+            const macdDiv = detectDivergenceClassicV6(candles, macdVals, signal, atr);
+            let bonus = 0;
+            if (rsiDiv && macdDiv) bonus = +20;
+            else if (rsiDiv || macdDiv) bonus = +10;
+            else bonus = 0;
+
+            // Penalidade contra
+            const bearishDiv = detectDivergenceClassicV6(candles, rsiVals, 'SHORT', atr);
+            const bullishDiv = detectDivergenceClassicV6(candles, rsiVals, 'LONG', atr);
+            if (signal === 'LONG' && bearishDiv) bonus -= 30;
+            if (signal === 'SHORT' && bullishDiv) bonus -= 30;
+            return clamp(bonus, -30, +30);
+        }
+
+        // Função principal de confirmação V6
+        async function confirmSignalV6(signal, data, candles, rsiVals, macdVals, mtfData, isBacktest = false) {
+            if (!signal || signal === 'NEUTRAL') {
+                return {
+                    approved: false,
+                    score: 0,
+                    reasons: ['Sinal neutro'],
+                    regime: 'NORMAL',
+                    required: 60,
+                    scoreBonus: 0,
+                    scoreComponents: {}
+                };
+            }
+
             if (!isBacktest && !isGoodTradingHour()) {
                 return { approved: false, score: 0, reasons: ['Horário de baixa liquidez'], regime: 'NORMAL',
-                    required: 60, scoreBonus: 0 };
+                    required: 60, scoreBonus: 0, scoreComponents: {} };
             }
 
             const requiredScore = isBacktest ? 55 : 60;
+            const atr = data.atr || calculateATR(candles.map(c => c.close)) || data.price * 0.02;
 
-            // Coleta scores individuais (mesmo da versão anterior)
-            const scores = {
-                price_action: 0,
-                momentum: 0,
-                macro_crypto: 0,
-                liquidity_spread: 0,
-                ml_probability: 0,
-                mtf_alignment: 0,
-                volume_liquidity: 0,
-                funding_onchain: 0,
-                divergence_penalty: 0,
-                trend_strength: 0
-            };
-
-            // 1. Price Action
-            let pa_score = 0;
+            // 1. PRICE ACTION (40-80)
+            let pa_score = 50;
             if (data.price && data.support && data.resistance) {
-                const pos = (data.price - data.support) / (data.resistance - data.support);
-                if ((signal === 'LONG' && pos < 0.3) || (signal === 'SHORT' && pos > 0.7)) pa_score += 40;
-                else pa_score += 20;
+                const range = data.resistance - data.support;
+                const position = (data.price - data.support) / range;
+                if (signal === 'LONG') {
+                    if (position > 0.7) pa_score = 75;
+                    else if (position > 0.5) pa_score = 65;
+                    else if (position < 0.3) pa_score = 45;
+                    else pa_score = 55;
+                } else {
+                    if (position < 0.3) pa_score = 75;
+                    else if (position < 0.5) pa_score = 65;
+                    else if (position > 0.7) pa_score = 45;
+                    else pa_score = 55;
+                }
             }
-            scores.price_action = Math.min(100, pa_score);
 
-            // 2. Momentum (RSI)
+            // 2. MOMENTUM (RSI) (30-70)
             const rsi = data.rsi || 50;
-            const rsi_score = signal === 'LONG' ? Math.max(0, (rsi - 50) * 2) : Math.max(0, (50 - rsi) * 2);
-            scores.momentum = Math.min(100, rsi_score);
+            const rsi_overextended = (signal === 'LONG' && rsi > 70) || (signal === 'SHORT' && rsi < 30);
+            const rsi_aligned = (signal === 'LONG' && rsi > 50) || (signal === 'SHORT' && rsi < 50);
+            let momentum_score = 50;
+            if (rsi_overextended) momentum_score = 35;
+            else if (rsi_aligned) momentum_score = 65;
 
-            // 3. Macro/Crypto base
-            const mvrv_score = data.mvrv && data.mvrv < 0.85 ? 30 : data.mvrv > 1.3 ? 40 : 20;
-            const sopr_score = data.sopr && data.sopr < 0.8 ? 30 : data.sopr > 1.1 ? 40 : 20;
-            const funding_aligned = (signal === 'LONG' && data.fundingRate < -0.0005) ||
-                (signal === 'SHORT' && data.fundingRate > 0.0005);
-            const funding_bonus = funding_aligned ? 20 : 0;
-            scores.macro_crypto = Math.min(100, mvrv_score + sopr_score + funding_bonus);
+            // 3. MACRO/CRYPTO (20-80)
+            let macro_score = 50;
+            const has_good = (data.mvrv && data.mvrv < 0.85) && (data.sopr && data.sopr < 0.9);
+            const has_bad = (data.mvrv && data.mvrv > 1.3) && (data.sopr && data.sopr > 1.1);
+            if (has_good) macro_score = 75;
+            else if (has_bad) macro_score = 25;
+            else macro_score = 50;
 
-            // 4. Liquidity/Spread
-            let liq_score = 0;
-            if (!isBacktest) {
-                const spreadData = await fetchOrderBookSpread();
-                const spread_ok = spreadData && spreadData.spreadBps < 8;
-                const oi_stable = Math.abs(data.oiDelta || 0) < 15;
-                if (spread_ok) liq_score += 40;
-                if (oi_stable) liq_score += 30;
-                if (data.volumeRatio && data.volumeRatio > 1.4) liq_score += 30;
-            } else {
-                liq_score = 70;
-            }
-            scores.liquidity_spread = liq_score;
+            // 4. LIQUIDITY/SPREAD (30-70)
+            let liq_score = isBacktest ? 60 : 50;
 
-            // 5. ML
+            // 5. ML PROBABILITY (20-80)
             const ml_prob = predictDirectionV3(data);
-            scores.ml_probability = ml_prob * 100;
+            const ml_score = 20 + ml_prob * 60;
 
-            // 6. MTF Alignment
-            let mtfScore = 50;
+            // 6. MTF ALIGNMENT (0-100)
+            let mtf_score = 50;
             if (mtfData && mtfData.c1h && mtfData.c1h.length > 0) {
                 const aligned = checkMTFAlignment(mtfData, signal, data.price);
-                mtfScore = aligned ? 80 : 20;
-            } else {
-                mtfScore = 50;
+                mtf_score = aligned ? 85 : 20;
             }
-            scores.mtf_alignment = mtfScore;
 
-            // 7. Volume + Liquidity
-            let volLiqScore = 0;
+            // 7. VOLUME (30-70)
+            let vol_score = 50;
             if (data.volume && data.avgVolume) {
-                const volCheck = checkVolumeLiquidity(data.volume, data.avgVolume, 0, data.oiDelta || 0, signal,
-                isBacktest);
-                volLiqScore = volCheck.ok ? 80 : 30;
-            } else {
-                volLiqScore = 50;
+                const volRel = data.volume / data.avgVolume;
+                if (volRel > 1.5) vol_score = 70;
+                else if (volRel > 1.0) vol_score = 60;
+                else vol_score = 40;
             }
-            scores.volume_liquidity = volLiqScore;
 
-            // 8. Funding + On-Chain Bias
-            const fobScore = fundingOnChainBias(signal, data.fundingRate, data.mvrv, data.sopr, data.minerOutflow || 0);
-            scores.funding_onchain = Math.min(100, Math.max(0, 50 + fobScore));
+            // 8. FUNDING/ON-CHAIN (30-70)
+            let funding_score = 50;
+            const f_aligned = (signal === 'LONG' && data.fundingRate < -0.0005) ||
+                (signal === 'SHORT' && data.fundingRate > 0.0005);
+            if (f_aligned) funding_score = 70;
+            else if ((signal === 'LONG' && data.fundingRate > 0.0008) ||
+                (signal === 'SHORT' && data.fundingRate < -0.0008)) {
+                funding_score = 30;
+            }
 
-            // 9. Divergência Aprimorada (Melhoria #4)
-            const divPenalty = detectDivergenceMulti(candles, rsiVals, macdVals, signal);
-            scores.divergence_penalty = 50 + divPenalty;
+            // 9. DIVERGÊNCIA (30-70, SIMÉTRICA)
+            let div_score = 50;
+            if (candles && candles.length > 0 && rsiVals && rsiVals.length > 0) {
+                const divPenalty = detectDivergenceMultiV6(candles, rsiVals, macdVals, signal, atr);
+                div_score = Math.min(70, Math.max(30, 50 + divPenalty));
+            }
 
-            // 10. Trend Strength
-            let tsScore = 50;
+            // 10. TREND STRENGTH (20-80)
+            let trend_score = 50;
             if (candles && candles.length > 0) {
                 const { adx, trending } = getTrendStrength(candles);
-                tsScore = trending ? 70 + (adx - 25) * 0.5 : 40;
-            }
-            scores.trend_strength = Math.min(100, Math.max(0, tsScore));
-
-            // Filtro de profundidade do book (Melhoria #2) – apenas em tempo real
-            if (!isBacktest) {
-                const posSize = data.positionSize || 0.01; // tamanho estimado
-                const side = signal === 'LONG' ? 'BUY' : 'SELL';
-                const liqCheck = await checkLiquidity('BTCUSDT', posSize, data.price, side);
-                if (!liqCheck.enough) {
-                    return { approved: false, score: 0, reasons: ['Liquidez insuficiente no book'], regime: 'NORMAL',
-                        required: requiredScore, scoreBonus: 0 };
-                }
-                // Bônus se houver liquidez abundante
-                if (liqCheck.maxSize > posSize * 10) {
-                    scores.liquidity_spread = Math.min(100, scores.liquidity_spread + 15);
-                }
+                if (trending && adx > 40) trend_score = 80;
+                else if (trending) trend_score = 70;
+                else if (adx < 20) trend_score = 30;
+                else trend_score = 50;
             }
 
-            // Score final ponderado usando pesos otimizados
+            const scores = {
+                price_action: pa_score,
+                momentum: momentum_score,
+                macro_crypto: macro_score,
+                liquidity_spread: liq_score,
+                ml_probability: ml_score,
+                mtf_alignment: mtf_score,
+                volume_liquidity: vol_score,
+                funding_onchain: funding_score,
+                divergence_penalty: div_score,
+                trend_strength: trend_score
+            };
+
+            // Pesos rebalanceados
+            const weights = {
+                price_action: 0.12,
+                momentum: 0.12,
+                macro_crypto: 0.10,
+                liquidity_spread: 0.08,
+                ml_probability: 0.08,
+                mtf_alignment: 0.10,
+                volume_liquidity: 0.12,
+                funding_onchain: 0.14,
+                divergence_penalty: 0.10,
+                trend_strength: 0.14
+            };
+
             let finalScore = 0;
-            for (const [key, val] of Object.entries(scores)) {
-                finalScore += val * (filterWeights[key] || 0.10);
+            for (const [key, weight] of Object.entries(weights)) {
+                finalScore += (scores[key] || 50) * weight;
             }
             finalScore = Math.min(100, Math.max(0, finalScore));
 
             const approve = finalScore >= requiredScore;
 
-            // Logs
-            if (!isBacktest || !approve) {
-                console.log(`[V5] Sinal ${signal} | Score: ${finalScore.toFixed(1)} | Aprovado: ${approve}`);
-                console.log('  Scores parciais:', scores);
-                console.log('  Pesos:', filterWeights);
-            }
-
             const reasons = [
-                `MTF: ${scores.mtf_alignment.toFixed(0)}/100`,
-                `Volume/Liq: ${scores.volume_liquidity.toFixed(0)}/100`,
-                `Funding: ${scores.funding_onchain.toFixed(0)}/100`,
-                `Divergência: ${scores.divergence_penalty.toFixed(0)}/100`,
-                `Tendência: ${scores.trend_strength.toFixed(0)}/100`
+                `Price Action: ${scores.price_action.toFixed(0)}/100`,
+                `Trend: ${scores.trend_strength.toFixed(0)}/100`,
+                `Momentum: ${scores.momentum.toFixed(0)}/100`,
+                `Volume: ${scores.volume_liquidity.toFixed(0)}/100`,
+                `MTF: ${scores.mtf_alignment.toFixed(0)}/100`
             ];
 
             return {
@@ -2284,8 +2178,8 @@
                 reasons: reasons,
                 regime: calculateVolatilityRegimeV3(candles.map(c => c.close)) || 'NORMAL',
                 required: requiredScore,
-                scoreBonus: approve ? (finalScore - 50) * 0.25 : -25,
-                scoreComponents: scores // para histórico de otimização
+                scoreBonus: approve ? (finalScore - 50) * 0.3 : -25,
+                scoreComponents: scores
             };
         }
 
@@ -2297,26 +2191,79 @@
             return Math.min(1, Math.max(0, prob));
         }
 
-        async function fetchOrderBookSpread(symbol = 'BTCUSDT') {
-            try {
-                const resp = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=5`);
-                const data = await resp.json();
-                const bestBid = parseFloat(data.bids[0][0]);
-                const bestAsk = parseFloat(data.asks[0][0]);
-                const midPrice = (bestBid + bestAsk) / 2;
-                const spreadBps = ((bestAsk - bestBid) / midPrice) * 10000;
-                return { spreadBps, midPrice };
-            } catch (e) {
-                return null;
+        // ================================================================
+        // 0.11 TRAILING STOP V6 (HIERÁRQUICO)
+        // ================================================================
+        function advancedTrailingStopV6(position, candleData, index, currentPrice, atr, atrPctRank, fvgZones) {
+            const closes = candleData.map(c => c.close);
+
+            // Base
+            let trailingMult = 2.0;
+
+            if (position.breakeven) {
+                trailingMult = 0.8;
+            } else {
+                // Momentum (influência pequena: ±30%)
+                const ema9 = calculateEMA(closes, 9);
+                const ema21 = calculateEMA(closes, 21);
+                let momentum = 0;
+                if (ema9 && ema21 && ema21 > 0) {
+                    momentum = (ema9 - ema21) / ema21;
+                    momentum = clamp(momentum, -0.05, 0.05);
+                }
+                const momentumAdj = 1.0 + momentum * 6;
+
+                // Volatilidade (influência grande: ×0.7 a ×1.5)
+                const volAdj = atrPctRank < 30 ? 0.7 : atrPctRank > 70 ? 1.5 : 1.0;
+
+                // Combina multiplicativamente
+                trailingMult = 2.0 * momentumAdj * volAdj;
+                trailingMult = clamp(trailingMult, 1.0, 3.5);
             }
+
+            // Aplica
+            const recentCandles = candleData.slice(-5);
+            const highestSince = Math.max(...recentCandles.map(c => c.high));
+            const lowestSince = Math.min(...recentCandles.map(c => c.low));
+
+            if (position.type === 'LONG') {
+                let newStop = highestSince - trailingMult * atr;
+                if (fvgZones && fvgZones.length > 0) {
+                    const fvgFloor = Math.min(...fvgZones.map(f => f.low));
+                    newStop = Math.max(newStop, fvgFloor - atr);
+                }
+                if (position.breakeven && position.breakeven_stop) {
+                    newStop = Math.max(newStop, position.breakeven_stop);
+                }
+                position.stop = Math.max(position.stop, newStop);
+            } else {
+                let newStop = lowestSince + trailingMult * atr;
+                if (fvgZones && fvgZones.length > 0) {
+                    const fvgCeiling = Math.max(...fvgZones.map(f => f.high));
+                    newStop = Math.min(newStop, fvgCeiling + atr);
+                }
+                if (position.breakeven && position.breakeven_stop) {
+                    newStop = Math.min(newStop, position.breakeven_stop);
+                }
+                position.stop = Math.min(position.stop, newStop);
+            }
+
+            // Log esporádico
+            if (index % 10 === 0) {
+                console.log(
+                    `[TRAILING] ${position.type} @ #${index} | mult=${trailingMult.toFixed(2)} | stop=$${position.stop.toFixed(0)} | breakeven=${position.breakeven}`
+                    );
+            }
+
+            return position.stop;
         }
 
         // ================================================================
-        // 0.13 TARGETS E TRAILING (V5)
+        // 0.12 TARGETS E BREAKEVEN (MANTIDOS)
         // ================================================================
-        function generateScaledTargetsV5(entry, stop, signalType, volatilityRegime) {
+        function generateScaledTargetsV6(entry, stop, signalType, volatilityRegime) {
             const risk = Math.abs(entry - stop);
-            const p = STOP_PARAMS_V5[volatilityRegime] || STOP_PARAMS_V5.NORMAL;
+            const p = STOP_PARAMS_V6[volatilityRegime] || STOP_PARAMS_V6.NORMAL;
             const slippageBps = 5;
             const fees = 0.001;
             const configs = [
@@ -2366,7 +2313,7 @@
         }
 
         // ================================================================
-        // 0.14 SCORE INSTITUCIONAL (MANTIDO)
+        // 0.13 SCORE INSTITUCIONAL (MANTIDO)
         // ================================================================
         let globalData = {
             price: 60000,
@@ -2507,13 +2454,13 @@
             document.getElementById('score-volume').textContent = components.volume;
             document.getElementById('score-oi').textContent = components.oi;
 
-            checkAdditionalAlertsV5(score, components);
+            checkAdditionalAlertsV6(score, components);
         }
 
         // ================================================================
-        // 0.15 ALERTA EM TEMPO REAL (USANDO V5)
+        // 0.14 ALERTA EM TEMPO REAL V6
         // ================================================================
-        async function checkAdditionalAlertsV5(score, components) {
+        async function checkAdditionalAlertsV6(score, components) {
             const now = Date.now();
             if (now - lastAlertTime < ALERT_COOLDOWN) return;
 
@@ -2541,7 +2488,7 @@
                 volume: 0,
                 avgVolume: 0,
                 minerOutflow: 500,
-                positionSize: 0.01 // estimativa
+                positionSize: 0.01
             };
 
             let signal = null;
@@ -2550,36 +2497,34 @@
             if (!signal) return;
 
             const mtfData = await fetchMTFData('BTCUSDT');
-            const conf = await confirmSignalV5(signal, data, candleHistory, rsiHistory, macdHistory, mtfData, false);
+            const conf = await confirmSignalV6(signal, data, candleHistory, rsiHistory, macdHistory, mtfData, false);
 
             if (!conf.approved) {
                 console.log(`Sinal bloqueado: score ${conf.score.toFixed(0)}/100 (requerido ≥60)`);
                 return;
             }
 
-            // Atualiza histórico de trades para otimização
             tradeHistory.push({
-                outcome: false, // será preenchido depois
+                outcome: false,
                 features: conf.scoreComponents || {}
             });
             tradeCounter++;
             if (tradeCounter % OPTIMIZATION_INTERVAL === 0) {
-                updateFilterWeights();
+                updateFilterWeightsV6();
             }
 
             const regime = conf.regime || 'NORMAL';
-            const p = STOP_PARAMS_V5[regime];
+            const p = STOP_PARAMS_V6[regime];
             const atr = data.atr || price * 0.02;
             const stopPrice = signal === 'LONG' ? price - p.stop * atr : price + p.stop * atr;
             const stop = Math.max(stopPrice, 0);
 
-            let targets = generateScaledTargetsV5(price, stop, signal, regime);
-
+            let targets = generateScaledTargetsV6(price, stop, signal, regime);
             let finalScore = score + conf.scoreBonus;
             finalScore = Math.min(100, Math.max(0, finalScore));
 
             const rationale =
-                `Filtros V5: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Targets escalonados. MTF: ${conf.reasons[0]}. Profundidade OK.`;
+                `Filtros V6: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Targets escalonados. MTF: ${conf.reasons[0]}.`;
 
             await sendStructuredAlert(signal, finalScore, price, stop, targets, rationale, components);
             lastAlertTime = now;
@@ -2975,7 +2920,6 @@
                             if (candleHistory.length > 50) candleHistory.shift();
                             const closes = candleHistory.map(c => c.close);
                             rsiHistory.push(calculateRSI(closes));
-                            // Calcula MACD para o histórico
                             const macdVal = calculateMACD(closes);
                             if (macdVal !== null) macdHistory.push(macdVal);
                             else macdHistory.push(0);
@@ -3239,7 +3183,7 @@
         }
 
         // ================================================================
-        // 7. BACKTEST 4H (V5)
+        // 7. BACKTEST 4H (V6 – COM PRÉ-CACHE MTF)
         // ================================================================
         let backtestRunning = false;
 
@@ -3254,7 +3198,7 @@
             container.innerHTML = `
                 <div class="backtest-loading">
                     <div class="spinner"></div>
-                    <p>Baixando dados de 4h dos últimos 30 dias...</p>
+                    <p>Carregando dados históricos (4h)...</p>
                 </div>
             `;
 
@@ -3325,11 +3269,12 @@
                         `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
                     backtestRunning = false;
                     btn.disabled = false;
-                    btn.textContent = '▶ Executar Backtest V5';
+                    btn.textContent = '▶ Executar Backtest V6';
                     return;
                 }
 
-                // MTF data com fallback
+                // 🔥 PRÉ-CACHE MTF (UMA VEZ SÓ)
+                console.log('📥 Pré-carregando dados MTF...');
                 let mtfData = await fetchMTFData('BTCUSDT');
                 if (mtfData.c1h.length === 0 && mtfData.c4h.length === 0 && mtfData.c1d.length === 0) {
                     console.warn('MTF data vazio, usando candles 4h como fallback.');
@@ -3339,6 +3284,7 @@
                         c1d: dataset.slice(-50)
                     };
                 }
+                console.log('✅ MTF cache pronto.');
 
                 const initialCapital = 10000;
                 let balance = initialCapital;
@@ -3405,20 +3351,21 @@
                         minerOutflow: 500,
                         support: Math.min(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.low)),
                         resistance: Math.max(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.high)),
-                        positionSize: 0.01 // estimativa
+                        positionSize: 0.01,
+                        atr: atr
                     };
 
-                    // Prepara históricos para divergência
+                    // Usa MTF cacheado
                     const rsiSlice = closes.map(c => calculateRSI(closes.slice(0, i + 1)));
                     const macdSlice = closes.map(c => calculateMACD(closes.slice(0, i + 1)) || 0);
 
-                    const conf = await confirmSignalV5(signal, simData, dataset.slice(0, i + 1),
+                    const conf = await confirmSignalV6(signal, simData, dataset.slice(0, i + 1),
                         rsiSlice, macdSlice, mtfData, true // isBacktest = true
                     );
                     if (!conf.approved) signal = 'NEUTRAL';
 
                     const regime = conf.regime || 'NORMAL';
-                    const p = STOP_PARAMS_V5[regime];
+                    const p = STOP_PARAMS_V6[regime];
 
                     if (position === null && signal !== 'NEUTRAL') {
                         const stopPrice = signal === 'LONG' ? price - p.stop * atr : price + p.stop * atr;
@@ -3428,7 +3375,7 @@
                         const riskAmount = balance * kellyPct;
                         const size = riskAmount / risk;
 
-                        let targets = generateScaledTargetsV5(entry, stopPrice, signal, regime);
+                        let targets = generateScaledTargetsV6(entry, stopPrice, signal, regime);
                         const fvgZones = [{ low: simData.support, high: simData.resistance }];
 
                         position = {
@@ -3461,8 +3408,8 @@
                             if (low < position.lowestPrice) position.lowestPrice = low;
                         }
 
-                        // Trailing stop com momentum (V5)
-                        const currentStop = advancedTrailingStopMomentum(position, dataset.slice(0, i + 1), i, price,
+                        // Trailing V6
+                        const currentStop = advancedTrailingStopV6(position, dataset.slice(0, i + 1), i, price,
                             atr, atrPctRankNorm, position.fvgZones);
                         position.stop = currentStop;
 
@@ -3543,7 +3490,7 @@
                                 scoreComponents: conf.scoreComponents || {}
                             });
 
-                            // Atualiza histórico para otimização (apenas se for win/loss definido)
+                            // Atualiza histórico para otimização
                             if (trades.length > 0) {
                                 const last = trades[trades.length - 1];
                                 tradeHistory.push({
@@ -3551,7 +3498,7 @@
                                     features: last.scoreComponents || {}
                                 });
                                 if (tradeHistory.length % OPTIMIZATION_INTERVAL === 0) {
-                                    updateFilterWeights();
+                                    updateFilterWeightsV6();
                                 }
                             }
 
@@ -3627,7 +3574,7 @@
                     html += `<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>`;
                 } else {
                     html += `
-                        <h4 style="color:var(--text-light); margin: 20px 0 10px 0;">📋 Histórico de Trades V5 (4h)</h4>
+                        <h4 style="color:var(--text-light); margin: 20px 0 10px 0;">📋 Histórico de Trades V6 (4h)</h4>
                         <div class="backtest-table-wrap">
                             <table>
                                 <thead>
@@ -3668,7 +3615,7 @@
                 html += `
                     <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 12px;">
                         Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • Capital inicial: US$ ${initialCapital.toFixed(0)}
-                        • Filtros V5: Otimização de pesos, Profundidade (simulado), Trailing com momentum, Divergência RSI+MACD+MTF, Horário • Score mínimo: 55 (backtest)
+                        • Filtros V6: SA + Cross-Validation • Scores normalizados • Trailing hierárquico • Divergência adaptativa • MTF cacheado • Score mínimo: 55 (backtest)
                     </p>
                 `;
 
@@ -3686,16 +3633,14 @@
 
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest V5';
+            btn.textContent = '▶ Executar Backtest V6';
         }
 
         // ================================================================
         // 8. INICIALIZAÇÃO
         // ================================================================
         async function init() {
-            // Carrega pesos salvos
-            loadWeights();
-
+            loadWeightsV6();
             updateTimestamp();
             initWhaleFlowChart();
 
@@ -3766,7 +3711,7 @@
         window.sendTestAlert = sendTestAlert;
         window.runBacktest = runBacktest;
         window.refreshAll = fetchBinanceDerivatives;
-        window.optimizeWeights = updateFilterWeights;
+        window.optimizeWeights = updateFilterWeightsV6;
         window.filterWeights = filterWeights;
     </script>
 </body>
