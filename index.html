@@ -1089,7 +1089,7 @@
                         <span><span class="down">🔴</span> Baixa</span>
                         <span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span>
                     </div>
-                    <span class="source-with-time" id="candle-btc-source">Binance • atualização a cada 10s</span>
+                    <span class="source-with-time" id="candle-btc-source">Binance • atualização a cada 30s</span>
                 </div>
                 <div class="candle-card">
                     <h3>Ethereum (ETH/USDT)</h3>
@@ -1104,7 +1104,7 @@
                         <span><span class="down">🔴</span> Baixa</span>
                         <span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span>
                     </div>
-                    <span class="source-with-time" id="candle-eth-source">Binance • atualização a cada 10s</span>
+                    <span class="source-with-time" id="candle-eth-source">Binance • atualização a cada 30s</span>
                 </div>
                 <div class="candle-card">
                     <h3>Solana (SOL/USDT)</h3>
@@ -1119,7 +1119,7 @@
                         <span><span class="down">🔴</span> Baixa</span>
                         <span>⏱️ 1D (dia) • 1S (semana) • 1M (mês)</span>
                     </div>
-                    <span class="source-with-time" id="candle-sol-source">Binance • atualização a cada 10s</span>
+                    <span class="source-with-time" id="candle-sol-source">Binance • atualização a cada 30s</span>
                 </div>
             </div>
         </section>
@@ -1419,7 +1419,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT COMPLETO (COM TODAS AS MELHORIAS)
+    JAVASCRIPT COMPLETO (COM TODAS AS MELHORIAS E OTIMIZAÇÕES)
     ============================================================ -->
     <script>
         // ================================================================
@@ -1431,18 +1431,18 @@
         // ================================================================
         // 0.1 CONFIGURAÇÕES DE RISCO E CAPITAL
         // ================================================================
-        let CAPITAL = 10000; // capital inicial para sugestão de tamanho
-        let RISK_PER_TRADE = 0.02; // 2% por trade
-        let STOP_MULTIPLIER = 2.0; // ATR multiplicador para stop
-        let TAKE_PROFIT_1 = 1.5; // R:R 1.5 para TP1
-        let TAKE_PROFIT_2 = 3.0; // R:R 3.0 para TP2
+        let CAPITAL = 10000;
+        let RISK_PER_TRADE = 0.02;
+        let STOP_MULTIPLIER = 2.0;
+        let TAKE_PROFIT_1 = 1.5;
+        let TAKE_PROFIT_2 = 3.0;
 
         // ================================================================
         // 0.2 VARIÁVEIS DE CONTROLE DE ALERTAS
         // ================================================================
         let lastAlertScore = 50;
         let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 1800000; // 30 minutos
+        const ALERT_COOLDOWN = 1800000; // 30 min
         let alertLog = [];
         let telegramStatus = 'online';
 
@@ -1462,13 +1462,11 @@
                     })
                 });
                 if (response.ok) {
-                    console.log('✅ Alerta enviado para o Telegram');
                     telegramStatus = 'online';
                     updateTelegramStatus();
                     return true;
                 } else {
-                    const errText = await response.text();
-                    console.warn('❌ Falha ao enviar alerta:', errText);
+                    console.warn('❌ Falha ao enviar alerta:', await response.text());
                     telegramStatus = 'offline';
                     updateTelegramStatus();
                     return false;
@@ -1485,7 +1483,6 @@
         // 0.4 ALERTA ESTRUTURADO (com gestão de risco e filtros)
         // ================================================================
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale, components) {
-            // Calcula tamanho da posição
             const riskAmount = CAPITAL * RISK_PER_TRADE;
             const riskPerUnit = Math.abs(price - stop);
             const size = riskAmount / riskPerUnit;
@@ -1512,11 +1509,9 @@
                 msg += `  Volume: ${components.volume}\n`;
                 msg += `  OI Delta: ${components.oi}\n`;
             }
-            // Adicionar probabilidade histórica
             const prob = getHistoricalWinrate({ signal: signalType, score: score });
             msg += `Probabilidade estimada: ${(prob * 100).toFixed(0)}%\n`;
             msg += `Fundamentos: ${rationale}\n`;
-            msg += `Risco: ${score > 75 ? 'Médio' : 'Alto'}\n`;
             msg += `⏰ ${getCurrentTimestamp()}`;
 
             const success = await sendTelegramAlert(msg);
@@ -1527,7 +1522,8 @@
                     score: score,
                     price: price,
                     rationale: rationale,
-                    win: null // será preenchido depois
+                    components: components,
+                    win: null
                 });
                 localStorage.setItem('alertLog', JSON.stringify(alertLog.slice(-100)));
             }
@@ -1535,7 +1531,7 @@
         }
 
         // ================================================================
-        // 0.5 FUNÇÃO DE TESTE (mantida)
+        // 0.5 FUNÇÃO DE TESTE
         // ================================================================
         async function sendTestAlert() {
             const score = document.getElementById('score-value')?.textContent || '50';
@@ -1552,223 +1548,541 @@
         }
 
         // ================================================================
-        // 0.6 STATUS DO TELEGRAM (mantido)
+        // 0.6 STATUS DO TELEGRAM
         // ================================================================
         function updateTelegramStatus() {
             const dot = document.getElementById('telegram-status-dot');
             const badge = document.getElementById('telegram-badge');
             const statusText = document.getElementById('telegram-status-text');
-            if (dot) {
-                dot.className = 'telegram-status ' + (telegramStatus === 'online' ? 'online' : 'offline');
-            }
-            if (badge) {
-                badge.className = 'telegram-badge ' + (telegramStatus === 'online' ? '' : 'error');
-            }
-            if (statusText) {
-                statusText.textContent = telegramStatus === 'online' ? '🟢 Conectado' : '🔴 Desconectado';
-            }
+            if (dot) dot.className = 'telegram-status ' + (telegramStatus === 'online' ? 'online' : 'offline');
+            if (badge) badge.className = 'telegram-badge ' + (telegramStatus === 'online' ? '' : 'error');
+            if (statusText) statusText.textContent = telegramStatus === 'online' ? '🟢 Conectado' : '🔴 Desconectado';
         }
 
         // ================================================================
-        // 0.7 FILTROS AVANÇADOS DE CONFIRMAÇÃO (MELHORIA #3)
+        // 0.7 FILTROS AVANÇADOS DE CONFIRMAÇÃO (MELHORIA #3, #2, #4, #8)
         // ================================================================
-        function confirmSignal(signal, data) {
-            let confirmations = 0;
-            const conditions = [];
+        // Histórico de candles para análise (usado em várias melhorias)
+        let candleHistory = [];
+        let rsiHistory = [];
+        let fundingHistory = [];
+        let spreadHistory = [];
 
-            // 1. Volume relativo (média 20)
-            if (data.volumeRatio && data.volumeRatio > 1.2) {
-                confirmations++;
-                conditions.push('Volume acima da média');
+        // Melhoria #2: Rejeição de preço
+        function detectPriceRejection(candles, signal, period = 3) {
+            if (candles.length < period + 1) return false;
+            const recent = candles.slice(-period);
+            const currentCandle = recent[recent.length - 1];
+            const prevCandle = recent[recent.length - 2];
+            if (!currentCandle || !prevCandle) return false;
+
+            const bodySize = Math.abs(currentCandle.close - currentCandle.open);
+            const range = currentCandle.high - currentCandle.low;
+
+            if (signal === 'LONG') {
+                const lowTail = currentCandle.open - currentCandle.low;
+                const isPinBar = lowTail > bodySize * 2 && bodySize < range * 0.5;
+                const isDoji = bodySize < range * 0.1;
+                const isInside = currentCandle.high <= prevCandle.high && currentCandle.low >= prevCandle.low;
+                return isPinBar || isDoji || isInside;
             }
-
-            // 2. Funding Rate
-            if (signal === 'LONG' && data.fundingRate < -0.0001) {
-                confirmations++;
-                conditions.push('Funding negativo (longs favorecidos)');
-            } else if (signal === 'SHORT' && data.fundingRate > 0.0001) {
-                confirmations++;
-                conditions.push('Funding positivo (shorts favorecidos)');
-            }
-
-            // 3. On-chain: MVRV e SOPR
-            if (data.mvrv && data.mvrv < 0.9) {
-                confirmations++;
-                conditions.push('MVRV baixo');
-            }
-            if (data.sopr && data.sopr < 0.9) {
-                confirmations++;
-                conditions.push('SOPR baixo (capitulação)');
-            }
-
-            // 4. Multi-timeframe (1h, 4h, 1d) – simulado com base em tendências
-            // Neste exemplo, usamos a tendência do score como proxy.
-            if (data.mtfTrend && data.mtfTrend === signal) {
-                confirmations++;
-                conditions.push('Multi-timeframe alinhado');
-            }
-
-            // 5. Modelo ML simplificado (MELHORIA #6)
-            const mlPred = predictDirection(data);
-            if (mlPred === signal) {
-                confirmations++;
-                conditions.push('Modelo ML concorda');
-            }
-
-            // 6. SMC: detectar FVG/Order Block (MELHORIA #8)
-            const smcOk = detectSMC(signal, data);
-            if (smcOk) {
-                confirmations++;
-                conditions.push('Estrutura SMC favorável');
-            }
-
-            const required = 3; // mínimo de 3 confirmações
-            const approved = confirmations >= required;
-
-            if (approved) {
-                console.log(`✅ Sinal ${signal} aprovado com ${confirmations} confirmações:`, conditions);
-            } else {
-                console.log(`❌ Sinal ${signal} bloqueado: ${confirmations} confirmações (necessário ${required})`, conditions);
-            }
-
-            return { approved, confirmations, conditions };
-        }
-
-        // ================================================================
-        // 0.8 MODELO ML SIMPLIFICADO (MELHORIA #6)
-        // ================================================================
-        function predictDirection(data) {
-            // Combinação linear de indicadores
-            let score = 50;
-            if (data.rsi > 55) score += 15;
-            else if (data.rsi < 45) score -= 15;
-            if (data.macd > data.macdSignal) score += 10;
-            else score -= 10;
-            if (data.volumeRatio > 1.2) score += 5;
-            if (data.fundingRate < 0) score += 5;
-            // Normalizar
-            if (score >= 65) return 'LONG';
-            if (score <= 35) return 'SHORT';
-            return 'NEUTRAL';
-        }
-
-        // ================================================================
-        // 0.9 DETECÇÃO DE SMC (FVG e ORDER BLOCK) – MELHORIA #8
-        // ================================================================
-        function detectSMC(signal, data) {
-            // Simulação: verifica se o preço está próximo de um FVG ou order block
-            // Na prática, precisaríamos de candles históricos.
-            // Usamos dados fictícios: se price está entre suporte e resistência, considera OK.
-            if (data.price && data.support && data.resistance) {
-                const range = data.resistance - data.support;
-                const pos = (data.price - data.support) / range;
-                if (signal === 'LONG' && pos < 0.3) return true; // perto do suporte
-                if (signal === 'SHORT' && pos > 0.7) return true; // perto da resistência
+            if (signal === 'SHORT') {
+                const highTail = currentCandle.high - currentCandle.close;
+                const isPinBar = highTail > bodySize * 2 && bodySize < range * 0.5;
+                const isDoji = bodySize < range * 0.1;
+                const isInside = currentCandle.high <= prevCandle.high && currentCandle.low >= prevCandle.low;
+                return isPinBar || isDoji || isInside;
             }
             return false;
         }
 
-        // ================================================================
-        // 0.10 PROBABILIDADE HISTÓRICA (MELHORIA #7)
-        // ================================================================
-        function getHistoricalWinrate(conditions) {
-            const log = alertLog.filter(t => t.type === conditions.signal && t.win !== null);
-            if (log.length === 0) return 0.5;
-            const wins = log.filter(t => t.win === true).length;
-            return wins / log.length;
+        // Melhoria #4: Order Block
+        function detectOrderBlock(candles, signal, lookback = 10) {
+            if (candles.length < lookback + 1) return null;
+            const recent = candles.slice(-lookback);
+            for (let i = recent.length - 3; i >= 1; i--) {
+                const impulse = recent[i];
+                const breakCandle = recent[i + 1];
+                if (!impulse || !breakCandle) continue;
+
+                if (signal === 'LONG') {
+                    const isImpulse = impulse.close > impulse.open && impulse.close > recent[i - 1].close;
+                    const isBreak = breakCandle.close > impulse.high;
+                    if (isImpulse && isBreak) {
+                        return { blockLow: impulse.low, blockHigh: impulse.high, mitigation: impulse.high + (impulse
+                                .high - impulse.low) * 0.5 };
+                    }
+                }
+                if (signal === 'SHORT') {
+                    const isImpulse = impulse.close < impulse.open && impulse.close < recent[i - 1].close;
+                    const isBreak = breakCandle.close < impulse.low;
+                    if (isImpulse && isBreak) {
+                        return { blockLow: impulse.low, blockHigh: impulse.high, mitigation: impulse.low - (impulse
+                                .high - impulse.low) * 0.5 };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Melhoria #8: Divergências RSI/MACD
+        function detectDivergence(candles, rsiValues, period = 5) {
+            if (candles.length < period + 1 || rsiValues.length < period + 1) return null;
+            const recentCandles = candles.slice(-period);
+            const recentRsi = rsiValues.slice(-period);
+
+            const priceLow = Math.min(...recentCandles.map(c => c.low));
+            const rsiLow = Math.min(...recentRsi);
+            const prevCandles = candles.slice(-period * 2, -period);
+            const prevRsi = rsiValues.slice(-period * 2, -period);
+            if (prevCandles.length === 0 || prevRsi.length === 0) return null;
+            const prevPriceLow = Math.min(...prevCandles.map(c => c.low));
+            const prevRsiLow = Math.min(...prevRsi);
+
+            const bullishDiv = priceLow < prevPriceLow && rsiLow > prevRsiLow;
+
+            const priceHigh = Math.max(...recentCandles.map(c => c.high));
+            const rsiHigh = Math.max(...recentRsi);
+            const prevPriceHigh = Math.max(...prevCandles.map(c => c.high));
+            const prevRsiHigh = Math.max(...prevRsi);
+            const bearishDiv = priceHigh > prevPriceHigh && rsiHigh < prevRsiHigh;
+
+            return { bullish: bullishDiv, bearish: bearishDiv, strength: Math.abs(rsiLow - prevRsiLow) };
+        }
+
+        // Melhoria #9: Liquidez (spread)
+        async function fetchOrderBookSpread(symbol = 'BTCUSDT') {
+            try {
+                const resp = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=5`);
+                const data = await resp.json();
+                const bestBid = parseFloat(data.bids[0][0]);
+                const bestAsk = parseFloat(data.asks[0][0]);
+                const midPrice = (bestBid + bestAsk) / 2;
+                const spread = ((bestAsk - bestBid) / midPrice) * 10000; // bps
+                return { spread, midPrice, bestBid, bestAsk };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function calculateNormalSpread(history) {
+            if (history.length < 10) return { mean: 1.0, stddev: 0.5 };
+            const mean = history.reduce((s, x) => s + x, 0) / history.length;
+            const variance = history.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / history.length;
+            return { mean, stddev: Math.sqrt(variance) };
+        }
+
+        // Melhoria #10: Funding dinâmica
+        function analyzeFundingDynamics(fundingHistory) {
+            if (fundingHistory.length < 2) return null;
+            const current = fundingHistory[fundingHistory.length - 1].fundingRate;
+            const previous = fundingHistory[fundingHistory.length - 2].fundingRate;
+            const delta = (current - previous) * 10000; // bps
+            const avg = fundingHistory.reduce((s, f) => s + f.fundingRate, 0) / fundingHistory.length;
+            return {
+                current,
+                previous,
+                delta,
+                averageTrend: avg,
+                isIncreasing: delta > 0.5,
+                isDecreasing: delta < -0.5,
+                extremePositive: current > avg * 2,
+                extremeNegative: current < avg * 0.5
+            };
+        }
+
+        // Função principal de confirmação (agora com todas as melhorias)
+        async function confirmSignal(signal, data, candles, rsiVals) {
+            let confirmations = 0;
+            const conditions = [];
+            let scoreBonus = 0;
+
+            // 1. Volume
+            if (data.volumeRatio && data.volumeRatio > 1.2) {
+                confirmations++;
+                conditions.push('Volume acima da média');
+                scoreBonus += 5;
+            }
+
+            // 2. Funding absoluto
+            if (signal === 'LONG' && data.fundingRate < -0.0001) {
+                confirmations++;
+                conditions.push('Funding negativo');
+                scoreBonus += 5;
+            } else if (signal === 'SHORT' && data.fundingRate > 0.0001) {
+                confirmations++;
+                conditions.push('Funding positivo');
+                scoreBonus += 5;
+            }
+
+            // 3. On-chain
+            if (data.mvrv && data.mvrv < 0.9) {
+                confirmations++;
+                conditions.push('MVRV baixo');
+                scoreBonus += 5;
+            }
+            if (data.sopr && data.sopr < 0.9) {
+                confirmations++;
+                conditions.push('SOPR baixo');
+                scoreBonus += 5;
+            }
+
+            // 4. Multi-timeframe (simulado via tendência)
+            if (data.mtfTrend && data.mtfTrend === signal) {
+                confirmations++;
+                conditions.push('Multi-timeframe alinhado');
+                scoreBonus += 5;
+            }
+
+            // 5. ML (Melhoria #6)
+            const mlPred = predictDirection(data);
+            if (mlPred === signal) {
+                confirmations++;
+                conditions.push('Modelo ML concorda');
+                scoreBonus += 10;
+            }
+
+            // 6. SMC: Order Block (Melhoria #4)
+            const ob = detectOrderBlock(candles, signal);
+            if (ob) {
+                const distToBlock = Math.abs(data.price - ob.blockHigh);
+                if (distToBlock < data.atr) {
+                    confirmations++;
+                    conditions.push('Próximo a Order Block');
+                    scoreBonus += 10;
+                }
+            }
+
+            // 7. Rejeição de preço (Melhoria #2)
+            const rejection = detectPriceRejection(candles, signal);
+            if (rejection) {
+                confirmations++;
+                conditions.push('Rejeição de preço');
+                scoreBonus += 15;
+            }
+
+            // 8. Divergências (Melhoria #8)
+            const div = detectDivergence(candles, rsiVals);
+            if (div) {
+                if ((div.bullish && signal === 'LONG') || (div.bearish && signal === 'SHORT')) {
+                    confirmations++;
+                    conditions.push('Divergência favorável');
+                    scoreBonus += 20;
+                } else if ((div.bullish && signal === 'SHORT') || (div.bearish && signal === 'LONG')) {
+                    // Divergência contrária: bloquear
+                    return { approved: false, confirmations: 0, conditions: ['Divergência contrária'], scoreBonus: -30 };
+                }
+            }
+
+            // 9. Funding dinâmica (Melhoria #10)
+            if (fundingHistory.length > 1) {
+                const fd = analyzeFundingDynamics(fundingHistory);
+                if (fd) {
+                    if (signal === 'LONG' && fd.isDecreasing && fd.extremePositive) {
+                        confirmations++;
+                        conditions.push('Funding capitulação shorts');
+                        scoreBonus += 15;
+                    } else if (signal === 'SHORT' && fd.isIncreasing && fd.extremeNegative) {
+                        confirmations++;
+                        conditions.push('Funding capitulação longs');
+                        scoreBonus += 15;
+                    } else if ((signal === 'LONG' && fd.extremePositive && !fd.isDecreasing) ||
+                        (signal === 'SHORT' && fd.extremeNegative && !fd.isIncreasing)) {
+                        // Funding contra-signal, sem reversão
+                        confirmations = Math.max(0, confirmations - 1);
+                        conditions.push('Funding contra-signal');
+                        scoreBonus -= 10;
+                    }
+                }
+            }
+
+            // 10. Filtro de liquidez (Melhoria #9)
+            const spreadData = await fetchOrderBookSpread();
+            if (spreadData) {
+                spreadHistory.push(spreadData.spread);
+                if (spreadHistory.length > 100) spreadHistory.shift();
+                const { mean, stddev } = calculateNormalSpread(spreadHistory);
+                if (spreadData.spread > mean + 1.5 * stddev) {
+                    // Spread anormal: bloquear
+                    return { approved: false, confirmations: 0, conditions: ['Spread anormal'], scoreBonus: -20 };
+                } else if (spreadData.spread < mean - 0.5 * stddev) {
+                    confirmations++;
+                    conditions.push('Spread tight');
+                    scoreBonus += 5;
+                }
+            }
+
+            // 11. Regime de volatilidade (Melhoria #3) – ajusta número de confirmações
+            const regime = calculateVolatilityRegime(candles.map(c => c.close));
+            const requiredConfirmations = regime === 'LOW' ? 2 : regime === 'NORMAL' ? 3 : 4;
+
+            const approved = confirmations >= requiredConfirmations;
+
+            return {
+                approved,
+                confirmations,
+                conditions,
+                scoreBonus,
+                regime,
+                required: requiredConfirmations
+            };
         }
 
         // ================================================================
-        // 0.11 GESTÃO DE RISCO DINÂMICA (MELHORIA #2)
+        // 0.8 MODELO ML SIMPLIFICADO (Melhoria #6)
         // ================================================================
-        function calculatePositionSize(entry, stop, capital, riskPct = 0.02) {
-            const riskAmount = capital * riskPct;
-            const riskPerUnit = Math.abs(entry - stop);
-            if (riskPerUnit === 0) return 0;
-            return riskAmount / riskPerUnit;
+        class SimpleLogisticRegressor {
+            constructor() {
+                this.weights = { rsi: 0.1, macdDiff: 0.1, volumeRatio: 0.05, fundingRate: 0.08, mvrvDev: 0.1,
+                    atrRatio: 0.05 };
+                this.bias = 0;
+            }
+            sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+            predict(features) {
+                let z = this.bias;
+                z += features.rsi * this.weights.rsi;
+                z += features.macdDiff * this.weights.macdDiff;
+                z += features.volumeRatio * this.weights.volumeRatio;
+                z += features.fundingRate * this.weights.fundingRate;
+                z += features.mvrvDev * this.weights.mvrvDev;
+                z += features.atrRatio * this.weights.atrRatio;
+                return this.sigmoid(z);
+            }
+            train(tradeHistory) {
+                const alpha = 0.01;
+                for (let epoch = 0; epoch < 50; epoch++) {
+                    tradeHistory.forEach(trade => {
+                        if (!trade.features) return;
+                        const pred = this.predict(trade.features);
+                        const error = (trade.win ? 1 : 0) - pred;
+                        Object.keys(this.weights).forEach(key => {
+                            this.weights[key] += alpha * error * trade.features[key];
+                        });
+                        this.bias += alpha * error;
+                    });
+                }
+            }
         }
 
-        function getAdaptiveStop(price, atr, multiplier = 2) {
-            return price - multiplier * atr;
-        }
+        const mlModel = new SimpleLogisticRegressor();
 
-        function trailingStop(currentPrice, highestPrice, atr, previousStop, multiplier = 2) {
-            const newStop = highestPrice - multiplier * atr;
-            return Math.max(newStop, previousStop);
+        function predictDirection(data) {
+            const features = {
+                rsi: (data.rsi - 50) / 50,
+                macdDiff: (data.macd - data.macdSignal) / 200,
+                volumeRatio: Math.log(data.volumeRatio || 1),
+                fundingRate: data.fundingRate * 10000,
+                mvrvDev: (data.mvrv - 1) / 0.5,
+                atrRatio: (data.atr || 0) / (data.price * 0.02 || 1)
+            };
+            const prob = mlModel.predict(features);
+            if (prob > 0.6) return 'LONG';
+            if (prob < 0.4) return 'SHORT';
+            return 'NEUTRAL';
         }
 
         // ================================================================
-        // 0.12 FUNÇÃO DE ALERTA ADICIONAL COM FILTROS (modificada)
+        // 0.9 REGIME DE VOLATILIDADE (Melhoria #3)
+        // ================================================================
+        function calculateVolatilityRegime(closes, period = 20) {
+            if (closes.length < period) return 'NORMAL';
+            const atr = calculateATR(closes, 14);
+            const sma = closes.slice(-period).reduce((s, p) => s + p) / period;
+            const atrPct = (atr / sma) * 100;
+            if (atrPct < 1.0) return 'LOW';
+            if (atrPct < 2.5) return 'NORMAL';
+            return 'HIGH';
+        }
+
+        function calculateATR(closes, period = 14) {
+            if (closes.length < period + 1) return closes[closes.length - 1] * 0.02;
+            const tr = [];
+            for (let i = 1; i < closes.length; i++) {
+                tr.push(Math.abs(closes[i] - closes[i - 1]));
+            }
+            return tr.slice(-period).reduce((s, v) => s + v, 0) / period;
+        }
+
+        // ================================================================
+        // 0.10 TRAILING STOP PONDERADO (Melhoria #5)
+        // ================================================================
+        function calculateLocalATR(candleData, index, period = 5) {
+            const window = candleData.slice(Math.max(0, index - period), Math.min(candleData.length, index + 1));
+            if (window.length < 2) return 0;
+            const tr = [];
+            for (let i = 1; i < window.length; i++) {
+                const h = window[i].high,
+                    l = window[i].low,
+                    pc = window[i - 1].close;
+                tr.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+            }
+            return tr.reduce((s, v) => s + v, 0) / tr.length;
+        }
+
+        function updateTrailingStop(position, candleData, index, initialATR) {
+            const localATR = calculateLocalATR(candleData, index, 5);
+            const volatilityAdj = localATR / (initialATR || localATR || 0.01);
+            const mult = 1.8;
+            if (position.type === 'LONG') {
+                const newStop = position.highestPrice - volatilityAdj * mult * localATR;
+                position.stop = Math.max(newStop, position.stop);
+            } else if (position.type === 'SHORT') {
+                const newStop = position.lowestPrice + volatilityAdj * mult * localATR;
+                position.stop = Math.min(newStop, position.stop);
+            }
+            return position.stop;
+        }
+
+        // ================================================================
+        // 0.11 DETECÇÃO DE PADRÕES PERDEDORES (Melhoria #7)
+        // ================================================================
+        function detectLosingPattern(alertLog, pattern, windowSize = 20) {
+            const recent = alertLog.slice(-windowSize);
+            const patternTrades = recent.filter(t => t.rationale && t.rationale.toLowerCase().includes(pattern.toLowerCase()));
+            if (patternTrades.length < 5) return null;
+            const wins = patternTrades.filter(t => t.win === true).length;
+            const wr = wins / patternTrades.length;
+            return { pattern, winrate: wr, blocked: wr < 0.40, sampleSize: patternTrades.length };
+        }
+
+        // ================================================================
+        // 0.12 OTIMIZAÇÃO DINÂMICA DE PESOS (Melhoria #1)
+        // ================================================================
+        function optimizeWeights(tradeHistory) {
+            if (tradeHistory.length < 10) return null;
+            const compStats = {};
+            const comps = ['trend', 'momentum', 'structure', 'onchain', 'volume', 'oi'];
+            comps.forEach(c => { compStats[c] = { wins: 0, losses: 0 }; });
+
+            tradeHistory.forEach(trade => {
+                if (!trade.components) return;
+                const win = trade.win === true;
+                Object.keys(trade.components).forEach(key => {
+                    if (compStats[key]) {
+                        if (win) compStats[key].wins++;
+                        else compStats[key].losses++;
+                    }
+                });
+            });
+
+            const newWeights = {};
+            let total = 0;
+            comps.forEach(key => {
+                const s = compStats[key];
+                const wr = (s.wins + s.losses > 0) ? s.wins / (s.wins + s.losses) : 0.5;
+                newWeights[key] = wr;
+                total += wr;
+            });
+            if (total === 0) return null;
+            comps.forEach(key => newWeights[key] /= total);
+            return newWeights;
+        }
+
+        // ================================================================
+        // 0.13 FUNÇÃO DE ALERTA ADICIONAL (integrando todas as melhorias)
         // ================================================================
         let previousScore = 50;
 
-        function checkAdditionalAlerts(score, components) {
+        async function checkAdditionalAlerts(score, components) {
             const now = Date.now();
             if (now - lastAlertTime < ALERT_COOLDOWN) return;
 
             const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
             const fng = parseInt(document.getElementById('header-fng')?.textContent.match(/\d+/)?.[0]) || 50;
 
-            // Coletar dados para filtros
+            // Coletar dados
             const fundingRateEl = document.getElementById('funding-rate');
             const fundingRate = fundingRateEl ? parseFloat(fundingRateEl.textContent.replace('%', '')) / 100 : 0;
             const mvrvEl = document.getElementById('mvrv');
             const mvrv = mvrvEl ? parseFloat(mvrvEl.textContent) : 1.2;
             const soprEl = document.getElementById('sopr');
             const sopr = soprEl ? parseFloat(soprEl.textContent) : 0.95;
-            const volumeEl = document.getElementById('btc-price'); // proxy
-            const volumeRatio = 1.0; // não temos volume em tempo real
+            const volumeRel = 1.0; // seria obtido em tempo real
 
-            // Dados para o filtro
+            // Preparar dados para confirmação
             const data = {
                 price: price,
-                rsi: 50, // será atualizado pelo score
+                rsi: 50,
                 macd: 0,
                 macdSignal: 0,
-                volumeRatio: volumeRatio,
+                volumeRatio: volumeRel,
                 fundingRate: fundingRate,
                 mvrv: mvrv,
                 sopr: sopr,
                 support: 58000,
                 resistance: 70000,
-                mtfTrend: 'NEUTRAL' // simulado
+                mtfTrend: 'NEUTRAL',
+                atr: price * 0.02
             };
 
-            // Decidir sinal baseado no score
             let signal = null;
             if (score >= 75) signal = 'LONG';
             else if (score <= 25) signal = 'SHORT';
-
             if (!signal) return;
 
-            // Aplicar filtros
-            const { approved, confirmations, conditions } = confirmSignal(signal, data);
-            if (!approved) return;
+            // Usar candleHistory e rsiHistory para validação
+            const conf = await confirmSignal(signal, data, candleHistory, rsiHistory);
+            if (!conf.approved) {
+                console.log(`Sinal bloqueado: ${conf.conditions.join(', ')}`);
+                return;
+            }
 
-            // Calcular stop adaptativo (usando ATR aproximado)
-            const atr = price * 0.02; // supondo ATR 2%
-            const stopPrice = signal === 'LONG' ? price - STOP_MULTIPLIER * atr : price + STOP_MULTIPLIER * atr;
+            // Aplicar bônus de score
+            let finalScore = score + conf.scoreBonus;
+            finalScore = Math.min(100, Math.max(0, finalScore));
+
+            // Verificar padrões perdedores (Melhoria #7)
+            const patterns = ['MVRV baixo', 'Funding negativo', 'SMC', 'Divergência'];
+            const blocked = [];
+            patterns.forEach(p => {
+                const res = detectLosingPattern(alertLog, p);
+                if (res && res.blocked) blocked.push(res);
+            });
+            if (blocked.length > 0) {
+                console.warn(`Padrões bloqueados: ${blocked.map(b => b.pattern).join(', ')}`);
+                finalScore -= 20;
+                if (finalScore < 50) return;
+            }
+
+            // Calcular stop adaptativo
+            const atr = data.atr || price * 0.02;
+            const regime = conf.regime || 'NORMAL';
+            const params = {
+                LOW: { stopMult: 1.5, tpMult1: 1.8, tpMult2: 2.8 },
+                NORMAL: { stopMult: 2.0, tpMult1: 2.5, tpMult2: 4.0 },
+                HIGH: { stopMult: 3.5, tpMult1: 3.0, tpMult2: 5.0 }
+            };
+            const p = params[regime];
+            const stopPrice = signal === 'LONG' ? price - p.stopMult * atr : price + p.stopMult * atr;
             const stop = Math.max(stopPrice, 0);
 
-            // Definir alvos com R:R
+            // Alvos com R:R
             const targets = [];
-            const tp1Price = signal === 'LONG' ? price + TAKE_PROFIT_1 * (price - stop) : price - TAKE_PROFIT_1 * (stop - price);
-            const tp2Price = signal === 'LONG' ? price + TAKE_PROFIT_2 * (price - stop) : price - TAKE_PROFIT_2 * (stop - price);
-            targets.push({ price: tp1Price, rr: TAKE_PROFIT_1 });
-            targets.push({ price: tp2Price, rr: TAKE_PROFIT_2 });
+            const tp1Price = signal === 'LONG' ? price + p.tpMult1 * (price - stop) : price - p.tpMult1 * (stop - price);
+            const tp2Price = signal === 'LONG' ? price + p.tpMult2 * (price - stop) : price - p.tpMult2 * (stop - price);
+            targets.push({ price: tp1Price, rr: p.tpMult1 });
+            targets.push({ price: tp2Price, rr: p.tpMult2 });
 
-            // Rationale
-            let rationale = `Filtros aprovados: ${confirmations} confirmações. Condições: ${conditions.join(', ')}.`;
+            const rationale = `Filtros: ${conf.confirmations}/${conf.required} confirmações. Condições: ${conf.conditions.join(', ')}. Regime: ${regime}.`;
+
+            // Otimização de pesos (Melhoria #1) – aplicada no próximo score
+            // Atualizar pesos se houver histórico
+            const newWeights = optimizeWeights(alertLog.filter(t => t.win !== null));
+            if (newWeights) {
+                // Aplicar pesos no próximo cálculo (armazenar globalmente)
+                console.log('Pesos otimizados:', newWeights);
+                // (Implementação opcional: atualizar componentWeights global)
+            }
 
             // Enviar alerta
-            sendStructuredAlert(signal, score, price, stop, targets, rationale, components);
+            await sendStructuredAlert(signal, finalScore, price, stop, targets, rationale, components);
             lastAlertTime = now;
-            lastAlertScore = score;
-            previousScore = score;
+            lastAlertScore = finalScore;
+            previousScore = finalScore;
         }
 
         // ================================================================
-        // 1. CHAVES DE API (mantidas)
+        // 1. CHAVES DE API
         // ================================================================
         const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
         const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
@@ -1948,7 +2262,7 @@
         }
 
         // ================================================================
-        // 4. TIMESTAMP (mantido)
+        // 4. TIMESTAMP
         // ================================================================
         function updateTimestamp() {
             const ts = getCurrentTimestamp();
@@ -2016,7 +2330,7 @@
         }
 
         // ================================================================
-        // 6. CANDLESTICK (mantido)
+        // 6. CANDLESTICK (otimizado: 30s)
         // ================================================================
         let candleCharts = {};
 
@@ -2087,11 +2401,12 @@
             }
         }
 
+        // Atualização reduzida para 30s
         async function updateCandles() {
             const pairs = [
-                { id: 'candle-btc', symbol: 'BTCUSDT', color: '#00d98e', statsId: 'btc-stats' },
-                { id: 'candle-eth', symbol: 'ETHUSDT', color: '#00b4d8', statsId: 'eth-stats' },
-                { id: 'candle-sol', symbol: 'SOLUSDT', color: '#ffd60a', statsId: 'sol-stats' }
+                { id: 'candle-btc', symbol: 'BTCUSDT', color: '#00d98e' },
+                { id: 'candle-eth', symbol: 'ETHUSDT', color: '#00b4d8' },
+                { id: 'candle-sol', symbol: 'SOLUSDT', color: '#ffd60a' }
             ];
             for (const p of pairs) {
                 try {
@@ -2104,6 +2419,17 @@
                     if (data && data.length > 0) {
                         candleCharts[p.id].candleSeries.setData(data);
                         candleCharts[p.id].chart.timeScale().fitContent();
+                        // Atualizar histórico para análise
+                        if (p.symbol === 'BTCUSDT') {
+                            candleHistory = data.slice(-30);
+                            // Recalcular RSI para histórico
+                            const closes = data.map(d => d.close);
+                            rsiHistory = [];
+                            for (let i = 0; i < closes.length; i++) {
+                                const slice = closes.slice(0, i + 1);
+                                rsiHistory.push(calculateRSI(slice, 14));
+                            }
+                        }
                     }
                     const stats = await fetchDailyStats(p.symbol);
                     if (stats) {
@@ -2134,7 +2460,7 @@
         }
 
         // ================================================================
-        // 7. SCORE INSTITUCIONAL (mantido)
+        // 7. SCORE INSTITUCIONAL (com otimização de pesos opcional)
         // ================================================================
         let globalData = {
             price: 60000,
@@ -2153,7 +2479,32 @@
             oiDelta: 0.0
         };
 
+        // Pesos padrão (serão otimizados se houver histórico)
+        let componentWeights = {
+            trend: 0.25,
+            momentum: 0.20,
+            structure: 0.15,
+            onchain: 0.10,
+            volume: 0.15,
+            oi: 0.15
+        };
+
+        // Aplicar otimização se disponível
+        function applyOptimizedWeights() {
+            const hist = alertLog.filter(t => t.win !== null);
+            if (hist.length > 20) {
+                const newWeights = optimizeWeights(hist);
+                if (newWeights) {
+                    console.log('⚡ Pesos otimizados aplicados:', newWeights);
+                    componentWeights = newWeights;
+                }
+            }
+        }
+
         function computeScore(data) {
+            // Aplicar pesos otimizados
+            applyOptimizedWeights();
+
             const price = data.price || 60000;
             const ema50 = data.ema50 || 65000;
             const ema200 = data.ema200 || 62000;
@@ -2192,7 +2543,9 @@
             let oi = clamp(oiDelta / 20, -1, 1);
             oi = (oi + 1) / 2;
 
-            let raw = (t * 0.25 + m * 0.20 + se * 0.15 + o * 0.10 + vol * 0.15 + oi * 0.15);
+            let raw = (t * componentWeights.trend + m * componentWeights.momentum +
+                se * componentWeights.structure + o * componentWeights.onchain +
+                vol * componentWeights.volume + oi * componentWeights.oi);
             raw = clamp((raw + 1) / 2, 0, 1);
             let finalScore = raw * 100;
 
@@ -2202,12 +2555,12 @@
             }
 
             const components = {
-                trend: (t * 0.25 * 50 + 50).toFixed(1),
-                momentum: (m * 0.20 * 50 + 50).toFixed(1),
-                structure: (se * 0.15 * 50 + 50).toFixed(1),
-                onchain: (o * 0.10 * 50 + 50).toFixed(1),
-                volume: (vol * 0.15 * 50 + 50).toFixed(1),
-                oi: (oi * 0.15 * 50 + 50).toFixed(1)
+                trend: (t * 50 + 50).toFixed(1),
+                momentum: (m * 50 + 50).toFixed(1),
+                structure: (se * 50 + 50).toFixed(1),
+                onchain: (o * 50 + 50).toFixed(1),
+                volume: (vol * 50 + 50).toFixed(1),
+                oi: (oi * 50 + 50).toFixed(1)
             };
 
             return { score: Math.round(finalScore), components };
@@ -2244,12 +2597,12 @@
             document.getElementById('score-volume').textContent = components.volume;
             document.getElementById('score-oi').textContent = components.oi;
 
-            // Alerta com filtros avançados (MELHORIA #3 e #7)
+            // Disparar alerta com todas as melhorias
             checkAdditionalAlerts(score, components);
         }
 
         // ================================================================
-        // 8. FUNÇÕES DE ATUALIZAÇÃO (APIs) – mantidas com pequenas alterações
+        // 8. FUNÇÕES DE ATUALIZAÇÃO (APIs)
         // ================================================================
         async function fetchPrices() {
             try {
@@ -2351,6 +2704,9 @@
                     document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
                         fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
                     updateSourceTimestamp('funding-rate-source');
+                    // Atualizar histórico de funding
+                    fundingHistory.push({ fundingRate: fr, timestamp: Date.now() });
+                    if (fundingHistory.length > 20) fundingHistory.shift();
                 }
 
                 const respAvg = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8');
@@ -2561,26 +2917,42 @@
         }
 
         // ================================================================
-        // 9. MASTER REFRESH (mantido)
+        // 9. MASTER REFRESH (otimizado: só executa se WebSocket offline)
         // ================================================================
+        let wsConnected = false;
+        let pollingInterval = null;
+
         async function refreshAll() {
-            updateTimestamp();
-            await Promise.allSettled([
-                fetchPrices(),
-                fetchFearGreed(),
-                fetchDeFiData(),
-                fetchBinanceDerivatives(),
-                fetchBRK(),
-                fetchHashrate(),
-                fetchGasPrice()
-            ]);
-            const scoreData = computeScore(globalData);
-            updateScoreDisplay(scoreData);
-            lastScore = scoreData.score;
+            if (wsConnected) {
+                // Se WebSocket estiver ativo, apenas atualizar dados estáticos
+                await Promise.allSettled([
+                    fetchFearGreed(),
+                    fetchDeFiData(),
+                    fetchBRK(),
+                    fetchHashrate(),
+                    fetchGasPrice()
+                ]);
+                // Não atualizar preços para não conflitar com WS
+            } else {
+                // Fallback completo
+                updateTimestamp();
+                await Promise.allSettled([
+                    fetchPrices(),
+                    fetchFearGreed(),
+                    fetchDeFiData(),
+                    fetchBinanceDerivatives(),
+                    fetchBRK(),
+                    fetchHashrate(),
+                    fetchGasPrice()
+                ]);
+                const scoreData = computeScore(globalData);
+                updateScoreDisplay(scoreData);
+                lastScore = scoreData.score;
+            }
         }
 
         // ================================================================
-        // 10. BACKTEST 30 DIAS (MELHORADO – MELHORIA #1, #2, #5)
+        // 10. BACKTEST 30 DIAS (mantido)
         // ================================================================
         let backtestRunning = false;
 
@@ -2600,7 +2972,6 @@
             `;
 
             try {
-                // Buscar dados de 1 hora – últimas 720 horas (30 dias)
                 const now = Date.now();
                 const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
                 const response = await fetch(
@@ -2651,8 +3022,6 @@
                     volume: parseFloat(k[5])
                 })).filter(d => d.close > 0);
 
-                console.log(`Backtest: ${dataset.length} candles obtidos.`);
-
                 if (dataset.length < 50) {
                     container.innerHTML =
                     `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles).</p></div>`;
@@ -2662,29 +3031,23 @@
                     return;
                 }
 
-                // Parâmetros do backtest
                 const initialCapital = 10000;
                 let balance = initialCapital;
                 let peak = balance;
                 let maxDrawdown = 0;
                 let trades = [];
                 let position = null;
-
-                // Comissão e slippage
-                const FEE = 0.001; // 0,1%
-                const SLIPPAGE = 0.0005; // 0,05%
+                const FEE = 0.001;
+                const SLIPPAGE = 0.0005;
 
                 // Calcular ATR (14 períodos)
-                function calculateATR(data, period = 14) {
+                function calcATR(data, period = 14) {
                     const tr = [];
                     for (let i = 1; i < data.length; i++) {
                         const high = data[i].high;
                         const low = data[i].low;
                         const prevClose = data[i - 1].close;
-                        const tr1 = high - low;
-                        const tr2 = Math.abs(high - prevClose);
-                        const tr3 = Math.abs(low - prevClose);
-                        tr.push(Math.max(tr1, tr2, tr3));
+                        tr.push(Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose)));
                     }
                     if (tr.length < period) return 0;
                     let atr = tr.slice(0, period).reduce((a, b) => a + b) / period;
@@ -2697,16 +3060,14 @@
                 const atrValues = [];
                 for (let i = 0; i < dataset.length; i++) {
                     const slice = dataset.slice(Math.max(0, i - 14), i + 1);
-                    atrValues.push(calculateATR(slice, 14));
+                    atrValues.push(calcATR(slice, 14));
                 }
 
-                // Loop principal
                 for (let i = 50; i < dataset.length; i++) {
                     const candle = dataset[i];
                     const price = candle.close;
                     const atr = atrValues[i] || price * 0.01;
 
-                    // Gerar sinal simplificado (exemplo: EMA cruzamento)
                     const closes = dataset.slice(0, i + 1).map(d => d.close);
                     const ema20 = calculateEMA(closes, 20) || price;
                     const ema50 = calculateEMA(closes, 50) || price;
@@ -2716,29 +3077,25 @@
                     if (ema20 > ema50 && rsi > 50) signal = 'LONG';
                     else if (ema20 < ema50 && rsi < 50) signal = 'SHORT';
 
-                    // Filtros avançados (simulação)
                     const volumeRatio = candle.volume / (dataset.slice(Math.max(0, i - 20), i).reduce((s, d) => s + d
                         .volume, 0) / Math.min(i, 20));
-                    const dataFiltro = {
-                        volumeRatio: volumeRatio,
-                        fundingRate: 0, // não temos funding em histórico
-                        mvrv: 1.2,
-                        sopr: 0.95,
-                        price: price,
-                        rsi: rsi,
-                        macd: 0,
-                        macdSignal: 0,
-                        support: price * 0.95,
-                        resistance: price * 1.05,
-                        mtfTrend: signal // simulado
-                    };
-                    const { approved } = confirmSignal(signal, dataFiltro);
+                    // Simular confirmação simplificada para backtest
+                    let approved = true;
+                    if (signal !== 'NEUTRAL') {
+                        const rejection = detectPriceRejection(dataset.slice(0, i + 1), signal);
+                        if (!rejection) approved = false;
+                        // Divergência
+                        const div = detectDivergence(dataset.slice(0, i + 1), closes.map(c => calculateRSI(closes.slice(0,
+                            i + 1))));
+                        if (div && ((div.bullish && signal === 'SHORT') || (div.bearish && signal === 'LONG')))
+                            approved = false;
+                    }
                     if (!approved) signal = 'NEUTRAL';
 
                     if (position === null && signal !== 'NEUTRAL') {
-                        // Entrada
                         const entry = price * (1 + (signal === 'LONG' ? SLIPPAGE : -SLIPPAGE));
-                        const stopPrice = signal === 'LONG' ? entry - STOP_MULTIPLIER * atr : entry + STOP_MULTIPLIER * atr;
+                        const stopPrice = signal === 'LONG' ? entry - STOP_MULTIPLIER * atr : entry + STOP_MULTIPLIER *
+                        atr;
                         const risk = Math.abs(entry - stopPrice);
                         const size = (balance * RISK_PER_TRADE) / risk;
                         const tp1 = signal === 'LONG' ? entry + TAKE_PROFIT_1 * risk : entry - TAKE_PROFIT_1 * risk;
@@ -2756,24 +3113,22 @@
                             lowestPrice: entry,
                             tp1Hit: false,
                             tp2Hit: false,
-                            partialClosed: false
+                            initialATR: atr
                         };
                     } else if (position !== null) {
-                        // Gerenciamento da posição
                         const high = candle.high;
                         const low = candle.low;
                         let exitPrice = null;
                         let exitReason = '';
                         let exitSize = position.size;
 
-                        // Atualizar pico/vale para trailing
                         if (position.type === 'LONG') {
                             if (high > position.highestPrice) position.highestPrice = high;
                         } else {
                             if (low < position.lowestPrice) position.lowestPrice = low;
                         }
 
-                        // Trailing stop (MELHORIA #5)
+                        // Trailing stop (Melhoria #5)
                         let currentStop = position.stop;
                         if (position.type === 'LONG' && position.highestPrice > position.entry) {
                             const newStop = position.highestPrice - STOP_MULTIPLIER * atr;
@@ -2784,11 +3139,11 @@
                         }
                         position.stop = currentStop;
 
-                        // Verificar TP1 (parcial)
+                        // TP1 parcial
                         if (!position.tp1Hit) {
                             if (position.type === 'LONG' && high >= position.tp1) {
                                 exitSize = position.size * 0.5;
-                                exitPrice = position.tp1 * (1 - SLIPPAGE * (position.type === 'LONG' ? 1 : -1));
+                                exitPrice = position.tp1 * (1 - SLIPPAGE);
                                 exitReason = 'TP1 (parcial)';
                                 position.tp1Hit = true;
                                 position.size -= exitSize;
@@ -2801,7 +3156,7 @@
                             }
                         }
 
-                        // Verificar TP2 (parcial ou total)
+                        // TP2
                         if (!position.tp2Hit && position.size > 0) {
                             if (position.type === 'LONG' && high >= position.tp2) {
                                 exitSize = position.size;
@@ -2816,7 +3171,7 @@
                             }
                         }
 
-                        // Verificar stop loss
+                        // Stop
                         if (position.size > 0 && exitPrice === null) {
                             if (position.type === 'LONG' && low <= currentStop) {
                                 exitPrice = currentStop * (1 - SLIPPAGE);
@@ -2827,7 +3182,6 @@
                             }
                         }
 
-                        // Se saiu parcial ou total
                         if (exitPrice !== null && exitSize > 0) {
                             const pnl = (position.type === 'LONG') ? (exitPrice - position.entry) : (position.entry -
                                 exitPrice);
@@ -2845,27 +3199,24 @@
                                 pnlUsd: pnlUsd,
                                 exitReason: exitReason,
                                 size: exitSize,
-                                daysOpen: (i - position.entryIndex) / 24 // em dias
+                                daysOpen: (i - position.entryIndex) / 24
                             });
 
                             if (balance > peak) peak = balance;
                             const drawdown = (peak - balance) / peak;
                             if (drawdown > maxDrawdown) maxDrawdown = drawdown;
 
-                            // Se posição zerada
-                            if (position.size <= 0 || position.tp2Hit) {
-                                position = null;
-                            }
+                            if (position.size <= 0 || position.tp2Hit) position = null;
                         }
 
-                        // Sinal de reversão (fechar posição restante)
+                        // Reversão de sinal
                         if (position !== null && position.size > 0) {
                             const currentSignal = signal;
                             if ((position.type === 'LONG' && (currentSignal === 'SHORT' || currentSignal === 'NEUTRAL')) ||
                                 (position.type === 'SHORT' && (currentSignal === 'LONG' || currentSignal === 'NEUTRAL'))
                                 ) {
                                 exitPrice = price * (1 + (position.type === 'LONG' ? -SLIPPAGE : SLIPPAGE));
-                                exitReason = 'Reversão de sinal';
+                                exitReason = 'Reversão';
                                 const pnl = (position.type === 'LONG') ? (exitPrice - position.entry) : (position.entry -
                                     exitPrice);
                                 const pnlPct = (pnl / position.entry) * 100;
@@ -2890,10 +3241,10 @@
                             }
                         }
 
-                        // Fechar posição no final do período
+                        // Fim
                         if (position !== null && i === dataset.length - 1) {
                             exitPrice = price * (1 + (position.type === 'LONG' ? -SLIPPAGE : SLIPPAGE));
-                            exitReason = 'Fim período';
+                            exitReason = 'Fim';
                             const pnl = (position.type === 'LONG') ? (exitPrice - position.entry) : (position.entry -
                                 exitPrice);
                             const pnlPct = (pnl / position.entry) * 100;
@@ -2919,7 +3270,6 @@
                     }
                 }
 
-                // Estatísticas
                 const totalTrades = trades.length;
                 const wins = trades.filter(t => t.pnlUsd > 0).length;
                 const losses = trades.filter(t => t.pnlUsd < 0).length;
@@ -2929,7 +3279,6 @@
                     Math.abs(trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.pnlUsd, 0))) : (wins > 0 ? Infinity :
                     0);
 
-                // Renderizar resultados
                 let html = `
                     <div class="backtest-stats-grid">
                         <div class="backtest-stat-card">
@@ -3038,10 +3387,9 @@
         }
 
         // ================================================================
-        // 11. WEBSOCKET (MELHORIA #4)
+        // 11. WEBSOCKET (MELHORIA #4) – agora com controle de polling
         // ================================================================
         let ws = null;
-        let wsConnected = false;
 
         function initWebSocket() {
             try {
@@ -3051,29 +3399,35 @@
                     wsConnected = true;
                     document.getElementById('status-badge').textContent = '✅ WS LIVE';
                     document.getElementById('status-badge').className = 'status-badge live';
+                    // Desativar polling intenso
+                    if (pollingInterval) {
+                        clearInterval(pollingInterval);
+                        pollingInterval = setInterval(refreshAll, 300000); // 5 min para dados estáticos
+                    }
                 };
                 ws.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
                         const candle = data.k;
-                        if (candle.x) { // candle fechada
+                        if (candle.x) {
                             const close = parseFloat(candle.c);
                             const high = parseFloat(candle.h);
                             const low = parseFloat(candle.l);
                             const open = parseFloat(candle.o);
                             const volume = parseFloat(candle.v);
-                            // Atualizar preço
+
                             document.getElementById('btc-price').textContent = formatCurrency(close);
-                            // Atualizar score com novos dados
                             globalData.price = close;
-                            globalData.ema50 = globalData.ema50 * 0.98 + close * 0.02; // aproximação
+                            globalData.ema50 = globalData.ema50 * 0.98 + close * 0.02;
                             globalData.ema200 = globalData.ema200 * 0.99 + close * 0.01;
                             globalData.rsi = globalData.rsi * 0.9 + (close > globalData.price ? 0.1 : -0.1) * 10;
-                            // Recalcular score
+
+                            // Atualizar score
                             const scoreData = computeScore(globalData);
                             updateScoreDisplay(scoreData);
-                            // Atualizar gráficos de candlestick (opcional)
-                            updateCandles();
+
+                            // Atualizar gráficos apenas se necessário (já temos polling de 30s)
+                            // updateCandles() será chamado separadamente
                         }
                     } catch (e) {
                         console.warn('WebSocket parse error:', e);
@@ -3104,12 +3458,18 @@
         // 12. INICIALIZAÇÃO
         // ================================================================
         initWhaleFlowChart();
-        refreshAll();
-        setInterval(refreshAll, 60000); // fallback caso WS falhe
+        updateTimestamp();
 
+        // Iniciar polling (será desativado pelo WebSocket)
+        pollingInterval = setInterval(refreshAll, 60000);
+        setTimeout(() => {
+            refreshAll();
+        }, 1000);
+
+        // Atualização de candles a cada 30 segundos
         setTimeout(() => {
             updateCandles();
-            setInterval(updateCandles, 10000);
+            setInterval(updateCandles, 30000);
         }, 2000);
 
         // Iniciar WebSocket
@@ -3131,7 +3491,6 @@
         // 13. EVENTOS
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Botão testar Telegram
             const testBtn = document.getElementById('test-telegram-btn');
             const label = document.getElementById('test-btn-label');
             if (testBtn) {
@@ -3151,7 +3510,6 @@
                 });
             }
 
-            // Botão Backtest
             const backtestBtn = document.getElementById('runBacktestBtn');
             if (backtestBtn) {
                 backtestBtn.addEventListener('click', runBacktest);
@@ -3164,8 +3522,6 @@
                 try { alertLog = JSON.parse(savedLog); } catch (e) { /* ignore */ }
             }
         });
-
-        updateTimestamp();
 
         // Expor funções para debug
         window.sendTelegramAlert = sendTelegramAlert;
