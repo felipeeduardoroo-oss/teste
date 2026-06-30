@@ -220,32 +220,6 @@
             color: var(--text-light);
         }
 
-        /* NOVO: Indicadores de Regime, MTF, Funding/Divergência */
-        .indicator-row {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-top: 12px;
-            font-size: 0.8em;
-        }
-
-        .indicator-badge {
-            padding: 4px 14px;
-            border-radius: 12px;
-            font-weight: 600;
-            border: 1px solid var(--border);
-            background: var(--primary);
-        }
-
-        .indicator-badge.pass { background: rgba(0, 217, 142, 0.15); border-color: var(--accent-green); color: var(--accent-green); }
-        .indicator-badge.fail { background: rgba(233, 69, 96, 0.15); border-color: var(--accent-red); color: var(--accent-red); }
-        .indicator-badge.warn { background: rgba(255, 214, 10, 0.15); border-color: var(--accent-yellow); color: var(--accent-yellow); }
-        .indicator-badge.trending { background: rgba(0, 217, 142, 0.15); border-color: var(--accent-green); color: var(--accent-green); }
-        .indicator-badge.ranging { background: rgba(255, 214, 10, 0.15); border-color: var(--accent-yellow); color: var(--accent-yellow); }
-        .indicator-badge.compression { background: rgba(0, 180, 216, 0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
-        .indicator-badge.accumulation { background: rgba(0, 180, 216, 0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
-
         /* CANDLES */
         .candles-grid {
             display: grid;
@@ -1029,11 +1003,11 @@
         </header>
 
         <!-- ============================================================
-        SCORE CARD (MELHORADO)
+        SCORE CARD
         ============================================================ -->
         <section>
             <div class="score-card">
-                <div class="score-label">Score Institucional (Calibrado)</div>
+                <div class="score-label">Score Institucional</div>
                 <div class="score-value" id="score-value" style="color: var(--accent-yellow);">50</div>
                 <div class="score-bar-container">
                     <div class="score-bar-fill" id="score-bar" style="width: 50%; background: var(--accent-yellow);"></div>
@@ -1051,15 +1025,6 @@
                     <div class="score-detail-item"><span class="label">Volume</span> <span class="value" id="score-volume">--</span></div>
                     <div class="score-detail-item"><span class="label">OI Delta</span> <span class="value" id="score-oi">--</span></div>
                 </div>
-
-                <!-- NOVOS INDICADORES -->
-                <div class="indicator-row">
-                    <span class="indicator-badge" id="regime-badge">📊 Regime: --</span>
-                    <span class="indicator-badge" id="mtf-badge">⏱️ MTF: --</span>
-                    <span class="indicator-badge" id="funding-badge">💰 Funding: --</span>
-                    <span class="indicator-badge" id="liquidity-badge">💧 Liquidez: --</span>
-                </div>
-                <div style="margin-top:6px; font-size:0.75em; color:var(--text-muted);" id="score-rationale">Aguardando dados...</div>
             </div>
         </section>
 
@@ -1436,7 +1401,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score institucional calibrado com filtros inteligentes: Regime Detection, Multi‑Timeframe, Order Flow e Funding/OI Divergência. Backtest com dados dos últimos 30 dias (Binance).</p>
+                    <p>Score institucional calculado com base em tendência, momentum, estrutura, on-chain, volume e OI. Alertas Telegram para condições extremas. Backtest com dados dos últimos 30 dias (Binance).</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
@@ -1453,7 +1418,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT COMPLETO (COM MELHORIAS DO SCORE)
+    JAVASCRIPT COMPLETO
     ============================================================ -->
     <script>
         // ================================================================
@@ -1886,120 +1851,6 @@
         }
 
         // ================================================================
-        // 5.1 NOVAS FUNÇÕES DE FILTRO (MELHORIAS DO SCORE)
-        // ================================================================
-
-        // Regime Detection real
-        function detectRegimeReal(adx, atrPct, emaSlope, rangeCompression, volumeRel) {
-            if (adx > 25 && atrPct > 60 && emaSlope > 0.05) return { regime: 'TRENDING', multiplier: 1.2, label: 'Tendência' };
-            if (atrPct < 30 || rangeCompression < 0.2) return { regime: 'COMPRESSION', multiplier: 0.4, label: 'Compressão' };
-            if (adx < 20 && volumeRel < 0.8) return { regime: 'RANGING', multiplier: 0.6, label: 'Lateral' };
-            return { regime: 'ACCUMULATION', multiplier: 0.9, label: 'Acumulação' };
-        }
-
-        // Multi-Timeframe com cache
-        let cachedCandlesMTF = { d1: null, h4: null, h1: null, lastUpdate: 0 };
-
-        async function fetchCandlesWithCache(symbol, tf, limit) {
-            const key = tf === '1d' ? 'd1' : tf === '4h' ? 'h4' : 'h1';
-            const now = Date.now();
-            if (cachedCandlesMTF[key] && (now - cachedCandlesMTF.lastUpdate) < 300000) {
-                return cachedCandlesMTF[key];
-            }
-            try {
-                const url =
-                    `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tf}&limit=${limit}`;
-                const resp = await fetch(url);
-                if (!resp.ok) return null;
-                const data = await resp.json();
-                const parsed = data.map(k => ({ open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]),
-                    close: parseFloat(k[4]) }));
-                cachedCandlesMTF[key] = parsed;
-                cachedCandlesMTF.lastUpdate = now;
-                return parsed;
-            } catch (e) { return null; }
-        }
-
-        async function multiTimeframeReal(symbol, price) {
-            try {
-                const [d1, h4, h1] = await Promise.all([
-                    fetchCandlesWithCache(symbol, '1d', 50),
-                    fetchCandlesWithCache(symbol, '4h', 50),
-                    fetchCandlesWithCache(symbol, '1h', 50)
-                ]);
-                if (!d1 || !h4 || !h1) return { pass: false, reason: 'Sem dados', confidence: 0.3 };
-
-                const calcTrend = (candles) => {
-                    if (!candles || candles.length < 20) return 0;
-                    const closes = candles.map(c => c.close);
-                    const ema20 = calculateEMA(closes, 20);
-                    const ema50 = calculateEMA(closes, 50);
-                    return ema20 && ema50 ? (ema20 - ema50) / ema50 : 0;
-                };
-
-                const trend1D = calcTrend(d1);
-                const trend4H = calcTrend(h4);
-                const trend1H = calcTrend(h1);
-
-                const bull1D = trend1D > 0.02;
-                const bull4H = trend4H > 0.01;
-                const bull1H = trend1H > 0.005;
-
-                const pass = bull1D && bull4H && bull1H;
-                return { pass, confidence: pass ? 0.85 : 0.2, trend1D, trend4H, trend1H };
-            } catch (e) {
-                console.warn('MTF error:', e);
-                return { pass: false, reason: 'Erro', confidence: 0.3 };
-            }
-        }
-
-        // Order Flow + Liquidez
-        function orderFlowLiquidity(candles, price) {
-            if (!candles || candles.length < 5) return { pass: false, confidence: 0.3, label: 'Dados insuf.' };
-            const recent = candles.slice(-5);
-            const last = candles[candles.length - 1];
-            const highs = recent.map(c => c.high);
-            const lows = recent.map(c => c.low);
-            const maxHigh = Math.max(...highs);
-            const minLow = Math.min(...lows);
-
-            const sweepHigh = last.high > maxHigh && last.close < maxHigh * 0.99;
-            const sweepLow = last.low < minLow && last.close > minLow * 1.01;
-            const displacement = Math.abs(last.close - last.open) > (last.high - last.low) * 0.6;
-            const reclaim = (last.close > last.open && last.close > maxHigh * 0.98) ||
-                (last.close < last.open && last.close < minLow * 1.02);
-            const body = Math.abs(last.close - last.open);
-            const range = last.high - last.low;
-            const imbalance = range > 0 && body / range > 0.7;
-
-            const pass = (sweepHigh || sweepLow) && displacement && (reclaim || imbalance);
-            const confidence = pass ? 0.85 : 0.2;
-            const label = pass ? '✅ Liquidez confirmada' : '❌ Sem confluência';
-            return { pass, confidence, label, sweepHigh, sweepLow, displacement, reclaim, imbalance };
-        }
-
-        // Funding / OI Divergência
-        function fundingDivergence(fundingRate, oiDelta, priceChange) {
-            let avoidLongs = false,
-                avoidShorts = false,
-                watchReversal = false;
-            const label = 'Neutro';
-            let confidence = 0.5;
-
-            if (priceChange > 0 && oiDelta > 0 && fundingRate > 0.0005) { avoidLongs = true;
-                confidence = 0.2;
-                label = '⚠️ Evitar Long (funding alto)'; }
-            if (priceChange < 0 && oiDelta > 0 && fundingRate < -0.0005) { watchReversal = true;
-                confidence = 0.8;
-                label = '✅ Possível reversão'; }
-            if (priceChange > 0 && oiDelta < 0 && fundingRate > 0.0003) { avoidLongs = true;
-                confidence = 0.3;
-                label = '⚠️ Evitar Long (OI cai)'; }
-
-            return { avoidLongs, avoidShorts, watchReversal, confidence, label };
-        }
-
-        // ================================================================
         // 6. CANDLESTICK
         // ================================================================
         let candleCharts = {};
@@ -2118,7 +1969,7 @@
         }
 
         // ================================================================
-        // 7. SCORE INSTITUCIONAL (MELHORADO)
+        // 7. SCORE INSTITUCIONAL
         // ================================================================
         let globalData = {
             price: 60000,
@@ -2134,14 +1985,9 @@
             mvrv: 1.2,
             sopr: 0.95,
             volumeRel: 1.0,
-            oiDelta: 0.0,
-            adx: 25,
-            atrPct: 1.0,
-            funding: 0.00043,
-            priceChange: 0
+            oiDelta: 0.0
         };
 
-        // Função de score base (clássica) – mantida
         function computeScore(data) {
             const price = data.price || 60000;
             const ema50 = data.ema50 || 65000;
@@ -2202,9 +2048,6 @@
             return { score: Math.round(finalScore), components };
         }
 
-        // ================================================================
-        // 7.1 UPDATE SCORE DISPLAY (COM FILTROS)
-        // ================================================================
         function updateScoreDisplay(scoreData) {
             const score = scoreData.score;
             const components = scoreData.components;
@@ -2270,42 +2113,6 @@
         }
 
         // ================================================================
-        // 7.2 UPDATE BADGES (NOVO)
-        // ================================================================
-        function updateBadges(regime, mtfResult, ofResult, fundDiv) {
-            const regimeBadge = document.getElementById('regime-badge');
-            if (regimeBadge) {
-                regimeBadge.textContent = `📊 Regime: ${regime.label}`;
-                regimeBadge.className = `indicator-badge ${regime.regime.toLowerCase()}`;
-            }
-
-            const mtfBadge = document.getElementById('mtf-badge');
-            if (mtfBadge) {
-                mtfBadge.textContent = mtfResult.pass ? '⏱️ MTF: OK' : '⏱️ MTF: FAIL';
-                mtfBadge.className = `indicator-badge ${mtfResult.pass ? 'pass' : 'fail'}`;
-            }
-
-            const fundingBadge = document.getElementById('funding-badge');
-            if (fundingBadge) {
-                fundingBadge.textContent = fundDiv.label || '💰 Funding: Neutro';
-                const cls = fundDiv.avoidLongs ? 'fail' : fundDiv.watchReversal ? 'pass' : 'warn';
-                fundingBadge.className = `indicator-badge ${cls}`;
-            }
-
-            const liquidityBadge = document.getElementById('liquidity-badge');
-            if (liquidityBadge) {
-                liquidityBadge.textContent = ofResult.label || '💧 Liquidez: --';
-                liquidityBadge.className = `indicator-badge ${ofResult.pass ? 'pass' : 'fail'}`;
-            }
-
-            const rationaleEl = document.getElementById('score-rationale');
-            if (rationaleEl) {
-                rationaleEl.textContent =
-                    `Regime: ${regime.label} | MTF: ${mtfResult.pass ? '✅' : '❌'} | Liquidez: ${ofResult.pass ? '✅' : '❌'} | Funding: ${fundDiv.label}`;
-            }
-        }
-
-        // ================================================================
         // 8. FUNÇÕES DE ATUALIZAÇÃO (APIs)
         // ================================================================
         async function fetchPrices() {
@@ -2321,7 +2128,6 @@
                 document.getElementById('btc-change').textContent = formatChange(btc.usd_24h_change) + ' (live)';
                 updateSourceTimestamp('btc-source');
                 globalData.price = btc.usd;
-                globalData.priceChange = btc.usd_24h_change / 100 || 0;
                 const eth = data.ethereum;
                 document.getElementById('eth-price').textContent = formatCurrency(eth.usd);
                 document.getElementById('eth-price').className = 'value ' + getChangeClass(eth.usd_24h_change);
@@ -2409,7 +2215,6 @@
                     document.getElementById('funding-rate-interp').textContent = fr > 0.0001 ? '✅ Longs pagam' :
                         fr < -0.0001 ? '🔴 Shorts pagam' : 'ℹ️ Neutro';
                     updateSourceTimestamp('funding-rate-source');
-                    globalData.funding = fr;
                 }
 
                 const respAvg = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=8');
@@ -2523,81 +2328,10 @@
                     }
                 }
 
-                // ATR e ADX
-                const candleResp = await fetch(
-                    'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=50');
-                if (candleResp.ok) {
-                    const candleData = await candleResp.json();
-                    const candles = candleData.map(k => ({
-                        high: parseFloat(k[2]),
-                        low: parseFloat(k[3]),
-                        close: parseFloat(k[4])
-                    }));
-                    if (candles.length > 20) {
-                        let atrSum = 0;
-                        for (let i = 1; i < candles.length && i < 15; i++) {
-                            const tr = Math.max(candles[i].high - candles[i].low,
-                                Math.abs(candles[i].high - candles[i - 1].close),
-                                Math.abs(candles[i].low - candles[i - 1].close));
-                            atrSum += tr;
-                        }
-                        const atr = atrSum / Math.min(14, candles.length - 1);
-                        const atrPct = (atr / globalData.price) * 100;
-                        globalData.atrPct = atrPct;
-                        const closes = candles.map(c => c.close);
-                        const ema50 = calculateEMA(closes, 20);
-                        const ema200 = calculateEMA(closes, 50);
-                        let adx = 25;
-                        if (ema50 && ema200) {
-                            const diff = (ema50 - ema200) / ema200;
-                            adx = 25 + clamp(diff * 1000, -15, 15);
-                        }
-                        globalData.adx = adx;
-                        globalData.ema50 = ema50 || globalData.ema50;
-                        globalData.ema200 = ema200 || globalData.ema200;
-                        const volAvg = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
-                        const volRel = candles[candles.length - 1].close / (volAvg || 1);
-                        globalData.volumeRel = volRel;
-                    }
-                }
-
                 updateLiveTime();
-
-                // ============================================================
-                // APLICAÇÃO DOS FILTROS SOBRE O SCORE CLÁSSICO
-                // ============================================================
                 const scoreData = computeScore(globalData);
-
-                const candles1D = await fetchCandlesWithCache('BTCUSDT', '1d', 50);
-                const regime = detectRegimeReal(
-                    globalData.adx || 25,
-                    globalData.atrPct || 1.0,
-                    0.02,
-                    0.5,
-                    globalData.volumeRel || 1
-                );
-                const mtfResult = await multiTimeframeReal('BTCUSDT', globalData.price);
-                const ofResult = orderFlowLiquidity(candles1D || [], globalData.price);
-                const fundDiv = fundingDivergence(globalData.funding || 0, globalData.oiDelta || 0, globalData
-                    .priceChange || 0);
-
-                let multiplier = 1.0;
-                multiplier *= regime.multiplier;
-                if (!mtfResult.pass) multiplier *= 0.6;
-                if (!ofResult.pass) multiplier *= 0.7;
-                if (scoreData.score > 50 && fundDiv.avoidLongs) multiplier *= 0.5;
-                if (scoreData.score < 50 && fundDiv.avoidShorts) multiplier *= 0.5;
-
-                const finalScore = clamp(scoreData.score * multiplier, 0, 100);
-
-                // Atualizar UI do score
-                updateScoreDisplay({
-                    score: Math.round(finalScore),
-                    components: scoreData.components
-                });
-
-                // Atualizar badges dos filtros
-                updateBadges(regime, mtfResult, ofResult, fundDiv);
+                updateScoreDisplay(scoreData);
+                lastScore = scoreData.score;
 
             } catch (e) {
                 console.warn('Binance derivatives unavailable, keeping static');
@@ -2704,7 +2438,9 @@
                 fetchHashrate(),
                 fetchGasPrice()
             ]);
-            // O score já é atualizado dentro de fetchBinanceDerivatives
+            const scoreData = computeScore(globalData);
+            updateScoreDisplay(scoreData);
+            lastScore = scoreData.score;
         }
 
         // ================================================================
@@ -2728,6 +2464,7 @@
             `;
 
             try {
+                // Buscar dados diários
                 const now = Date.now();
                 const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
                 const response = await fetch(
