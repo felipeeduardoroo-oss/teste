@@ -1004,99 +1004,9 @@
                 max-height: 300px;
             }
         }
-
-        /* ============================================================
-           PAINEL DE DEBUG (NOVO)
-           ============================================================ */
-        #debug-panel {
-            position: fixed;
-            bottom: 80px;
-            left: 10px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.9);
-            color: #0f0;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            padding: 12px;
-            border-radius: 8px;
-            max-width: 320px;
-            max-height: 60vh;
-            overflow-y: auto;
-            border: 1px solid #333;
-            line-height: 1.5;
-            pointer-events: none;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-        }
-        #debug-panel .debug-title {
-            color: #fff;
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 4px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 4px;
-        }
-        #debug-panel .debug-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        #debug-panel .debug-label {
-            color: #aaa;
-        }
-        #debug-panel .debug-value {
-            color: #0f0;
-            font-weight: bold;
-        }
-        #debug-panel .debug-value.error {
-            color: #f00;
-        }
-        #debug-panel .debug-value.warn {
-            color: #ff0;
-        }
-        #debug-toggle {
-            position: fixed;
-            bottom: 80px;
-            left: 10px;
-            z-index: 1001;
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            transition: all 0.3s;
-        }
-        #debug-toggle:hover {
-            transform: scale(1.05);
-        }
-        #debug-toggle.hidden {
-            display: none;
-        }
     </style>
 </head>
 <body>
-    <!-- ============================================================
-    PAINEL DE DEBUG (FLUTUANTE)
-    ============================================================ -->
-    <button id="debug-toggle">🐞 Debug</button>
-    <div id="debug-panel" style="display:none;">
-        <div class="debug-title">🔍 DEBUG SCORE</div>
-        <div class="debug-row"><span class="debug-label">Score Bruto:</span><span class="debug-value" id="db-raw">--</span></div>
-        <div class="debug-row"><span class="debug-label">Regime Mult:</span><span class="debug-value" id="db-regime">--</span></div>
-        <div class="debug-row"><span class="debug-label">MTF Mult:</span><span class="debug-value" id="db-mtf">--</span></div>
-        <div class="debug-row"><span class="debug-label">Liquidez Mult:</span><span class="debug-value" id="db-liq">--</span></div>
-        <div class="debug-row"><span class="debug-label">Funding Mult:</span><span class="debug-value" id="db-fund">--</span></div>
-        <div class="debug-row"><span class="debug-label">Score Final:</span><span class="debug-value" id="db-final">--</span></div>
-        <div class="debug-row"><span class="debug-label">Preço:</span><span class="debug-value" id="db-price">--</span></div>
-        <div class="debug-row"><span class="debug-label">RSI:</span><span class="debug-value" id="db-rsi">--</span></div>
-        <div class="debug-row"><span class="debug-label">EMA50/EMA200:</span><span class="debug-value" id="db-emas">--</span></div>
-        <div class="debug-row"><span class="debug-label">Status APIs:</span><span class="debug-value" id="db-apis">--</span></div>
-        <div class="debug-row"><span class="debug-label">Último erro:</span><span class="debug-value error" id="db-error">--</span></div>
-    </div>
-
     <div class="container">
         <!-- ============================================================
         HEADER
@@ -1154,7 +1064,7 @@
         </section>
 
         <!-- ============================================================
-        RESUMO EXECUTIVO (MANTIDO)
+        RESUMO EXECUTIVO
         ============================================================ -->
         <section>
             <h2 class="section-title">📌 RESUMO EXECUTIVO</h2>
@@ -1196,7 +1106,7 @@
         </section>
 
         <!-- ============================================================
-        GRÁFICOS DE CANDLESTICK (MANTIDO)
+        GRÁFICOS DE CANDLESTICK
         ============================================================ -->
         <section>
             <h2 class="section-title">🕯️ GRÁFICOS DE CANDLESTICK (LIVE)</h2>
@@ -1250,7 +1160,7 @@
         </section>
 
         <!-- ============================================================
-        ON-CHAIN ANALYSIS (MANTIDO)
+        ON-CHAIN ANALYSIS
         ============================================================ -->
         <section>
             <h2 class="section-title">⛓️ ANÁLISE ON-CHAIN &amp; DERIVADOS</h2>
@@ -1385,7 +1295,7 @@
         </section>
 
         <!-- ============================================================
-        PAINEL DE CONFIRMAÇÃO (MANTIDO)
+        PAINEL DE CONFIRMAÇÃO
         ============================================================ -->
         <section>
             <h2 class="section-title">✅ PAINEL DE CONFIRMAÇÃO DE FUNDO</h2>
@@ -1402,7 +1312,7 @@
         </section>
 
         <!-- ============================================================
-        MACRO INDICADORES (MANTIDO)
+        MACRO INDICADORES
         ============================================================ -->
         <section>
             <h2 class="section-title">🌍 INDICADORES MACROECONÔMICOS (referência)</h2>
@@ -1423,7 +1333,7 @@
         </section>
 
         <!-- ============================================================
-        WHALE ACTIVITY (MANTIDO)
+        WHALE ACTIVITY
         ============================================================ -->
         <section>
             <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS (referência)</h2>
@@ -1452,7 +1362,7 @@
         </section>
 
         <!-- ============================================================
-        STABLECOINS & DEFI (MANTIDO)
+        STABLECOINS & DEFI
         ============================================================ -->
         <section>
             <h2 class="section-title">💰 STABLECOINS &amp; DEFI (referência)</h2>
@@ -1469,7 +1379,7 @@
         </section>
 
         <!-- ============================================================
-        SCORES (ESTÁTICO - MANTIDO)
+        SCORES (ESTÁTICO)
         ============================================================ -->
         <section>
             <h2 class="section-title">📈 SCORES DE ANÁLISE</h2>
@@ -1489,7 +1399,7 @@
         </section>
 
         <!-- ============================================================
-        CENÁRIOS & ALLOCATION (MANTIDO)
+        CENÁRIOS & ALLOCATION
         ============================================================ -->
         <section>
             <h2 class="section-title">🎯 CENÁRIOS &amp; MATRIZ DE APORTE</h2>
@@ -1498,7 +1408,7 @@
         </section>
 
         <!-- ============================================================
-        BACKTEST 30 DIAS (CORRIGIDO)
+        BACKTEST 30 DIAS
         ============================================================ -->
         <section>
             <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS</h2>
@@ -1520,14 +1430,14 @@
         </section>
 
         <!-- ============================================================
-        FOOTER (MANTIDO)
+        FOOTER
         ============================================================ -->
         <footer>
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia</h4>
-                    <p>Score calibrado com filtros inteligentes: Regime Detection, MTF obrigatório, Order Flow, Funding/OI Divergência e Gestão Dinâmica de Saída. Backtest com dados reais ou simulados (fallback).</p>
-                    <p><strong>Última atualização:</strong> <span id="live-update-time">--</span></p>
+                    <p>Score institucional calibrado com filtros inteligentes: Regime Detection, Multi‑Timeframe, Order Flow e Funding/OI Divergência. Backtest com dados dos últimos 30 dias (Binance).</p>
+                    <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
                 <div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div>
@@ -1536,33 +1446,33 @@
     </div>
 
     <!-- ============================================================
-    BOTÃO FLUTUANTE — TESTAR TELEGRAM (MANTIDO)
+    BOTÃO FLUTUANTE — TESTAR TELEGRAM
     ============================================================ -->
     <button class="telegram-test-btn" id="test-telegram-btn">
         <span id="test-btn-label">📨 Testar Alerta</span>
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT COMPLETO (COM BACKTEST CORRIGIDO)
+    JAVASCRIPT COMPLETO (COM MELHORIAS DO SCORE)
     ============================================================ -->
     <script>
         // ================================================================
-        // 0. CONFIGURAÇÃO DO TELEGRAM (MANTIDO)
+        // 0. CONFIGURAÇÃO DO TELEGRAM (ATUALIZADO)
         // ================================================================
         const TELEGRAM_TOKEN = '8670184440:AAFBfhFFTMnUWsgIFyRh0huBYbL-Q_vhT5k';
         const TELEGRAM_CHAT_ID = '1137196768';
 
         // ================================================================
-        // 0.1 VARIÁVEIS DE CONTROLE DE ALERTAS (MANTIDAS)
+        // 0.1 VARIÁVEIS DE CONTROLE DE ALERTAS
         // ================================================================
         let lastAlertScore = 50;
         let lastAlertTime = 0;
-        const ALERT_COOLDOWN = 1800000;
+        const ALERT_COOLDOWN = 1800000; // 30 minutos
         let alertLog = [];
         let telegramStatus = 'online';
 
         // ================================================================
-        // 0.2 FUNÇÕES DE ENVIO (MANTIDAS)
+        // 0.2 FUNÇÕES DE ENVIO
         // ================================================================
         async function sendTelegramAlert(message) {
             try {
@@ -1596,6 +1506,9 @@
             }
         }
 
+        // ================================================================
+        // 0.3 ALERTA ESTRUTURADO
+        // ================================================================
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale, components) {
             const emojis = { long: '🟢', short: '🔴' };
             const direction = signalType.toUpperCase();
@@ -1609,36 +1522,70 @@
             });
             msg += `Score: ${Math.round(score)}/100\n`;
             if (components) {
-                msg +=
-                    `Componentes:\n  Tendência: ${components.trend}\n  Momentum: ${components.momentum}\n  Estrutura: ${components.structure}\n  On-Chain: ${components.onchain}\n  Volume: ${components.volume}\n  OI Delta: ${components.oi}\n`;
+                msg += `Componentes:\n`;
+                msg += `  Tendência: ${components.trend}\n`;
+                msg += `  Momentum: ${components.momentum}\n`;
+                msg += `  Estrutura: ${components.structure}\n`;
+                msg += `  On-Chain: ${components.onchain}\n`;
+                msg += `  Volume: ${components.volume}\n`;
+                msg += `  OI Delta: ${components.oi}\n`;
             }
-            msg += `Fundamentos: ${rationale}\nRisco: ${score > 75 ? 'Médio' : 'Alto'}\n⏰ ${getCurrentTimestamp()}`;
+            msg += `Fundamentos: ${rationale}\n`;
+            msg += `Risco: ${score > 75 ? 'Médio' : 'Alto'}\n`;
+            msg += `⏰ ${getCurrentTimestamp()}`;
+
             const success = await sendTelegramAlert(msg);
             if (success) {
-                alertLog.push({ timestamp: Date.now(), type: signalType, score: score, price: price, rationale: rationale });
+                alertLog.push({
+                    timestamp: Date.now(),
+                    type: signalType,
+                    score: score,
+                    price: price,
+                    rationale: rationale
+                });
                 localStorage.setItem('alertLog', JSON.stringify(alertLog.slice(-50)));
             }
             return success;
         }
 
+        // ================================================================
+        // 0.4 FUNÇÃO DE TESTE
+        // ================================================================
         async function sendTestAlert() {
             const score = document.getElementById('score-value')?.textContent || '50';
             const price = document.getElementById('btc-price')?.textContent || '$60.000';
             const timestamp = getCurrentTimestamp();
-            const testMsg =
-                `🔔 <b>TESTE DE CONEXÃO TELEGRAM</b>\n✅ Status: CONECTADO\n📊 Score atual: ${score}\n💰 Preço BTC: ${price}\n⏰ ${timestamp}`;
+            const testMsg = `
+        🔔 <b>TESTE DE CONEXÃO TELEGRAM</b>
+        ✅ Status: CONECTADO
+        📊 Score atual: ${score}
+        💰 Preço BTC: ${price}
+        ⏰ ${timestamp}
+        `;
             return await sendTelegramAlert(testMsg);
         }
 
+        // ================================================================
+        // 0.5 STATUS DO TELEGRAM
+        // ================================================================
         function updateTelegramStatus() {
             const dot = document.getElementById('telegram-status-dot');
             const badge = document.getElementById('telegram-badge');
             const statusText = document.getElementById('telegram-status-text');
-            if (dot) dot.className = 'telegram-status ' + (telegramStatus === 'online' ? 'online' : 'offline');
-            if (badge) badge.className = 'telegram-badge ' + (telegramStatus === 'online' ? '' : 'error');
-            if (statusText) statusText.textContent = telegramStatus === 'online' ? '🟢 Conectado' : '🔴 Desconectado';
+            if (dot) {
+                dot.className = 'telegram-status ' + (telegramStatus === 'online' ? 'online' : 'offline');
+            }
+            if (badge) {
+                badge.className = 'telegram-badge ' + (telegramStatus === 'online' ? '' : 'error');
+            }
+            if (statusText) {
+                statusText.textContent = telegramStatus === 'online' ? '🟢 Conectado' : '🔴 Desconectado';
+            }
         }
 
+        // ================================================================
+        // 0.6 ALERTAS ADICIONAIS
+        // ================================================================
         let previousScore = 50;
 
         function checkAdditionalAlerts(score, components) {
@@ -1646,53 +1593,59 @@
             if (now - lastAlertTime < ALERT_COOLDOWN) return;
             const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
             const fng = parseInt(document.getElementById('header-fng')?.textContent.match(/\d+/)?.[0]) || 50;
+
             if (previousScore < 50 && score >= 50) {
-                sendTelegramAlert(
-                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore subiu de ${previousScore} para ${score}\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`
-                    );
+                const msg =
+                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore subiu de ${previousScore} para ${score} – cruzando a zona neutra.\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`;
+                sendTelegramAlert(msg);
                 lastAlertTime = now;
             } else if (previousScore > 50 && score <= 50) {
-                sendTelegramAlert(
-                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore caiu de ${previousScore} para ${score}\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`
-                    );
+                const msg =
+                    `🔄 <b>MUDANÇA DE TENDÊNCIA</b>\nScore caiu de ${previousScore} para ${score} – entrando em zona neutra.\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`;
+                sendTelegramAlert(msg);
                 lastAlertTime = now;
             }
+
             if (previousScore - score >= 20) {
-                sendTelegramAlert(
-                    `⚠️ <b>ALERTA DE RISCO ELEVADO</b>\nScore despencou ${previousScore - score} pontos (${previousScore} → ${score})\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`
-                    );
+                const msg =
+                    `⚠️ <b>ALERTA DE RISCO ELEVADO</b>\nScore despencou ${previousScore - score} pontos (${previousScore} → ${score}).\n💰 BTC: $${price.toFixed(2)}\n⏰ ${getCurrentTimestamp()}`;
+                sendTelegramAlert(msg);
                 lastAlertTime = now;
             }
+
             if (score < 30 && fng < 30) {
-                sendTelegramAlert(
-                    `🟢 <b>ACUMULAÇÃO SPOT</b>\nScore baixo (${score}) e Fear & Greed em ${fng}\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Iniciar DCA em lotes.\n⏰ ${getCurrentTimestamp()}`
-                    );
+                const msg =
+                    `🟢 <b>ACUMULAÇÃO SPOT</b>\nScore baixo (${score}) e Fear & Greed em ${fng} – região de oversold.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Iniciar DCA em lotes.\n⏰ ${getCurrentTimestamp()}`;
+                sendTelegramAlert(msg);
                 lastAlertTime = now;
             }
+
             if (previousScore >= 70 && score <= 60 && score < previousScore) {
-                sendTelegramAlert(
-                    `📉 <b>REALIZAÇÃO PARCIAL</b>\nScore caiu de ${previousScore} para ${score}\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Realizar parte do lucro.\n⏰ ${getCurrentTimestamp()}`
-                    );
+                const msg =
+                    `📉 <b>REALIZAÇÃO PARCIAL</b>\nScore caiu de ${previousScore} para ${score} – sinal de realização.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Realizar parte do lucro.\n⏰ ${getCurrentTimestamp()}`;
+                sendTelegramAlert(msg);
                 lastAlertTime = now;
             }
+
             if (score <= 20) {
-                sendTelegramAlert(
-                    `🔴 <b>SAÍDA TOTAL</b>\nScore em ${score}\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Zerar posições ou hedge.\n⏰ ${getCurrentTimestamp()}`
-                    );
+                const msg =
+                    `🔴 <b>SAÍDA TOTAL</b>\nScore em ${score} – região de extrema fraqueza.\n💰 BTC: $${price.toFixed(2)}\n💡 Sugestão: Zerar posições ou hedge.\n⏰ ${getCurrentTimestamp()}`;
+                sendTelegramAlert(msg);
                 lastAlertTime = now;
             }
+
             previousScore = score;
         }
 
         // ================================================================
-        // 1. CHAVES DE API (MANTIDAS)
+        // 1. CHAVES DE API
         // ================================================================
         const FRED_API_KEY = 'cbe3655dd2b0a46d0e5c43324a21ab64';
         const ALPHA_VANTAGE_KEY = 'UN05WB1U49R5QG6A';
         const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
 
         // ================================================================
-        // 2. CHART.JS — GRÁFICOS (MANTIDOS)
+        // 2. CHART.JS — GRÁFICOS
         // ================================================================
         window.charts = [];
 
@@ -1827,7 +1780,7 @@
         }
 
         // ================================================================
-        // 3. HELPERS (MANTIDOS)
+        // 3. HELPERS
         // ================================================================
         function formatCurrency(value) {
             return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1865,7 +1818,7 @@
         }
 
         // ================================================================
-        // 4. TIMESTAMP (MANTIDO)
+        // 4. TIMESTAMP
         // ================================================================
         function updateTimestamp() {
             const ts = getCurrentTimestamp();
@@ -1894,7 +1847,7 @@
         }
 
         // ================================================================
-        // 5. FUNÇÕES DE CÁLCULO (CORE - MANTIDAS E NOVAS)
+        // 5. FUNÇÕES DE CÁLCULO (GLOBAIS)
         // ================================================================
         function calculateEMA(data, period) {
             if (!data || data.length < period) return null;
@@ -1932,8 +1885,11 @@
             return 100 - (100 / (1 + rs));
         }
 
-        // --- NOVAS FUNÇÕES (FILTROS INTELIGENTES) ---
+        // ================================================================
+        // 5.1 NOVAS FUNÇÕES DE FILTRO (MELHORIAS DO SCORE)
+        // ================================================================
 
+        // Regime Detection real
         function detectRegimeReal(adx, atrPct, emaSlope, rangeCompression, volumeRel) {
             if (adx > 25 && atrPct > 60 && emaSlope > 0.05) return { regime: 'TRENDING', multiplier: 1.2, label: 'Tendência' };
             if (atrPct < 30 || rangeCompression < 0.2) return { regime: 'COMPRESSION', multiplier: 0.4, label: 'Compressão' };
@@ -1941,7 +1897,7 @@
             return { regime: 'ACCUMULATION', multiplier: 0.9, label: 'Acumulação' };
         }
 
-        // Cache de candles para MTF
+        // Multi-Timeframe com cache
         let cachedCandlesMTF = { d1: null, h4: null, h1: null, lastUpdate: 0 };
 
         async function fetchCandlesWithCache(symbol, tf, limit) {
@@ -1997,6 +1953,7 @@
             }
         }
 
+        // Order Flow + Liquidez
         function orderFlowLiquidity(candles, price) {
             if (!candles || candles.length < 5) return { pass: false, confidence: 0.3, label: 'Dados insuf.' };
             const recent = candles.slice(-5);
@@ -2021,6 +1978,7 @@
             return { pass, confidence, label, sweepHigh, sweepLow, displacement, reclaim, imbalance };
         }
 
+        // Funding / OI Divergência
         function fundingDivergence(fundingRate, oiDelta, priceChange) {
             let avoidLongs = false,
                 avoidShorts = false,
@@ -2042,7 +2000,7 @@
         }
 
         // ================================================================
-        // 6. CANDLESTICK (MANTIDO)
+        // 6. CANDLESTICK
         // ================================================================
         let candleCharts = {};
 
@@ -2160,7 +2118,7 @@
         }
 
         // ================================================================
-        // 7. SCORE INSTITUCIONAL (CLÁSSICO - ESTÁVEL)
+        // 7. SCORE INSTITUCIONAL (MELHORADO)
         // ================================================================
         let globalData = {
             price: 60000,
@@ -2183,6 +2141,7 @@
             priceChange: 0
         };
 
+        // Função de score base (clássica) – mantida
         function computeScore(data) {
             const price = data.price || 60000;
             const ema50 = data.ema50 || 65000;
@@ -2244,7 +2203,7 @@
         }
 
         // ================================================================
-        // 8. DISPLAY FUNCTIONS (MELHORADAS)
+        // 7.1 UPDATE SCORE DISPLAY (COM FILTROS)
         // ================================================================
         function updateScoreDisplay(scoreData) {
             const score = scoreData.score;
@@ -2255,10 +2214,18 @@
 
             if (scoreValue) {
                 scoreValue.textContent = score;
-                const color = score >= 75 ? 'var(--accent-green)' :
-                    score <= 25 ? 'var(--accent-red)' : 'var(--accent-yellow)';
-                scoreValue.style.color = color;
-                scoreBar.style.background = color;
+                if (score >= 75) {
+                    scoreValue.style.color = 'var(--accent-green)';
+                    scoreBar.style.background = 'var(--accent-green)';
+                } else if (score <= 25) {
+                    scoreValue.style.color = 'var(--accent-red)';
+                    scoreBar.style.background = 'var(--accent-red)';
+                } else {
+                    scoreValue.style.color = 'var(--accent-yellow)';
+                    scoreBar.style.background = 'var(--accent-yellow)';
+                }
+            }
+            if (scoreBar) {
                 scoreBar.style.width = score + '%';
             }
 
@@ -2269,7 +2236,6 @@
             document.getElementById('score-volume').textContent = components.volume;
             document.getElementById('score-oi').textContent = components.oi;
 
-            // Alertas usando o score calibrado
             const now = Date.now();
             if (now - lastAlertTime > ALERT_COOLDOWN) {
                 const price = parseFloat(document.getElementById('btc-price').textContent.replace(/[$,]/g, '')) || 60000;
@@ -2280,7 +2246,7 @@
                         { price: price * 1.05, rr: 2.5 }
                     ];
                     sendStructuredAlert('long', score, price, stop, targets,
-                        'Score alto + RSI forte + Golden Cross.',
+                        'Golden Cross + RSI > 50, MVRV baixo, SOPR > 1, funding rate negativo.',
                         components
                     );
                     lastAlertTime = now;
@@ -2292,16 +2258,20 @@
                         { price: price * 0.95, rr: 2.5 }
                     ];
                     sendStructuredAlert('short', score, price, stop, targets,
-                        'Score baixo + RSI fraco + OI em alta.',
+                        'RSI > 70, resistência quebrada, OI em alta, overbought extremo.',
                         components
                     );
                     lastAlertTime = now;
                     lastAlertScore = score;
                 }
             }
+
             checkAdditionalAlerts(score, components);
         }
 
+        // ================================================================
+        // 7.2 UPDATE BADGES (NOVO)
+        // ================================================================
         function updateBadges(regime, mtfResult, ofResult, fundDiv) {
             const regimeBadge = document.getElementById('regime-badge');
             if (regimeBadge) {
@@ -2336,7 +2306,7 @@
         }
 
         // ================================================================
-        // 9. FUNÇÕES DE ATUALIZAÇÃO (APIs)
+        // 8. FUNÇÕES DE ATUALIZAÇÃO (APIs)
         // ================================================================
         async function fetchPrices() {
             try {
@@ -2477,8 +2447,11 @@
                             interp.className = 'alert-divergence';
                             const price = document.getElementById('btc-price')?.textContent || 'N/A';
                             sendTelegramAlert(
-                                `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n💰 Preço BTC: ${price}\n⚠️ Possível divergência de preço e OI.`
-                                );
+                                `🚨 <b>ALERTA DE DIVERGÊNCIA</b>\n\n` +
+                                `📊 OI subiu <b>${oiDelta.toFixed(1)}%</b> em 24h!\n` +
+                                `💰 Preço BTC: ${price}\n` +
+                                `⚠️ Possível divergência de preço e OI.`
+                            );
                         } else {
                             interp.textContent = 'ℹ️ Variação normal';
                             interp.className = '';
@@ -2521,8 +2494,11 @@
                             interp.className = 'alert-divergence';
                             const price = document.getElementById('btc-price')?.textContent || 'N/A';
                             sendTelegramAlert(
-                                `⚠️ <b>ALERTA DE SENTIMENTO EXTREMO</b>\n\n📊 Long/Short Ratio: <b>${longP.toFixed(1)}%</b> de traders estão comprados.\n💰 Preço BTC: ${price}\n⚠️ Nível extremo (>70%) — possibilidade de correção.`
-                                );
+                                `⚠️ <b>ALERTA DE SENTIMENTO EXTREMO</b>\n\n` +
+                                `📊 Long/Short Ratio: <b>${longP.toFixed(1)}%</b> de traders estão comprados.\n` +
+                                `💰 Preço BTC: ${price}\n` +
+                                `⚠️ Nível extremo (>70%) — possibilidade de correção.`
+                            );
                         } else {
                             interp.textContent = 'ℹ️ Neutro';
                             interp.className = '';
@@ -2588,7 +2564,7 @@
                 updateLiveTime();
 
                 // ============================================================
-                // NOVO: APLICAÇÃO DOS FILTROS INTELIGENTES SOBRE O SCORE CLÁSSICO
+                // APLICAÇÃO DOS FILTROS SOBRE O SCORE CLÁSSICO
                 // ============================================================
                 const scoreData = computeScore(globalData);
 
@@ -2614,59 +2590,20 @@
 
                 const finalScore = clamp(scoreData.score * multiplier, 0, 100);
 
+                // Atualizar UI do score
                 updateScoreDisplay({
                     score: Math.round(finalScore),
                     components: scoreData.components
                 });
+
+                // Atualizar badges dos filtros
                 updateBadges(regime, mtfResult, ofResult, fundDiv);
 
-                // ============================================================
-                // 5. ATUALIZAR PAINEL DE DEBUG
-                // ============================================================
-                updateDebugPanel(scoreData.score, multiplier, regime, mtfResult, ofResult, fundDiv, globalData);
-
             } catch (e) {
-                console.error('Erro em fetchBinanceDerivatives:', e);
-                document.getElementById('db-error').textContent = e.message || 'Erro desconhecido';
+                console.warn('Binance derivatives unavailable, keeping static');
             }
         }
 
-        function updateDebugPanel(rawScore, multiplier, regime, mtfResult, ofResult, fundDiv, data) {
-            document.getElementById('db-raw').textContent = rawScore;
-            document.getElementById('db-regime').textContent = `${regime.multiplier.toFixed(2)} (${regime.regime})`;
-            document.getElementById('db-mtf').textContent = mtfResult.pass ? '1.00' : '0.60';
-            document.getElementById('db-liq').textContent = ofResult.pass ? '1.00' : '0.70';
-            let fundMult = 1.0;
-            if (fundDiv.avoidLongs) fundMult = 0.5;
-            else if (fundDiv.avoidShorts) fundMult = 0.5;
-            document.getElementById('db-fund').textContent = fundMult.toFixed(2) + ' ' + (fundDiv.label || '');
-            document.getElementById('db-final').textContent = Math.round(rawScore * multiplier);
-            document.getElementById('db-price').textContent = data.price ? '$' + data.price.toFixed(0) : '--';
-            document.getElementById('db-rsi').textContent = data.rsi !== undefined ? data.rsi.toFixed(1) : '--';
-            document.getElementById('db-emas').textContent =
-                `${data.ema50 ? data.ema50.toFixed(0) : '--'} / ${data.ema200 ? data.ema200.toFixed(0) : '--'}`;
-            const apiStatus = [];
-            if (data.price) apiStatus.push('Preço OK');
-            if (data.rsi) apiStatus.push('RSI OK');
-            if (data.funding !== undefined) apiStatus.push('Funding OK');
-            document.getElementById('db-apis').textContent = apiStatus.length ? apiStatus.join(' | ') : 'Aguardando...';
-            document.getElementById('db-error').textContent = '--';
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggle = document.getElementById('debug-toggle');
-            const panel = document.getElementById('debug-panel');
-            let visible = false;
-            toggle.addEventListener('click', function() {
-                visible = !visible;
-                panel.style.display = visible ? 'block' : 'none';
-                toggle.textContent = visible ? '🔍 Debug Ocultar' : '🐞 Debug';
-            });
-        });
-
-        // ================================================================
-        // 11. FUNÇÕES DE ATUALIZAÇÃO (APIs) - CONTINUAÇÃO
-        // ================================================================
         async function fetchBRK() {
             const metrics = [
                 { id: 'mvrv', el: 'mvrv', interp: 'mvrv-interp', source: 'mvrv-source', fallback: '1,15' },
@@ -2754,7 +2691,7 @@
         }
 
         // ================================================================
-        // 12. MASTER REFRESH
+        // 9. MASTER REFRESH
         // ================================================================
         async function refreshAll() {
             updateTimestamp();
@@ -2767,10 +2704,11 @@
                 fetchHashrate(),
                 fetchGasPrice()
             ]);
+            // O score já é atualizado dentro de fetchBinanceDerivatives
         }
 
         // ================================================================
-        // 13. BACKTEST 30 DIAS (CORRIGIDO E SIMPLIFICADO)
+        // 10. BACKTEST 30 DIAS (CORRIGIDO)
         // ================================================================
         let backtestRunning = false;
 
@@ -2790,58 +2728,61 @@
             `;
 
             try {
-                // Tentar buscar dados reais, se falhar usar simulados
-                let dataset = [];
-                let usingSimulated = false;
-                try {
-                    const now = Date.now();
-                    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
-                    const response = await fetch(
-                        `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${thirtyDaysAgo}&limit=45`
-                    );
-                    if (response.ok) {
-                        const klines = await response.json();
-                        dataset = klines.map(k => ({
-                            date: new Date(k[0]).toISOString().split('T')[0],
-                            open: parseFloat(k[1]),
-                            high: parseFloat(k[2]),
-                            low: parseFloat(k[3]),
-                            close: parseFloat(k[4]),
-                            volume: parseFloat(k[5])
-                        })).filter(d => d.close > 0);
+                const now = Date.now();
+                const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+                const response = await fetch(
+                    `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${thirtyDaysAgo}&limit=45`
+                );
+
+                let klines;
+                if (!response.ok) {
+                    console.warn('Falha ao buscar dados da Binance, usando dados simulados.');
+                    klines = gerarDadosSimulados(30);
+                } else {
+                    klines = await response.json();
+                    if (!klines || klines.length < 10) {
+                        console.warn('Dados insuficientes, usando simulados.');
+                        klines = gerarDadosSimulados(30);
                     }
-                } catch (e) {
-                    console.warn('Falha ao buscar dados da Binance, usando simulados.');
                 }
 
-                if (!dataset || dataset.length < 10) {
-                    usingSimulated = true;
-                    dataset = [];
+                function gerarDadosSimulados(dias) {
+                    const dados = [];
                     let preco = 60000;
                     const agora = Date.now();
-                    for (let i = 30; i >= 0; i--) {
+                    for (let i = dias; i >= 0; i--) {
                         const variacao = (Math.random() - 0.5) * 0.03;
                         preco = preco * (1 + variacao);
                         const data = new Date(agora - i * 24 * 60 * 60 * 1000);
                         const open = preco * (1 + (Math.random() - 0.5) * 0.005);
                         const high = Math.max(open, preco) * (1 + Math.random() * 0.01);
                         const low = Math.min(open, preco) * (1 - Math.random() * 0.01);
-                        dataset.push({
-                            date: data.toISOString().split('T')[0],
-                            open: open,
-                            high: high,
-                            low: low,
-                            close: preco,
-                            volume: Math.random() * 1000 + 500
-                        });
+                        dados.push([
+                            data.getTime(),
+                            open.toFixed(2),
+                            high.toFixed(2),
+                            low.toFixed(2),
+                            preco.toFixed(2),
+                            (Math.random() * 1000 + 500).toFixed(0)
+                        ]);
                     }
+                    return dados;
                 }
 
-                console.log(`Backtest: ${dataset.length} dias obtidos (${usingSimulated ? 'simulados' : 'reais'}).`);
+                const dataset = klines.map(k => ({
+                    date: new Date(k[0]).toISOString().split('T')[0],
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4]),
+                    volume: parseFloat(k[5])
+                })).filter(d => d.close > 0);
+
+                console.log(`Backtest: ${dataset.length} dias obtidos.`);
 
                 if (dataset.length < 10) {
                     container.innerHTML =
-                        `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} dias).</p></div>`;
+                    `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} dias).</p></div>`;
                     backtestRunning = false;
                     btn.disabled = false;
                     btn.textContent = '▶ Executar Backtest';
@@ -2849,32 +2790,15 @@
                 }
 
                 const closes = dataset.map(d => d.close);
-                const highs = dataset.map(d => d.high);
-                const lows = dataset.map(d => d.low);
-
-                // Pré-calcular indicadores
                 const ema50s = [];
                 const ema200s = [];
                 const rsis = [];
-                const atrs = [];
 
                 for (let i = 0; i < closes.length; i++) {
                     const slice = closes.slice(0, i + 1);
-                    ema50s.push(slice.length >= 20 ? calculateEMA(slice, 20) : null);
-                    ema200s.push(slice.length >= 50 ? calculateEMA(slice, 50) : null);
+                    ema50s.push(slice.length >= 50 ? calculateEMA(slice, 50) : null);
+                    ema200s.push(slice.length >= 200 ? calculateEMA(slice, 200) : null);
                     rsis.push(slice.length >= 14 ? calculateRSI(slice, 14) : 50);
-                    if (i >= 14) {
-                        let trSum = 0;
-                        for (let j = i - 13; j <= i; j++) {
-                            const tr = Math.max(highs[j] - lows[j],
-                                Math.abs(highs[j] - closes[j - 1]),
-                                Math.abs(lows[j] - closes[j - 1]));
-                            trSum += tr;
-                        }
-                        atrs.push(trSum / 14);
-                    } else {
-                        atrs.push(null);
-                    }
                 }
 
                 let position = null;
@@ -2888,9 +2812,10 @@
                 let stopCount = 0,
                     tp1Count = 0,
                     tp2Count = 0;
-                let metricsByRegime = { TRENDING: [], RANGING: [], COMPRESSION: [], ACCUMULATION: [] };
 
-                const bestParams = { stopPct: 0.02, tpPct: 0.06, tp2Pct: 0.12 };
+                const STOP_LOSS_PCT = 0.02;
+                const TAKE_PROFIT_PCT = 0.06;
+                const TAKE_PROFIT2_PCT = 0.12;
 
                 for (let i = 20; i < dataset.length; i++) {
                     const candle = dataset[i];
@@ -2898,32 +2823,21 @@
                     const ema50 = ema50s[i] !== null ? ema50s[i] : price;
                     const ema200 = ema200s[i] !== null ? ema200s[i] : price;
                     const rsi = rsis[i] || 50;
-                    const atrPct = (atrs[i] || price * 0.015) / price * 100;
-
-                    // Score simplificado
-                    const adx = 25 + clamp((ema50 - ema200) / 1000, -15, 15);
-                    const regime = detectRegimeReal(adx, atrPct, 0.02, 0.5, 1.0);
-                    // MTF e liquidez simplificados para backtest (sempre passam)
-                    const mtfPass = true;
-                    const ofPass = true;
 
                     let score = 50;
                     if (ema50 > ema200) score += 20;
                     else score -= 20;
                     if (rsi > 50) score += 15;
                     else score -= 15;
-                    score = clamp(score * (regime.multiplier || 0.8), 0, 100);
 
-                    const signal = (score >= 65 && mtfPass && ofPass) ? 'LONG' :
-                        (score <= 35 && !fundingDivergence(0.0001, 0, 0).avoidLongs) ? 'SHORT' : 'NEUTRAL';
+                    let signal = 'NEUTRAL';
+                    if (score >= 65) signal = 'LONG';
+                    else if (score <= 35) signal = 'SHORT';
 
                     if (position === null && signal !== 'NEUTRAL') {
-                        const stopPct = bestParams.stopPct;
-                        const tpPct = bestParams.tpPct;
-                        const tp2Pct = bestParams.tp2Pct;
-                        const stopPrice = signal === 'LONG' ? price * (1 - stopPct) : price * (1 + stopPct);
-                        const tp1Price = signal === 'LONG' ? price * (1 + tpPct) : price * (1 - tpPct);
-                        const tp2Price = signal === 'LONG' ? price * (1 + tp2Pct) : price * (1 - tp2Pct);
+                        const stopPrice = signal === 'LONG' ? price * (1 - STOP_LOSS_PCT) : price * (1 + STOP_LOSS_PCT);
+                        const tp1Price = signal === 'LONG' ? price * (1 + TAKE_PROFIT_PCT) : price * (1 - TAKE_PROFIT_PCT);
+                        const tp2Price = signal === 'LONG' ? price * (1 + TAKE_PROFIT2_PCT) : price * (1 - TAKE_PROFIT2_PCT);
                         position = {
                             type: signal,
                             entryPrice: price,
@@ -2931,122 +2845,29 @@
                             tp1: tp1Price,
                             tp2: tp2Price,
                             entryIndex: i,
-                            daysOpen: 0,
-                            filledTP1: false,
-                            stopMoved: false,
-                            trailingActive: false,
-                            trailingStop: null,
-                            profitPct: 0,
-                            regime: regime.regime
+                            daysOpen: 0
                         };
                     } else if (position !== null) {
                         position.daysOpen++;
-                        position.profitPct = (position.type === 'LONG') ?
-                            (candle.close - position.entryPrice) / position.entryPrice :
-                            (position.entryPrice - candle.close) / position.entryPrice;
-
-                        // Breakeven
-                        if (position.profitPct > 0.015 && !position.stopMoved) {
-                            position.stop = position.type === 'LONG' ? position.entryPrice * 1.001 : position.entryPrice *
-                                0.999;
-                            position.stopMoved = true;
-                        }
-                        // Trailing ATR
-                        if (position.filledTP1 && !position.trailingActive) {
-                            position.trailingActive = true;
-                            position.trailingStop = position.type === 'LONG' ? candle.high * (1 - 0.02 * atrPct) : candle
-                                .low * (1 + 0.02 * atrPct);
-                        }
-                        if (position.trailingActive) {
-                            if (position.type === 'LONG') position.trailingStop = Math.max(position.trailingStop, candle
-                                .high * (1 - 0.02 * atrPct));
-                            else position.trailingStop = Math.min(position.trailingStop, candle.low * (1 + 0.02 * atrPct));
-                        }
-                        // Time exit
-                        if (position.daysOpen > 10 && position.profitPct < 0.02) {
-                            position.exitPrice = candle.close;
-                            position.exitReason = 'Time Stop';
-                        }
-
                         let exitPrice = null;
                         let exitReason = '';
 
                         if (position.type === 'LONG') {
-                            if (!position.filledTP1 && candle.high >= position.tp1) {
-                                const pnl = (position.tp1 - position.entryPrice);
-                                const pnlPct = (pnl / position.entryPrice) * 100;
-                                const pnlUsd = (pnl / position.entryPrice) * balance * 0.30;
-                                trades.push({
-                                    entryDate: dataset[position.entryIndex].date,
-                                    exitDate: candle.date,
-                                    type: position.type + ' (TP1)',
-                                    entryPrice: position.entryPrice,
-                                    exitPrice: position.tp1,
-                                    pnlPct: pnlPct,
-                                    pnlUsd: pnlUsd,
-                                    exitReason: 'TP1 Parcial',
-                                    daysOpen: position.daysOpen,
-                                    regime: position.regime
-                                });
-                                balance += pnlUsd;
-                                position.filledTP1 = true;
-                                position.remainingSize = 0.70;
-                                totalTrades++;
-                                if (pnlUsd > 0) wins++;
-                                else losses++;
-                                if (position.regime) metricsByRegime[position.regime].push({ win: pnlUsd > 0,
-                                    pnl: pnlUsd });
-                            }
-                            if (candle.low <= position.stop && !position.filledTP1) {
-                                exitPrice = position.stop;
+                            if (candle.low <= position.stop) { exitPrice = position.stop;
                                 exitReason = 'Stop';
-                                stopCount++;
-                            } else if (candle.high >= position.tp2) {
-                                exitPrice = position.tp2;
+                                stopCount++; } else if (candle.high >= position.tp2) { exitPrice = position.tp2;
                                 exitReason = 'TP2';
-                                tp2Count++;
-                            } else if (position.exitPrice) {
-                                exitPrice = position.exitPrice;
-                                exitReason = position.exitReason || 'Trailing';
-                            }
+                                tp2Count++; } else if (candle.high >= position.tp1) { exitPrice = position.tp1;
+                                exitReason = 'TP1';
+                                tp1Count++; }
                         } else {
-                            if (!position.filledTP1 && candle.low <= position.tp1) {
-                                const pnl = (position.entryPrice - position.tp1);
-                                const pnlPct = (pnl / position.entryPrice) * 100;
-                                const pnlUsd = (pnl / position.entryPrice) * balance * 0.30;
-                                trades.push({
-                                    entryDate: dataset[position.entryIndex].date,
-                                    exitDate: candle.date,
-                                    type: position.type + ' (TP1)',
-                                    entryPrice: position.entryPrice,
-                                    exitPrice: position.tp1,
-                                    pnlPct: pnlPct,
-                                    pnlUsd: pnlUsd,
-                                    exitReason: 'TP1 Parcial',
-                                    daysOpen: position.daysOpen,
-                                    regime: position.regime
-                                });
-                                balance += pnlUsd;
-                                position.filledTP1 = true;
-                                position.remainingSize = 0.70;
-                                totalTrades++;
-                                if (pnlUsd > 0) wins++;
-                                else losses++;
-                                if (position.regime) metricsByRegime[position.regime].push({ win: pnlUsd > 0,
-                                    pnl: pnlUsd });
-                            }
-                            if (candle.high >= position.stop && !position.filledTP1) {
-                                exitPrice = position.stop;
+                            if (candle.high >= position.stop) { exitPrice = position.stop;
                                 exitReason = 'Stop';
-                                stopCount++;
-                            } else if (candle.low <= position.tp2) {
-                                exitPrice = position.tp2;
+                                stopCount++; } else if (candle.low <= position.tp2) { exitPrice = position.tp2;
                                 exitReason = 'TP2';
-                                tp2Count++;
-                            } else if (position.exitPrice) {
-                                exitPrice = position.exitPrice;
-                                exitReason = position.exitReason || 'Trailing';
-                            }
+                                tp2Count++; } else if (candle.low <= position.tp1) { exitPrice = position.tp1;
+                                exitReason = 'TP1';
+                                tp1Count++; }
                         }
 
                         let currentSignal = signal;
@@ -3062,28 +2883,28 @@
                                 exitPrice = price;
                                 exitReason = signalChanged ? 'Reversão' : 'Fim período';
                             }
-                            const remaining = position.filledTP1 ? 0.70 : 1.0;
+
                             const pnl = (position.type === 'LONG') ? (exitPrice - position.entryPrice) : (position
                                 .entryPrice - exitPrice);
                             const pnlPct = (pnl / position.entryPrice) * 100;
-                            const pnlUsd = (pnl / position.entryPrice) * balance * remaining;
+                            const pnlUsd = (pnl / position.entryPrice) * balance;
+
                             trades.push({
                                 entryDate: dataset[position.entryIndex].date,
                                 exitDate: candle.date,
-                                type: position.type + (position.filledTP1 ? ' (Restante)' : ''),
+                                type: position.type,
                                 entryPrice: position.entryPrice,
                                 exitPrice: exitPrice,
                                 pnlPct: pnlPct,
                                 pnlUsd: pnlUsd,
                                 exitReason: exitReason,
-                                daysOpen: position.daysOpen,
-                                regime: position.regime
+                                daysOpen: position.daysOpen
                             });
+
                             balance += pnlUsd;
                             totalTrades++;
                             if (pnlUsd > 0) wins++;
                             else losses++;
-                            if (position.regime) metricsByRegime[position.regime].push({ win: pnlUsd > 0, pnl: pnlUsd });
 
                             if (balance > peak) peak = balance;
                             const drawdown = (peak - balance) / peak;
@@ -3094,37 +2915,11 @@
                     }
                 }
 
-                // Dashboard por regime
-                let dashboardHTML =
-                    `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📊 Performance por Regime</h4>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px;">`;
-                for (const [regime, results] of Object.entries(metricsByRegime)) {
-                    if (results.length === 0) {
-                        dashboardHTML +=
-                            `<div class="backtest-stat-card"><div class="stat-value">--</div><div class="stat-label">${regime}</div></div>`;
-                        continue;
-                    }
-                    const wins = results.filter(r => r.win).length;
-                    const winrate = (wins / results.length) * 100;
-                    const avgPnl = results.reduce((s, r) => s + r.pnl, 0) / results.length;
-                    const totalPnl = results.reduce((s, r) => s + r.pnl, 0);
-                    dashboardHTML += `
-                        <div class="backtest-stat-card">
-                            <div class="stat-value ${winrate>=60?'positive':winrate<40?'negative':'neutral'}">${winrate.toFixed(1)}%</div>
-                            <div class="stat-label">${regime} (${results.length} trades)</div>
-                            <div style="font-size:0.7em;color:var(--text-muted);">PnL médio: $${avgPnl.toFixed(2)}</div>
-                            <div style="font-size:0.7em;color:var(--text-muted);">Total: $${totalPnl.toFixed(2)}</div>
-                        </div>
-                    `;
-                }
-                dashboardHTML += `</div>`;
-
                 const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
                 const profitFactor = losses > 0 ? (trades.filter(t => t.pnlUsd > 0).reduce((s, t) => s + t.pnlUsd, 0) /
                     Math.abs(trades.filter(t => t.pnlUsd < 0).reduce((s, t) => s + t.pnlUsd, 0))) : (wins > 0 ? Infinity :
                     0);
                 const totalReturn = ((balance - 1000) / 1000) * 100;
-                const expectancy = totalTrades > 0 ? (trades.reduce((s, t) => s + t.pnlUsd, 0) / totalTrades) : 0;
 
                 let html = `
                     <div class="backtest-stats-grid">
@@ -3168,14 +2963,8 @@
                             <div class="stat-value">${tp2Count}</div>
                             <div class="stat-label">TP2</div>
                         </div>
-                        <div class="backtest-stat-card">
-                            <div class="stat-value">$${expectancy.toFixed(2)}</div>
-                            <div class="stat-label">Expectancy</div>
-                        </div>
                     </div>
                 `;
-
-                html += dashboardHTML;
 
                 if (trades.length === 0) {
                     html += `<div class="no-trades"><p>Nenhum trade gerado no período.</p></div>`;
@@ -3194,7 +2983,6 @@
                                         <th>PnL %</th>
                                         <th>Dias</th>
                                         <th>Motivo</th>
-                                        <th>Regime</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -3208,7 +2996,6 @@
                                             <td style="color: ${t.pnlUsd > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td>
                                             <td>${t.daysOpen}</td>
                                             <td>${t.exitReason}</td>
-                                            <td>${t.regime || '--'}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -3219,7 +3006,7 @@
 
                 html += `
                     <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 12px;">
-                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} dias) • Capital inicial: US$ 1.000 • Dados: ${usingSimulated ? 'simulados (fallback)' : 'reais (Binance)'}
+                        Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} dias) • Capital inicial: US$ 1.000
                     </p>
                 `;
 
@@ -3230,7 +3017,7 @@
                 container.innerHTML = `
                     <div class="no-trades">
                         <p>❌ Erro ao executar backtest: ${err.message}</p>
-                        <p style="font-size:0.85em;color:var(--text-muted);">Verifique o console para mais detalhes.</p>
+                        <p style="font-size:0.85em;color:var(--text-muted);">Verifique a console para mais detalhes.</p>
                     </div>
                 `;
             }
@@ -3241,7 +3028,7 @@
         }
 
         // ================================================================
-        // 14. INICIALIZAÇÃO
+        // 11. INICIALIZAÇÃO
         // ================================================================
         initWhaleFlowChart();
         refreshAll();
@@ -3265,7 +3052,7 @@
         });
 
         // ================================================================
-        // 15. EVENTOS
+        // 12. EVENTOS
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             // Botão testar Telegram
