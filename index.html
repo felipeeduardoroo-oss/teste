@@ -10,7 +10,7 @@
     </script>
     <style>
         /* ============================================================
-           ESTILOS (MANTIDOS – NENHUMA ALTERAÇÃO)
+           ESTILOS (MANTIDOS – NENHUMA ALTERAÇÃO, EXCETO BADGE REGIME)
            ============================================================ */
         :root {
             --primary: #1a1a2e;
@@ -87,6 +87,27 @@
             border-left: 3px solid var(--accent-blue);
             font-weight: 600;
             color: var(--text-light);
+        }
+        .badge-regime {
+            border-left-color: var(--accent-yellow);
+            background: rgba(255, 214, 10, 0.15);
+            color: var(--accent-yellow);
+            font-weight: 700;
+        }
+        .badge-regime.bull {
+            border-left-color: var(--accent-green);
+            background: rgba(0, 217, 142, 0.15);
+            color: var(--accent-green);
+        }
+        .badge-regime.bear {
+            border-left-color: var(--accent-red);
+            background: rgba(233, 69, 96, 0.15);
+            color: var(--accent-red);
+        }
+        .badge-regime.range {
+            border-left-color: var(--accent-yellow);
+            background: rgba(255, 214, 10, 0.15);
+            color: var(--accent-yellow);
         }
 
         .badge.sentiment-bearish {
@@ -1020,7 +1041,7 @@
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
                     <div class="badge extreme-fear" id="header-fng">😱 FEAR &amp; GREED: 18 (Extreme Fear)</div>
-                    <div class="badge">⚡ STATUS: MARKDOWN</div>
+                    <div class="badge" id="header-regime">⚡ REGIME: NEUTRO</div>
                     <span class="live-indicator">🔄 HYBRID</span>
                     <span class="status-badge" id="status-badge">📋 ESTÁTICO</span>
                     <span class="telegram-badge" id="telegram-badge">
@@ -1431,18 +1452,18 @@
         </section>
 
         <!-- ============================================================
-        BACKTEST 4H (V7 – COM MELHORIAS)
+        BACKTEST 4H (V8)
         ============================================================ -->
         <section>
-            <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V7</h2>
+            <h2 class="section-title">📊 BACKTEST — ÚLTIMOS 30 DIAS (4H) — V8</h2>
             <div class="backtest-section">
                 <div class="backtest-header">
                     <div>
                         <span style="color:var(--text-muted); font-size:0.9em;">Capital inicial: <strong style="color:var(--text-light);">US$ 10.000</strong></span>
                         <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Ativo: <strong style="color:var(--text-light);">BTC/USDT</strong></span>
-                        <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Filtros: <strong style="color:var(--text-light);">V7 – Dinâmico + Liquidez + Divergência Avançada + Volatilidade + Trailing SR</strong></span>
+                        <span style="color:var(--text-muted); font-size:0.9em; margin-left:20px;">Regime: <strong style="color:var(--text-light);">Adaptativo</strong></span>
                     </div>
-                    <button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V7</button>
+                    <button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V8</button>
                 </div>
                 <div id="backtestResults">
                     <div class="backtest-loading">
@@ -1459,8 +1480,8 @@
         <footer>
             <div class="footer-content">
                 <div class="footer-section">
-                    <h4>📋 Metodologia V7</h4>
-                    <p>Score institucional com suporte/resistência e volume dinâmicos, profundidade de book (liquidez real), divergência aprimorada (RSI+MACD+OBV), filtro de volatilidade extrema e trailing stop com suporte/resistência dinâmico.</p>
+                    <h4>📋 Metodologia V8</h4>
+                    <p>Estratégia adaptativa por regime (BULL/BEAR/RANGE) com detector de ADX, inclinação EMA e preço. Filtro de Choppiness Index, ancoragem de stop em níveis horizontais de S/R (1D, 1S, 1M), tamanho de posição por regime, trailing com S/R, volume anormal, divergência de volume delta, filtro de clusters de ordens e gestão de saída escalonada.</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
@@ -1477,7 +1498,7 @@
     </button>
 
     <!-- ============================================================
-    JAVASCRIPT COMPLETO (V7 – COM TODAS AS 5 MELHORIAS)
+    JAVASCRIPT COMPLETO (V8 – COM MELHORIAS DO COMITÊ)
     ============================================================ -->
     <script>
         // ================================================================
@@ -1491,7 +1512,7 @@
         // 0.1 CONFIGURAÇÕES DE RISCO E CAPITAL
         // ================================================================
         let CAPITAL = 10000;
-        const STOP_PARAMS_V7 = {
+        const STOP_PARAMS_V8 = {
             SQUEEZE: { stop: 1.0, tp1: 0.8, tp2: 1.5, tp3: 2.5 },
             LOW: { stop: 1.5, tp1: 1.2, tp2: 2.0, tp3: 3.5 },
             NORMAL: { stop: 2.0, tp1: 1.8, tp2: 3.5, tp3: 4.5 },
@@ -1513,8 +1534,9 @@
         let tradeHistory = [];
         let tradeCounter = 0;
         const OPTIMIZATION_INTERVAL = 50;
+        let currentRegime = 'NEUTRO';
 
-        // Pesos otimizados (V6)
+        // Pesos otimizados (V6) – serão substituídos pelos dinâmicos por regime
         let filterWeights = {
             price_action: 0.12,
             momentum: 0.12,
@@ -1528,8 +1550,12 @@
             trend_strength: 0.14
         };
 
-        // Histórico de ATR% para volatilidade extrema (em tempo real)
         let atrPercentHistory = [];
+        let regimeWeights = {
+            BULL: { trend: 0.30, momentum: 0.25, structure: 0.10, onChain: 0.10, volume: 0.10, oi: 0.15 },
+            BEAR: { trend: 0.30, momentum: 0.25, structure: 0.10, onChain: 0.10, volume: 0.10, oi: 0.15 },
+            RANGE: { trend: 0.10, momentum: 0.20, structure: 0.25, onChain: 0.20, volume: 0.10, oi: 0.15 }
+        };
 
         // ================================================================
         // 0.3 FUNÇÕES DE ENVIO TELEGRAM (MANTIDAS)
@@ -1561,7 +1587,7 @@
         }
 
         async function sendStructuredAlert(signalType, score, price, stop, targets, rationale, components) {
-            const kellyPct = calculateKellySizingV3(alertLog, CAPITAL, CAPITAL);
+            const kellyPct = calculateKellySizingV8();
             const riskAmount = CAPITAL * kellyPct;
             const riskPerUnit = Math.abs(price - stop);
             const size = riskAmount / riskPerUnit;
@@ -1581,6 +1607,7 @@
                 msg += `\n`;
             });
             msg += `Score: ${Math.round(score)}/100\n`;
+            msg += `Regime: ${currentRegime}\n`;
             if (components) {
                 msg += `Componentes:\n`;
                 msg += `  Tendência: ${components.trend}\n`;
@@ -1605,7 +1632,8 @@
                     rationale: rationale,
                     components: components,
                     win: null,
-                    pnl: null
+                    pnl: null,
+                    regime: currentRegime
                 });
                 localStorage.setItem('alertLog', JSON.stringify(alertLog.slice(-100)));
             }
@@ -1698,7 +1726,6 @@
             return emaFast - emaSlow;
         }
 
-        // OBV (On-Balance Volume)
         function calculateOBV(candles) {
             if (!candles || candles.length < 2) return 0;
             let obv = 0;
@@ -1708,7 +1735,6 @@
                 const volume = candles[i].volume || 0;
                 if (close > prevClose) obv += volume;
                 else if (close < prevClose) obv -= volume;
-                // se igual, não altera
             }
             return obv;
         }
@@ -1741,57 +1767,91 @@
         }
 
         // ================================================================
-        // 0.5 KELLY V3 (RAMPA)
+        // 0.5 KELLY V8 (ADAPTATIVO POR REGIME)
         // ================================================================
-        function calculateKellySizingV3(alertLog, initialCapital, currentBalance, defaultRisk = 0.02) {
-            const recent = alertLog.filter(t => t.win !== null).slice(-100);
-            if (recent.length < 10) return 0.015;
-            if (recent.length < 20) return 0.015 + ((recent.length - 10) / 10) * 0.005;
-            if (recent.length < 50) return 0.02;
+        function calculateKellySizingV8() {
+            const baseRisk = currentRegime === 'RANGE' ? 0.005 : 0.02; // 0.5% ou 2%
+            const recent = alertLog.filter(t => t.win !== null).slice(-50);
+            if (recent.length < 10) return baseRisk;
+
             const wins = recent.filter(t => t.win).length;
             const wr = wins / recent.length;
-            if (wr < 0.40) return 0.01;
-            if (wr > 0.70) return 0.035;
             const avgWin = recent.filter(t => t.win).reduce((s, t) => s + (t.pnl || 0), 0) / Math.max(1, wins);
             const avgLoss = Math.abs(recent.filter(t => !t.win).reduce((s, t) => s + (t.pnl || 0), 0)) / Math.max(1, recent
                 .length - wins);
-            if (avgLoss === 0) return 0.02;
             const kelly = (wr * avgWin - (1 - wr) * avgLoss) / avgWin;
             const safeKelly = Math.max(0, kelly * 0.25);
-            const drawdown = (currentBalance / initialCapital) - 1;
-            const maxRisk = drawdown < -0.15 ? 0.01 : drawdown < -0.10 ? 0.015 : 0.035;
-            return Math.min(maxRisk, Math.max(0.01, safeKelly));
+            const maxRisk = currentRegime === 'RANGE' ? 0.01 : 0.05;
+            const drawdown = (CAPITAL - 10000) / 10000;
+            const risk = Math.min(baseRisk, safeKelly);
+            if (drawdown > 0.10) return risk * 0.5;
+            return Math.min(maxRisk, Math.max(0.005, risk));
         }
 
         // ================================================================
-        // 0.6 REGIME POR PERCENTIS (V3)
+        // 0.6 DETECTOR DE REGIME (MELHORIA 1)
         // ================================================================
-        function percentile(arr, p) {
-            const sorted = [...arr].sort((a, b) => a - b);
-            const index = (p / 100) * sorted.length;
-            return sorted[Math.floor(index)];
+        function detectMarketRegime(price, ema50, ema200, adx, atrPct, atrPctHistory) {
+            const adxThreshold = 25;
+            const prevEma = ema50.prev || ema50 * 0.99;
+            const slope = (ema50 - prevEma) / prevEma;
+            const isTrend = adx > adxThreshold;
+            const isBullish = price > ema50 && ema50 > ema200 && slope > 0.0005;
+            const isBearish = price < ema50 && ema50 < ema200 && slope < -0.0005;
+            if (isBullish && isTrend) return 'BULL';
+            if (isBearish && isTrend) return 'BEAR';
+            return 'RANGE';
         }
 
-        function calculateVolatilityRegimeV3(closes, period = 20) {
-            if (closes.length < 50) return 'NORMAL';
-            const atrValues = [];
-            for (let i = Math.max(0, closes.length - 100); i < closes.length; i++) {
-                const slice = closes.slice(0, i + 1);
-                const atrVal = calculateATR(slice, 14);
-                atrValues.push((atrVal / slice[i]) * 100);
-            }
-            const atrPct = (calculateATR(closes, 14) / closes[closes.length - 1]) * 100;
-            const p10 = percentile(atrValues, 10);
-            const p50 = percentile(atrValues, 50);
-            const p90 = percentile(atrValues, 90);
-            if (atrPct < p10) return 'SQUEEZE';
-            if (atrPct < p50) return 'LOW';
-            if (atrPct < p90) return 'NORMAL';
-            return 'HIGH';
+        function updateRegimeDisplay(regime) {
+            const el = document.getElementById('header-regime');
+            if (!el) return;
+            currentRegime = regime;
+            el.textContent = `⚡ REGIME: ${regime}`;
+            el.className = 'badge badge-regime ' + regime.toLowerCase();
         }
 
         // ================================================================
-        // 0.7 OTIMIZAÇÃO DE PESOS (SA + VALIDAÇÃO CRUZADA) – MANTIDA
+        // 0.7 CHOPPINESS INDEX (MELHORIA 3)
+        // ================================================================
+        function choppinessIndex(candles, period = 14) {
+            if (!candles || candles.length < period) return 100;
+            const slice = candles.slice(-period);
+            const highs = slice.map(c => c.high);
+            const lows = slice.map(c => c.low);
+            const closes = slice.map(c => c.close);
+            const atr = calculateATR(closes, period);
+            const range = Math.max(...highs) - Math.min(...lows);
+            if (range === 0) return 100;
+            return 100 * Math.log10(atr / range) / Math.log10(period);
+        }
+
+        // ================================================================
+        // 0.8 NÍVEIS HORIZONTAIS DE S/R (MELHORIA 4)
+        // ================================================================
+        function getHorizontalSR(candles) {
+            // Níveis diários, semanais e mensais (aproximados)
+            if (!candles || candles.length < 24) return { support: 0, resistance: 0 };
+            // 1D (últimos 24 candles se 1h)
+            const daySlice = candles.slice(-24);
+            const supportD = Math.min(...daySlice.map(c => c.low));
+            const resistanceD = Math.max(...daySlice.map(c => c.high));
+            // 1S (últimos 168 candles)
+            const weekSlice = candles.slice(-168);
+            const supportW = weekSlice.length > 0 ? Math.min(...weekSlice.map(c => c.low)) : supportD;
+            const resistanceW = weekSlice.length > 0 ? Math.max(...weekSlice.map(c => c.high)) : resistanceD;
+            // 1M (últimos 720 candles)
+            const monthSlice = candles.slice(-720);
+            const supportM = monthSlice.length > 0 ? Math.min(...monthSlice.map(c => c.low)) : supportW;
+            const resistanceM = monthSlice.length > 0 ? Math.max(...monthSlice.map(c => c.high)) : resistanceW;
+            return {
+                support: Math.min(supportD, supportW, supportM),
+                resistance: Math.max(resistanceD, resistanceW, resistanceM)
+            };
+        }
+
+        // ================================================================
+        // 0.9 OTIMIZAÇÃO DE PESOS (SIMULATED ANNEALING – MANTIDA)
         // ================================================================
         function evalWeights(weights, dataset) {
             const filterNames = Object.keys(filterWeights);
@@ -1845,7 +1905,6 @@
                 }
             }
             const valScore = evalWeights(bestWeights, valSet);
-            console.log(`📊 Validação cruzada: ${valScore.toFixed(3)} (treino: ${bestScore.toFixed(3)})`);
             if (valScore < bestScore * 0.85) {
                 console.warn('⚠️ Overfitting detectado! Pesos podem não generalizar.');
             }
@@ -1879,7 +1938,7 @@
         }
 
         // ================================================================
-        // 0.8 MTF DATA (COM CACHE)
+        // 0.10 MTF DATA (COM CACHE)
         // ================================================================
         async function fetchMTFData(symbol = 'BTCUSDT') {
             try {
@@ -1925,7 +1984,7 @@
         }
 
         // ================================================================
-        // 0.9 FILTRO DE HORÁRIO
+        // 0.11 FILTRO DE HORÁRIO
         // ================================================================
         function isGoodTradingHour() {
             const now = new Date();
@@ -1937,62 +1996,321 @@
         }
 
         // ================================================================
-        // 0.10 MELHORIA 1: SUPORTE/RESISTÊNCIA E VOLUME DINÂMICOS
+        // 0.12 FILTRO DE ORDENS CLUSTER (MELHORIA 9)
         // ================================================================
-        function getDynamicLevels(candles) {
-            if (!candles || candles.length < 20) {
-                return { support: 58000, resistance: 70000 };
-            }
-            const slice = candles.slice(-20);
-            const support = Math.min(...slice.map(c => c.low));
-            const resistance = Math.max(...slice.map(c => c.high));
-            return { support, resistance };
-        }
-
-        function getVolumeStats(candles) {
-            if (!candles || candles.length < 1) return { volume: 0, avgVolume: 0 };
-            const volumes = candles.map(c => c.volume || 0);
-            const avg = volumes.reduce((a, b) => a + b, 0) / volumes.length;
-            const current = volumes[volumes.length - 1] || 0;
-            return { volume: current, avgVolume: avg };
-        }
-
-        // ================================================================
-        // 0.11 MELHORIA 2: PROFUNDIDADE DO BOOK (LIQUIDEZ REAL)
-        // ================================================================
-        async function checkLiquidityDepth(symbol, size, side) {
+        async function checkClusterOrders(symbol, price, side, tolerance = 0.005) {
             try {
-                const resp = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=10`);
-                const data = await resp.json();
-                const levels = side === 'BUY' ? data.bids : data.asks;
-                let cumulative = 0;
-                let totalCost = 0;
+                const depth = await fetchOrderBookDepth(symbol, 10);
+                if (!depth) return { cluster: false, impact: 0 };
+                const levels = side === 'BUY' ? depth.asks : depth.bids;
+                const targetPrice = side === 'BUY' ? price * (1 + tolerance) : price * (1 - tolerance);
+                let volume = 0;
                 for (const [p, q] of levels) {
-                    const price = parseFloat(p);
-                    const qty = parseFloat(q);
-                    const needed = size - cumulative;
-                    if (needed <= 0) break;
-                    const take = Math.min(needed, qty);
-                    cumulative += take;
-                    totalCost += take * price;
-                    if (cumulative >= size) break;
+                    if (side === 'BUY' && p > targetPrice) break;
+                    if (side === 'SELL' && p < targetPrice) break;
+                    volume += q;
                 }
-                if (cumulative >= size) {
-                    const avgPrice = totalCost / size;
-                    return { enough: true, maxSize: cumulative, avgPrice };
-                } else {
-                    return { enough: false, maxSize: cumulative, avgPrice: 0 };
-                }
+                // Se volume > 10 BTC no range de 0.5%, considera cluster
+                const cluster = volume > 10;
+                return { cluster, volume };
             } catch (e) {
-                // Fallback: assume liquidez suficiente se falhar
-                return { enough: true, maxSize: size, avgPrice: 0 };
+                return { cluster: false, impact: 0 };
             }
         }
 
         // ================================================================
-        // 0.12 MELHORIA 3: DIVERGÊNCIA APRIMORADA (RSI+MACD+OBV) + PENALIDADE -40
+        // 0.13 DIVERGÊNCIA DE VOLUME DELTA (MELHORIA 8)
         // ================================================================
-        function detectDivergenceClassicV7(candles, indicatorVals, signal, atr) {
+        function detectVolumeDeltaDivergence(candles, obvVals, signal) {
+            if (!candles || candles.length < 10 || !obvVals || obvVals.length < 10) return 0;
+            const recentC = candles.slice(-5);
+            const recentOBV = obvVals.slice(-5);
+            const priceLow = Math.min(...recentC.map(c => c.low));
+            const obvLow = Math.min(...recentOBV);
+            const prevC = candles.slice(-10, -5);
+            const prevOBV = obvVals.slice(-10, -5);
+            if (prevC.length === 0 || prevOBV.length === 0) return 0;
+            const prevPriceLow = Math.min(...prevC.map(c => c.low));
+            const prevObvLow = Math.min(...prevOBV);
+            const bullishDiv = priceLow < prevPriceLow && obvLow > prevObvLow;
+            const priceHigh = Math.max(...recentC.map(c => c.high));
+            const obvHigh = Math.max(...recentOBV);
+            const prevPriceHigh = Math.max(...prevC.map(c => c.high));
+            const prevObvHigh = Math.max(...prevOBV);
+            const bearishDiv = priceHigh > prevPriceHigh && obvHigh < prevObvHigh;
+            if ((bullishDiv && signal === 'LONG') || (bearishDiv && signal === 'SHORT')) return 20;
+            if ((bullishDiv && signal === 'SHORT') || (bearishDiv && signal === 'LONG')) return -30;
+            return 0;
+        }
+
+        // ================================================================
+        // 0.14 CONFIRMAÇÃO V8 (INTEGRANDO TODAS AS MELHORIAS)
+        // ================================================================
+        function getDynamicWeights(regime) {
+            return regimeWeights[regime] || regimeWeights.BULL;
+        }
+
+        function getDynamicFilterWeights(regime) {
+            // Pesos dos filtros de confirmação também se adaptam
+            const base = { ...filterWeights };
+            if (regime === 'RANGE') {
+                base.structure = 0.20;
+                base.trend = 0.08;
+                base.volume = 0.08;
+            } else {
+                base.trend = 0.25;
+                base.structure = 0.10;
+                base.volume = 0.12;
+            }
+            return base;
+        }
+
+        async function confirmSignalV8(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false) {
+            if (!signal || signal === 'NEUTRAL') {
+                return {
+                    approved: false,
+                    score: 0,
+                    reasons: ['Sinal neutro'],
+                    regime: 'NEUTRO',
+                    required: 60,
+                    scoreBonus: 0,
+                    scoreComponents: {}
+                };
+            }
+
+            if (!isBacktest && !isGoodTradingHour()) {
+                return { approved: false, score: 0, reasons: ['Horário de baixa liquidez'], regime: 'NEUTRO',
+                    required: 60, scoreBonus: 0, scoreComponents: {} };
+            }
+
+            // ------------------ DETECTOR DE REGIME ------------------
+            const closes = candles.map(c => c.close);
+            const ema50 = calculateEMA(closes, 50) || data.price;
+            const ema200 = calculateEMA(closes, 200) || data.price;
+            const adx = data.adx || 25; // será calculado no backtest
+            const atr = data.atr || calculateATR(closes) || data.price * 0.02;
+            const atrPct = (atr / data.price) * 100;
+            atrPercentHistory.push(atrPct);
+            if (atrPercentHistory.length > 100) atrPercentHistory.shift();
+            const regime = detectMarketRegime(data.price, ema50, ema200, adx, atrPct, atrPercentHistory);
+            updateRegimeDisplay(regime);
+            currentRegime = regime;
+
+            // ------------------ CHOPPINESS INDEX (MELHORIA 3) ------------------
+            if (regime === 'RANGE') {
+                const ci = choppinessIndex(candles, 14);
+                if (ci > 60) {
+                    return { approved: false, score: 0, reasons: [`Choppiness ${ci.toFixed(0)}% > 60`], regime: regime,
+                        required: 75, scoreBonus: 0, scoreComponents: {} };
+                }
+            }
+
+            // ------------------ VOLUME ANORMAL (MELHORIA 7) ------------------
+            if (regime !== 'RANGE' && data.volume && data.avgVolume) {
+                const volRel = data.volume / data.avgVolume;
+                if (volRel < 1.4) {
+                    return { approved: false, score: 0, reasons: [`Volume relativo ${volRel.toFixed(2)} < 1.4`],
+                        regime: regime, required: 65, scoreBonus: 0, scoreComponents: {} };
+                }
+                // Volume deve ser o maior dos últimos 5 candles (para rompimentos)
+                const recentVolumes = candles.slice(-5).map(c => c.volume || 0);
+                const maxVol = Math.max(...recentVolumes);
+                if (data.volume < maxVol) {
+                    return { approved: false, score: 0, reasons: ['Volume não é o maior dos últimos 5 candles'],
+                        regime: regime, required: 65, scoreBonus: 0, scoreComponents: {} };
+                }
+            }
+
+            // ------------------ FILTRO DE CLUSTERS (MELHORIA 9) ------------------
+            if (!isBacktest) {
+                const side = signal === 'LONG' ? 'BUY' : 'SELL';
+                const cluster = await checkClusterOrders('BTCUSDT', data.price, side);
+                if (cluster.cluster && cluster.volume > 15) {
+                    // Se há grande volume no caminho, ajusta target para antes da barreira ou rejeita
+                    // Simplificação: rejeita se for muito próximo
+                    return { approved: false, score: 0, reasons: ['Cluster de ordens no caminho'], regime: regime,
+                        required: 65, scoreBonus: 0, scoreComponents: {} };
+                }
+            }
+
+            // ------------------ PESOS DINÂMICOS POR REGIME ------------------
+            const dynamicWeights = getDynamicWeights(regime);
+            // Atualiza os pesos do score principal (usados no computeScore mais adiante)
+            componentWeights = {
+                trend: dynamicWeights.trend,
+                momentum: dynamicWeights.momentum,
+                structure: dynamicWeights.structure,
+                onchain: dynamicWeights.onChain,
+                volume: dynamicWeights.volume,
+                oi: dynamicWeights.oi
+            };
+
+            // ------------------ SCORES NORMALIZADOS (AJUSTADOS PELO REGIME) ------------------
+            const minScore = regime === 'RANGE' ? 75 : 65;
+            const requiredScore = isBacktest ? Math.min(minScore, 65) : minScore;
+
+            // Preço, suporte/resistência dinâmica e horizontal
+            const dynamic = getDynamicLevels(candles);
+            const horizontal = getHorizontalSR(candles);
+            const support = Math.max(dynamic.support, horizontal.support);
+            const resistance = Math.min(dynamic.resistance, horizontal.resistance);
+
+            // Price Action
+            let pa_score = 50;
+            if (data.price && support && resistance) {
+                const range = resistance - support;
+                const position = (data.price - support) / range;
+                if (signal === 'LONG') {
+                    if (position > 0.7) pa_score = 75;
+                    else if (position > 0.5) pa_score = 65;
+                    else if (position < 0.3) pa_score = 45;
+                    else pa_score = 55;
+                } else {
+                    if (position < 0.3) pa_score = 75;
+                    else if (position < 0.5) pa_score = 65;
+                    else if (position > 0.7) pa_score = 45;
+                    else pa_score = 55;
+                }
+            }
+
+            // Momentum
+            const rsi = data.rsi || 50;
+            let momentum_score = 50;
+            const rsi_over = (signal === 'LONG' && rsi > 70) || (signal === 'SHORT' && rsi < 30);
+            const rsi_ali = (signal === 'LONG' && rsi > 50) || (signal === 'SHORT' && rsi < 50);
+            if (rsi_over) momentum_score = 35;
+            else if (rsi_ali) momentum_score = 65;
+
+            // Macro/On-Chain
+            let macro_score = 50;
+            const good = (data.mvrv && data.mvrv < 0.85) && (data.sopr && data.sopr < 0.9);
+            const bad = (data.mvrv && data.mvrv > 1.3) && (data.sopr && data.sopr > 1.1);
+            if (good) macro_score = 75;
+            else if (bad) macro_score = 25;
+
+            // Liquidez
+            let liq_score = isBacktest ? 60 : 50;
+
+            // ML
+            const ml_prob = predictDirectionV3(data);
+            const ml_score = 20 + ml_prob * 60;
+
+            // MTF
+            let mtf_score = 50;
+            if (mtfData && mtfData.c1h && mtfData.c1h.length > 0) {
+                const aligned = checkMTFAlignment(mtfData, signal, data.price);
+                mtf_score = aligned ? 85 : 20;
+            }
+
+            // Volume
+            let vol_score = 50;
+            if (data.volume && data.avgVolume) {
+                const volRel = data.volume / data.avgVolume;
+                if (volRel > 1.5) vol_score = 70;
+                else if (volRel > 1.0) vol_score = 60;
+                else vol_score = 40;
+            }
+
+            // Funding
+            let funding_score = 50;
+            const f_aligned = (signal === 'LONG' && data.fundingRate < -0.0005) ||
+                (signal === 'SHORT' && data.fundingRate > 0.0005);
+            if (f_aligned) funding_score = 70;
+            else if ((signal === 'LONG' && data.fundingRate > 0.0008) ||
+                (signal === 'SHORT' && data.fundingRate < -0.0008)) {
+                funding_score = 30;
+            }
+
+            // Divergência aprimorada (RSI+MACD+OBV) + Volume Delta
+            let div_score = 50;
+            if (candles && candles.length > 0 && rsiVals && rsiVals.length > 0) {
+                const divPenalty = detectDivergenceMultiV8(candles, rsiVals, macdVals, obvVals, signal, atr);
+                div_score = Math.min(70, Math.max(30, 50 + divPenalty));
+                // Adiciona divergência de volume delta (Melhoria 8)
+                const volDeltaDiv = detectVolumeDeltaDivergence(candles, obvVals, signal);
+                div_score = clamp(div_score + volDeltaDiv, 20, 90);
+            }
+
+            // Trend Strength
+            let trend_score = 50;
+            if (candles && candles.length > 0) {
+                const { adx, trending } = getTrendStrength(candles);
+                if (trending && adx > 40) trend_score = 80;
+                else if (trending) trend_score = 70;
+                else if (adx < 20) trend_score = 30;
+                else trend_score = 50;
+            }
+
+            // Pesos dos filtros adaptativos
+            const filterWeightsAdapt = getDynamicFilterWeights(regime);
+            const scores = {
+                price_action: pa_score,
+                momentum: momentum_score,
+                macro_crypto: macro_score,
+                liquidity_spread: liq_score,
+                ml_probability: ml_score,
+                mtf_alignment: mtf_score,
+                volume_liquidity: vol_score,
+                funding_onchain: funding_score,
+                divergence_penalty: div_score,
+                trend_strength: trend_score
+            };
+
+            // Pesos dos filtros (usando os adaptativos)
+            const fw = {
+                price_action: filterWeightsAdapt.price_action || 0.12,
+                momentum: filterWeightsAdapt.momentum || 0.12,
+                macro_crypto: filterWeightsAdapt.macro_crypto || 0.10,
+                liquidity_spread: filterWeightsAdapt.liquidity_spread || 0.08,
+                ml_probability: filterWeightsAdapt.ml_probability || 0.08,
+                mtf_alignment: filterWeightsAdapt.mtf_alignment || 0.10,
+                volume_liquidity: filterWeightsAdapt.volume_liquidity || 0.12,
+                funding_onchain: filterWeightsAdapt.funding_onchain || 0.14,
+                divergence_penalty: filterWeightsAdapt.divergence_penalty || 0.10,
+                trend_strength: filterWeightsAdapt.trend_strength || 0.14
+            };
+
+            let finalScore = 0;
+            for (const [key, weight] of Object.entries(fw)) {
+                finalScore += (scores[key] || 50) * weight;
+            }
+            finalScore = Math.min(100, Math.max(0, finalScore));
+
+            const approve = finalScore >= requiredScore;
+
+            const reasons = [
+                `Price Action: ${scores.price_action.toFixed(0)}/100`,
+                `Trend: ${scores.trend_strength.toFixed(0)}/100`,
+                `Momentum: ${scores.momentum.toFixed(0)}/100`,
+                `Volume: ${scores.volume_liquidity.toFixed(0)}/100`,
+                `MTF: ${scores.mtf_alignment.toFixed(0)}/100`
+            ];
+
+            return {
+                approved: approve,
+                score: finalScore,
+                reasons: reasons,
+                regime: regime,
+                required: requiredScore,
+                scoreBonus: approve ? (finalScore - 50) * 0.3 : -25,
+                scoreComponents: scores,
+                support: support,
+                resistance: resistance
+            };
+        }
+
+        function predictDirectionV3(data) {
+            const rsiScore = data.rsi ? (data.rsi - 50) / 50 : 0;
+            const fundingScore = data.fundingRate ? -data.fundingRate * 10000 : 0;
+            const mvrvScore = data.mvrv ? (1 - data.mvrv) * 2 : 0;
+            const prob = 0.5 + 0.1 * rsiScore + 0.1 * fundingScore + 0.1 * mvrvScore;
+            return Math.min(1, Math.max(0, prob));
+        }
+
+        // ================================================================
+        // 0.15 DIVERGÊNCIA MULTI V8 (COM PENALIDADE -40)
+        // ================================================================
+        function detectDivergenceClassicV8(candles, indicatorVals, signal, atr) {
             if (!candles || !indicatorVals || candles.length < 10) return false;
             const priceRange = Math.max(...candles.map(c => c.high)) - Math.min(...candles.map(c => c.low));
             const atrPct = atr / (priceRange || 1);
@@ -2019,103 +2337,70 @@
             return false;
         }
 
-        function detectDivergenceMultiV7(candles, rsiVals, macdVals, obvVals, signal, atr) {
+        function detectDivergenceMultiV8(candles, rsiVals, macdVals, obvVals, signal, atr) {
             if (!candles || candles.length < 20) return 0;
             let score = 0;
-            const rsiDiv = detectDivergenceClassicV7(candles, rsiVals, signal, atr);
-            const macdDiv = detectDivergenceClassicV7(candles, macdVals, signal, atr);
-            const obvDiv = detectDivergenceClassicV7(candles, obvVals, signal, atr);
+            const rsiDiv = detectDivergenceClassicV8(candles, rsiVals, signal, atr);
+            const macdDiv = detectDivergenceClassicV8(candles, macdVals, signal, atr);
+            const obvDiv = detectDivergenceClassicV8(candles, obvVals, signal, atr);
             const count = [rsiDiv, macdDiv, obvDiv].filter(Boolean).length;
             if (count >= 2) score += 30;
             else if (count === 1) score += 15;
-            // Penalidade contra (mais severa: -40)
-            const bearishDiv = detectDivergenceClassicV7(candles, rsiVals, 'SHORT', atr);
-            const bullishDiv = detectDivergenceClassicV7(candles, rsiVals, 'LONG', atr);
+            const bearishDiv = detectDivergenceClassicV8(candles, rsiVals, 'SHORT', atr);
+            const bullishDiv = detectDivergenceClassicV8(candles, rsiVals, 'LONG', atr);
             if (signal === 'LONG' && bearishDiv) score -= 40;
             if (signal === 'SHORT' && bullishDiv) score -= 40;
             return clamp(score, -40, +40);
         }
 
         // ================================================================
-        // 0.13 MELHORIA 4: FILTRO DE VOLATILIDADE EXTREMA
+        // 0.16 FUNÇÕES DE GESTÃO DE RISCO (V8)
         // ================================================================
-        function isVolatilityExtreme(atrPct, history, thresholdPercentile = 90) {
-            if (history.length < 20) return false;
-            const thresh = percentile(history, thresholdPercentile);
-            return atrPct > thresh;
+        function getStopLossV8(regime, atr, price, side, support, resistance) {
+            const mult = regime === 'RANGE' ? 1.5 : 2.5;
+            let stop = side === 'LONG' ? price - atr * mult : price + atr * mult;
+            // Ancorar em níveis de S/R
+            if (side === 'LONG' && support && stop < support) {
+                stop = support * 0.995; // 0.5% abaixo do suporte
+            }
+            if (side === 'SHORT' && resistance && stop > resistance) {
+                stop = resistance * 1.005;
+            }
+            return stop;
+        }
+
+        function updateTrailingStopV8(regime, position, currentPrice, atr, support, resistance) {
+            let newStop = position.stop;
+            const mult = regime === 'RANGE' ? 0.8 : 1.5;
+            if (position.side === 'LONG') {
+                const atrStop = currentPrice - atr * mult;
+                const srStop = support || 0;
+                newStop = Math.max(atrStop, srStop);
+                if (position.tp1Hit && newStop < position.entryPrice) {
+                    newStop = position.entryPrice + atr * 0.2;
+                }
+            } else {
+                const atrStop = currentPrice + atr * mult;
+                const srStop = resistance || Infinity;
+                newStop = Math.min(atrStop, srStop);
+                if (position.tp1Hit && newStop > position.entryPrice) {
+                    newStop = position.entryPrice - atr * 0.2;
+                }
+            }
+            return newStop;
         }
 
         // ================================================================
-        // 0.14 MELHORIA 5: TRAILING STOP COM SUPORTE/RESISTÊNCIA DINÂMICO
+        // 0.17 TARGETS E BREAKEVEN (MANTIDOS)
         // ================================================================
-        function advancedTrailingStopV7(position, candleData, index, currentPrice, atr, atrPctRank, fvgZones, support,
-            resistance) {
-            const closes = candleData.map(c => c.close);
-            let trailingMult = 2.0;
-            if (position.breakeven) {
-                trailingMult = 0.8;
-            } else {
-                const ema9 = calculateEMA(closes, 9);
-                const ema21 = calculateEMA(closes, 21);
-                let momentum = 0;
-                if (ema9 && ema21 && ema21 > 0) {
-                    momentum = (ema9 - ema21) / ema21;
-                    momentum = clamp(momentum, -0.05, 0.05);
-                }
-                const momentumAdj = 1.0 + momentum * 6;
-                const volAdj = atrPctRank < 30 ? 0.7 : atrPctRank > 70 ? 1.5 : 1.0;
-                trailingMult = 2.0 * momentumAdj * volAdj;
-                trailingMult = clamp(trailingMult, 1.0, 3.5);
-            }
-
-            const recentCandles = candleData.slice(-5);
-            const highestSince = Math.max(...recentCandles.map(c => c.high));
-            const lowestSince = Math.min(...recentCandles.map(c => c.low));
-
-            let newStop;
-            if (position.type === 'LONG') {
-                newStop = highestSince - trailingMult * atr;
-                // Ajuste para suporte dinâmico
-                if (support !== undefined && support !== null && support > newStop) {
-                    newStop = Math.max(newStop, support);
-                }
-                if (fvgZones && fvgZones.length > 0) {
-                    const fvgFloor = Math.min(...fvgZones.map(f => f.low));
-                    newStop = Math.max(newStop, fvgFloor - atr);
-                }
-                if (position.breakeven && position.breakeven_stop) {
-                    newStop = Math.max(newStop, position.breakeven_stop);
-                }
-                position.stop = Math.max(position.stop, newStop);
-            } else {
-                newStop = lowestSince + trailingMult * atr;
-                if (resistance !== undefined && resistance !== null && resistance < newStop) {
-                    newStop = Math.min(newStop, resistance);
-                }
-                if (fvgZones && fvgZones.length > 0) {
-                    const fvgCeiling = Math.max(...fvgZones.map(f => f.high));
-                    newStop = Math.min(newStop, fvgCeiling + atr);
-                }
-                if (position.breakeven && position.breakeven_stop) {
-                    newStop = Math.min(newStop, position.breakeven_stop);
-                }
-                position.stop = Math.min(position.stop, newStop);
-            }
-
-            if (index % 10 === 0) {
-                console.log(
-                    `[TRAILING V7] ${position.type} @ #${index} | mult=${trailingMult.toFixed(2)} | stop=$${position.stop.toFixed(0)} | support=${support} | resistance=${resistance}`
-                    );
-            }
-            return position.stop;
-        }
-
-        // ================================================================
-        // 0.15 TARGETS E BREAKEVEN (MANTIDOS)
-        // ================================================================
-        function generateScaledTargetsV7(entry, stop, signalType, volatilityRegime) {
+        function generateScaledTargetsV8(entry, stop, signalType, volatilityRegime, regime) {
             const risk = Math.abs(entry - stop);
-            const p = STOP_PARAMS_V7[volatilityRegime] || STOP_PARAMS_V7.NORMAL;
+            let p;
+            if (regime === 'RANGE') {
+                p = { tp1: 1.5, tp2: 2.5, tp3: 3.5 };
+            } else {
+                p = { tp1: 2.0, tp2: 3.5, tp3: 5.0 };
+            }
             const slippageBps = 5;
             const fees = 0.001;
             const configs = [
@@ -2123,7 +2408,12 @@
                 { rr: p.tp2, size: 0.30, label: 'TP2' },
                 { rr: p.tp3, size: 0.40, label: 'TP3' }
             ];
-            return configs.map((config, idx) => {
+            if (regime === 'RANGE') {
+                // Em range, fecha tudo em TP2
+                configs[1].size = 0.70;
+                configs[2].size = 0.0;
+            }
+            return configs.filter(c => c.size > 0).map((config, idx) => {
                 const targetBruto = signalType === 'LONG' ?
                     entry + config.rr * risk :
                     entry - config.rr * risk;
@@ -2149,14 +2439,13 @@
             });
         }
 
-        function updateBreakevenStopV3(position, targetHit, atr, regime = 'NORMAL') {
+        function updateBreakevenStopV8(position, targetHit, atr, regime) {
             if (targetHit === 'TP1') {
-                const regimeBuffer = { SQUEEZE: 0.3, LOW: 0.4, NORMAL: 0.5, HIGH: 0.7 };
-                const buffer = atr * (regimeBuffer[regime] || 0.5);
-                if (position.type === 'LONG') {
-                    position.stop = position.entry + (position.entry * 0.002) + buffer;
+                const buffer = atr * (regime === 'RANGE' ? 0.3 : 0.5);
+                if (position.side === 'LONG') {
+                    position.stop = position.entryPrice + (position.entryPrice * 0.002) + buffer;
                 } else {
-                    position.stop = position.entry - (position.entry * 0.002) - buffer;
+                    position.stop = position.entryPrice - (position.entryPrice * 0.002) - buffer;
                 }
                 position.breakeven = true;
                 position.breakeven_stop = position.stop;
@@ -2165,28 +2454,29 @@
         }
 
         // ================================================================
-        // 0.16 CONFIRMAÇÃO V7 (INTEGRANDO TODAS AS MELHORIAS)
+        // 0.18 FUNÇÕES AUXILIARES (NÍVEIS DINÂMICOS, VOLUME)
         // ================================================================
-        function checkVolumeLiquidity(volume, avgVolume, signal, isBacktest = false) {
-            const volRel = volume / (avgVolume || 1);
-            const volThreshold = isBacktest ? 1.0 : 1.4;
-            if (volRel < volThreshold) return { ok: false, reason: 'volume baixo' };
-            return { ok: true, volRel };
-        }
-
-        function fundingOnChainBias(signal, fundingRate, mvrv, sopr, minerOutflow) {
-            let score = 0;
-            if (signal === 'LONG' && fundingRate < -0.0008) score += 22;
-            else if (signal === 'SHORT' && fundingRate > 0.0008) score += 22;
-            else if ((signal === 'LONG' && fundingRate > 0.0008) || (signal === 'SHORT' && fundingRate < -0.0008)) score -=
-                20;
-            if (mvrv < 0.85 && sopr < 0.9 && minerOutflow > 500) {
-                if (signal === 'LONG') score += 18;
-                else score -= 15;
+        function getDynamicLevels(candles) {
+            if (!candles || candles.length < 20) {
+                return { support: 58000, resistance: 70000 };
             }
-            return score;
+            const slice = candles.slice(-20);
+            const support = Math.min(...slice.map(c => c.low));
+            const resistance = Math.max(...slice.map(c => c.high));
+            return { support, resistance };
         }
 
+        function getVolumeStats(candles) {
+            if (!candles || candles.length < 1) return { volume: 0, avgVolume: 0 };
+            const volumes = candles.map(c => c.volume || 0);
+            const avg = volumes.reduce((a, b) => a + b, 0) / volumes.length;
+            const current = volumes[volumes.length - 1] || 0;
+            return { volume: current, avgVolume: avg };
+        }
+
+        // ================================================================
+        // 0.19 FUNÇÕES DE TRENDING (ADX, STRENGTH)
+        // ================================================================
         function getTrendStrength(candles) {
             if (!candles || candles.length < 20) return { adx: 20, slope: 0, trending: false };
             const closes = candles.map(d => d.close);
@@ -2209,206 +2499,10 @@
             return { adx, slope, trending };
         }
 
-        async function confirmSignalV7(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, isBacktest = false) {
-            if (!signal || signal === 'NEUTRAL') {
-                return {
-                    approved: false,
-                    score: 0,
-                    reasons: ['Sinal neutro'],
-                    regime: 'NORMAL',
-                    required: 60,
-                    scoreBonus: 0,
-                    scoreComponents: {}
-                };
-            }
-
-            if (!isBacktest && !isGoodTradingHour()) {
-                return { approved: false, score: 0, reasons: ['Horário de baixa liquidez'], regime: 'NORMAL',
-                    required: 60, scoreBonus: 0, scoreComponents: {} };
-            }
-
-            const requiredScore = isBacktest ? 55 : 60;
-            const atr = data.atr || calculateATR(candles.map(c => c.close)) || data.price * 0.02;
-            const price = data.price;
-
-            // ---------- MELHORIA 4: Filtro de Volatilidade Extrema ----------
-            if (!isBacktest) {
-                const atrPct = (atr / price) * 100;
-                atrPercentHistory.push(atrPct);
-                if (atrPercentHistory.length > 100) atrPercentHistory.shift();
-                if (isVolatilityExtreme(atrPct, atrPercentHistory, 90)) {
-                    return { approved: false, score: 0, reasons: ['Volatilidade extrema'], regime: 'NORMAL',
-                        required: requiredScore, scoreBonus: 0, scoreComponents: {} };
-                }
-            }
-
-            // ---------- MELHORIA 1: Suporte/Resistência e Volume Dinâmicos ----------
-            const dynamic = getDynamicLevels(candles);
-            const volStats = getVolumeStats(candles);
-            data.support = dynamic.support;
-            data.resistance = dynamic.resistance;
-            data.volume = volStats.volume;
-            data.avgVolume = volStats.avgVolume;
-            data.atr = atr;
-
-            // ---------- MELHORIA 2: Profundidade do Book (Liquidez) ----------
-            if (!isBacktest) {
-                const posSize = data.positionSize || 0.01;
-                const side = signal === 'LONG' ? 'BUY' : 'SELL';
-                const liq = await checkLiquidityDepth('BTCUSDT', posSize, side);
-                if (!liq.enough) {
-                    return { approved: false, score: 0, reasons: ['Liquidez insuficiente no book'], regime: 'NORMAL',
-                        required: requiredScore, scoreBonus: 0, scoreComponents: {} };
-                }
-                // Se liquidez abundante, pode ajustar score (opcional)
-                if (liq.maxSize > posSize * 10) {
-                    // bônus pequeno
-                }
-            }
-
-            // ---------- SCORES NORMALIZADOS (V6) ----------
-            let pa_score = 50;
-            if (data.price && data.support && data.resistance) {
-                const range = data.resistance - data.support;
-                const position = (data.price - data.support) / range;
-                if (signal === 'LONG') {
-                    if (position > 0.7) pa_score = 75;
-                    else if (position > 0.5) pa_score = 65;
-                    else if (position < 0.3) pa_score = 45;
-                    else pa_score = 55;
-                } else {
-                    if (position < 0.3) pa_score = 75;
-                    else if (position < 0.5) pa_score = 65;
-                    else if (position > 0.7) pa_score = 45;
-                    else pa_score = 55;
-                }
-            }
-
-            const rsi = data.rsi || 50;
-            const rsi_overextended = (signal === 'LONG' && rsi > 70) || (signal === 'SHORT' && rsi < 30);
-            const rsi_aligned = (signal === 'LONG' && rsi > 50) || (signal === 'SHORT' && rsi < 50);
-            let momentum_score = 50;
-            if (rsi_overextended) momentum_score = 35;
-            else if (rsi_aligned) momentum_score = 65;
-
-            let macro_score = 50;
-            const has_good = (data.mvrv && data.mvrv < 0.85) && (data.sopr && data.sopr < 0.9);
-            const has_bad = (data.mvrv && data.mvrv > 1.3) && (data.sopr && data.sopr > 1.1);
-            if (has_good) macro_score = 75;
-            else if (has_bad) macro_score = 25;
-            else macro_score = 50;
-
-            let liq_score = isBacktest ? 60 : 50;
-
-            const ml_prob = predictDirectionV3(data);
-            const ml_score = 20 + ml_prob * 60;
-
-            let mtf_score = 50;
-            if (mtfData && mtfData.c1h && mtfData.c1h.length > 0) {
-                const aligned = checkMTFAlignment(mtfData, signal, data.price);
-                mtf_score = aligned ? 85 : 20;
-            }
-
-            let vol_score = 50;
-            if (data.volume && data.avgVolume) {
-                const volRel = data.volume / data.avgVolume;
-                if (volRel > 1.5) vol_score = 70;
-                else if (volRel > 1.0) vol_score = 60;
-                else vol_score = 40;
-            }
-
-            let funding_score = 50;
-            const f_aligned = (signal === 'LONG' && data.fundingRate < -0.0005) ||
-                (signal === 'SHORT' && data.fundingRate > 0.0005);
-            if (f_aligned) funding_score = 70;
-            else if ((signal === 'LONG' && data.fundingRate > 0.0008) ||
-                (signal === 'SHORT' && data.fundingRate < -0.0008)) {
-                funding_score = 30;
-            }
-
-            // ---------- MELHORIA 3: Divergência Aprimorada ----------
-            let div_score = 50;
-            if (candles && candles.length > 0 && rsiVals && rsiVals.length > 0) {
-                const divPenalty = detectDivergenceMultiV7(candles, rsiVals, macdVals, obvVals, signal, atr);
-                div_score = Math.min(70, Math.max(30, 50 + divPenalty));
-            }
-
-            let trend_score = 50;
-            if (candles && candles.length > 0) {
-                const { adx, trending } = getTrendStrength(candles);
-                if (trending && adx > 40) trend_score = 80;
-                else if (trending) trend_score = 70;
-                else if (adx < 20) trend_score = 30;
-                else trend_score = 50;
-            }
-
-            const scores = {
-                price_action: pa_score,
-                momentum: momentum_score,
-                macro_crypto: macro_score,
-                liquidity_spread: liq_score,
-                ml_probability: ml_score,
-                mtf_alignment: mtf_score,
-                volume_liquidity: vol_score,
-                funding_onchain: funding_score,
-                divergence_penalty: div_score,
-                trend_strength: trend_score
-            };
-
-            const weights = {
-                price_action: 0.12,
-                momentum: 0.12,
-                macro_crypto: 0.10,
-                liquidity_spread: 0.08,
-                ml_probability: 0.08,
-                mtf_alignment: 0.10,
-                volume_liquidity: 0.12,
-                funding_onchain: 0.14,
-                divergence_penalty: 0.10,
-                trend_strength: 0.14
-            };
-
-            let finalScore = 0;
-            for (const [key, weight] of Object.entries(weights)) {
-                finalScore += (scores[key] || 50) * weight;
-            }
-            finalScore = Math.min(100, Math.max(0, finalScore));
-
-            const approve = finalScore >= requiredScore;
-
-            const reasons = [
-                `Price Action: ${scores.price_action.toFixed(0)}/100`,
-                `Trend: ${scores.trend_strength.toFixed(0)}/100`,
-                `Momentum: ${scores.momentum.toFixed(0)}/100`,
-                `Volume: ${scores.volume_liquidity.toFixed(0)}/100`,
-                `MTF: ${scores.mtf_alignment.toFixed(0)}/100`
-            ];
-
-            return {
-                approved: approve,
-                score: finalScore,
-                reasons: reasons,
-                regime: calculateVolatilityRegimeV3(candles.map(c => c.close)) || 'NORMAL',
-                required: requiredScore,
-                scoreBonus: approve ? (finalScore - 50) * 0.3 : -25,
-                scoreComponents: scores,
-                support: data.support,
-                resistance: data.resistance
-            };
-        }
-
-        function predictDirectionV3(data) {
-            const rsiScore = data.rsi ? (data.rsi - 50) / 50 : 0;
-            const fundingScore = data.fundingRate ? -data.fundingRate * 10000 : 0;
-            const mvrvScore = data.mvrv ? (1 - data.mvrv) * 2 : 0;
-            const prob = 0.5 + 0.1 * rsiScore + 0.1 * fundingScore + 0.1 * mvrvScore;
-            return Math.min(1, Math.max(0, prob));
-        }
-
         // ================================================================
-        // 0.17 ALERTA EM TEMPO REAL V7
+        // 0.20 ALERTA EM TEMPO REAL V8
         // ================================================================
-        async function checkAdditionalAlertsV7(score, components) {
+        async function checkAdditionalAlertsV8(score, components) {
             const now = Date.now();
             if (now - lastAlertTime < ALERT_COOLDOWN) return;
 
@@ -2420,7 +2514,6 @@
             const soprEl = document.getElementById('sopr');
             const sopr = soprEl ? parseFloat(soprEl.textContent) : 0.95;
 
-            // Dados iniciais (serão substituídos pelos dinâmicos)
             const data = {
                 price,
                 rsi: 50,
@@ -2437,7 +2530,8 @@
                 volume: 0,
                 avgVolume: 0,
                 minerOutflow: 500,
-                positionSize: 0.01
+                positionSize: 0.01,
+                adx: 25
             };
 
             let signal = null;
@@ -2445,16 +2539,12 @@
             else if (score <= 25) signal = 'SHORT';
             if (!signal) return;
 
-            // Buscar dados MTF
             const mtfData = await fetchMTFData('BTCUSDT');
-
-            // Preparar candles para análise
             const candles = candleHistory.length > 0 ? candleHistory : [];
             const rsiVals = rsiHistory.length > 0 ? rsiHistory : [];
             const macdVals = macdHistory.length > 0 ? macdHistory : [];
             const obvVals = obvHistory.length > 0 ? obvHistory : [];
 
-            // Usar dados dinâmicos (Melhoria 1)
             const dynamic = getDynamicLevels(candles);
             const volStats = getVolumeStats(candles);
             data.support = dynamic.support;
@@ -2464,14 +2554,17 @@
             const atr = calculateATR(candles.map(c => c.close)) || price * 0.02;
             data.atr = atr;
 
-            // Confirmar sinal com V7
-            const conf = await confirmSignalV7(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false);
+            // ADX aproximado
+            const trend = getTrendStrength(candles);
+            data.adx = trend.adx || 25;
+
+            const conf = await confirmSignalV8(signal, data, candles, rsiVals, macdVals, obvVals, mtfData, false);
             if (!conf.approved) {
-                console.log(`Sinal bloqueado: score ${conf.score.toFixed(0)}/100 (requerido ≥60)`);
+                console.log(`Sinal bloqueado: score ${conf.score.toFixed(0)}/100 (requerido ≥${conf.required})`);
                 return;
             }
 
-            // Atualizar histórico para otimização
+            // Atualiza histórico
             tradeHistory.push({
                 outcome: false,
                 features: conf.scoreComponents || {}
@@ -2482,24 +2575,23 @@
             }
 
             // Parâmetros de risco
-            const regime = conf.regime || 'NORMAL';
-            const p = STOP_PARAMS_V7[regime];
-            const stopPrice = signal === 'LONG' ? price - p.stop * atr : price + p.stop * atr;
+            const regime = conf.regime || 'NEUTRO';
+            const stopPrice = getStopLossV8(regime, atr, price, signal, conf.support, conf.resistance);
             const stop = Math.max(stopPrice, 0);
 
-            let targets = generateScaledTargetsV7(price, stop, signal, regime);
+            let targets = generateScaledTargetsV8(price, stop, signal, 'NORMAL', regime);
             let finalScore = score + conf.scoreBonus;
             finalScore = Math.min(100, Math.max(0, finalScore));
 
             const rationale =
-                `Filtros V7: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Targets escalonados. MTF: ${conf.reasons[0]}. Suporte/Resistência dinâmico.`;
+                `Filtros V8: ${conf.score.toFixed(0)}/100 score. Regime: ${regime}. Targets escalonados. MTF: ${conf.reasons[0]}. Suporte/Resistência horizontal.`;
 
             await sendStructuredAlert(signal, finalScore, price, stop, targets, rationale, components);
             lastAlertTime = now;
         }
 
         // ================================================================
-        // 0.18 SCORE INSTITUCIONAL (MANTIDO)
+        // 0.21 SCORE INSTITUCIONAL (MANTIDO)
         // ================================================================
         let globalData = {
             price: 60000,
@@ -2556,6 +2648,19 @@
                 }
             }
 
+            // Aplica pesos dinâmicos se houver regime definido
+            const regime = currentRegime || 'BULL';
+            const dynWeights = getDynamicWeights(regime);
+            // Mescla com os pesos otimizados (prioriza os dinâmicos)
+            const weights = {
+                trend: dynWeights.trend,
+                momentum: dynWeights.momentum,
+                structure: dynWeights.structure,
+                onchain: dynWeights.onChain,
+                volume: dynWeights.volume,
+                oi: dynWeights.oi
+            };
+
             const price = data.price || 60000;
             const ema50 = data.ema50 || 65000;
             const ema200 = data.ema200 || 62000;
@@ -2590,9 +2695,9 @@
             let oi = clamp(oiDelta / 20, -1, 1);
             oi = (oi + 1) / 2;
 
-            let raw = (t * componentWeights.trend + m * componentWeights.momentum +
-                se * componentWeights.structure + o * componentWeights.onchain +
-                vol * componentWeights.volume + oi * componentWeights.oi);
+            let raw = (t * weights.trend + m * weights.momentum +
+                se * weights.structure + o * weights.onchain +
+                vol * weights.volume + oi * weights.oi);
             raw = clamp((raw + 1) / 2, 0, 1);
             let finalScore = raw * 100;
             if (Math.abs(oiDelta) > 10) {
@@ -2640,7 +2745,7 @@
             document.getElementById('score-volume').textContent = components.volume;
             document.getElementById('score-oi').textContent = components.oi;
 
-            checkAdditionalAlertsV7(score, components);
+            checkAdditionalAlertsV8(score, components);
         }
 
         // ================================================================
@@ -3004,7 +3109,6 @@
                         const data = JSON.parse(event.data);
                         const candle = data.k;
                         if (candle.x) {
-                            // Atualizar gráfico BTC (apenas se 1m ativo)
                             const chartObj = candleCharts['candle-btc'];
                             if (chartObj && document.querySelector('#candle-btc .tf-btn.active')?.dataset.tf ===
                                 '1m') {
@@ -3028,8 +3132,6 @@
                                 }
                                 chartObj.chart.timeScale().fitContent();
                             }
-
-                            // Atualizar histórico para análise
                             const close = parseFloat(candle.c);
                             const newCandleObj = {
                                 time: candle.t / 1000,
@@ -3047,7 +3149,6 @@
                             const macdVal = calculateMACD(closes);
                             if (macdVal !== null) macdHistory.push(macdVal);
                             else macdHistory.push(0);
-                            // OBV
                             const obvVal = calculateOBV(candleHistory);
                             obvHistory.push(obvVal);
                             if (rsiHistory.length > 50) rsiHistory.shift();
@@ -3311,7 +3412,7 @@
         }
 
         // ================================================================
-        // 7. BACKTEST 4H (V7)
+        // 7. BACKTEST 4H (V8)
         // ================================================================
         let backtestRunning = false;
 
@@ -3397,11 +3498,10 @@
                         `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
                     backtestRunning = false;
                     btn.disabled = false;
-                    btn.textContent = '▶ Executar Backtest V7';
+                    btn.textContent = '▶ Executar Backtest V8';
                     return;
                 }
 
-                // Pré-cache MTF
                 console.log('📥 Pré-carregando MTF...');
                 let mtfData = await fetchMTFData('BTCUSDT');
                 if (mtfData.c1h.length === 0 && mtfData.c4h.length === 0 && mtfData.c1d.length === 0) {
@@ -3443,21 +3543,16 @@
                     atrValues.push(calcATR(slice, 14));
                 }
 
-                const atrPcts = atrValues.filter(a => a > 0);
-                const p70 = percentile(atrPcts, 70) || 1;
-
                 for (let i = 20; i < dataset.length; i++) {
                     const candle = dataset[i];
                     const price = candle.close;
                     const atr = atrValues[i] || price * 0.02;
-                    const atrPctRankNorm = (atr / p70) * 70;
 
                     const closes = dataset.slice(0, i + 1).map(d => d.close);
                     const ema20 = calculateEMA(closes, 20) || price;
                     const ema50 = calculateEMA(closes, 50) || price;
                     const rsi = calculateRSI(closes, 14) || 50;
                     const macdVal = calculateMACD(closes) || 0;
-                    // OBV para backtest (simulado)
                     const obvVal = calculateOBV(dataset.slice(0, i + 1));
 
                     let signal = 'NEUTRAL';
@@ -3480,36 +3575,37 @@
                         support: Math.min(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.low)),
                         resistance: Math.max(...dataset.slice(Math.max(0, i - 20), i + 1).map(d => d.high)),
                         positionSize: 0.01,
-                        atr: atr
+                        atr: atr,
+                        adx: 25 // estimado no backtest
                     };
 
                     const rsiSlice = closes.map(c => calculateRSI(closes.slice(0, i + 1)));
                     const macdSlice = closes.map(c => calculateMACD(closes.slice(0, i + 1)) || 0);
-                    // OBV slice para backtest (simples)
                     const obvSlice = dataset.slice(0, i + 1).map((_, idx) => calculateOBV(dataset.slice(0, idx + 1)));
 
-                    const conf = await confirmSignalV7(signal, simData, dataset.slice(0, i + 1),
+                    const conf = await confirmSignalV8(signal, simData, dataset.slice(0, i + 1),
                         rsiSlice, macdSlice, obvSlice, mtfData, true
                     );
                     if (!conf.approved) signal = 'NEUTRAL';
 
-                    const regime = conf.regime || 'NORMAL';
-                    const p = STOP_PARAMS_V7[regime];
+                    const regime = conf.regime || 'NEUTRO';
+                    const p = STOP_PARAMS_V8['NORMAL'];
 
                     if (position === null && signal !== 'NEUTRAL') {
-                        const stopPrice = signal === 'LONG' ? price - p.stop * atr : price + p.stop * atr;
+                        const stopPrice = getStopLossV8(regime, atr, price, signal, conf.support, conf.resistance);
                         const entry = price * (1 + (signal === 'LONG' ? SLIPPAGE : -SLIPPAGE));
                         const risk = Math.abs(entry - stopPrice);
-                        const kellyPct = calculateKellySizingV3(alertLog, initialCapital, balance);
+                        CAPITAL = balance; // atualiza capital para Kelly
+                        const kellyPct = calculateKellySizingV8();
                         const riskAmount = balance * kellyPct;
                         const size = riskAmount / risk;
 
-                        let targets = generateScaledTargetsV7(entry, stopPrice, signal, regime);
+                        let targets = generateScaledTargetsV8(entry, stopPrice, signal, 'NORMAL', regime);
                         const fvgZones = [{ low: simData.support, high: simData.resistance }];
 
                         position = {
-                            type: signal,
-                            entry: entry,
+                            side: signal,
+                            entryPrice: entry,
                             stop: stopPrice,
                             targets: targets,
                             size: size,
@@ -3522,7 +3618,9 @@
                             initialATR: atr,
                             regime: regime,
                             remainingSize: size,
-                            fvgZones: fvgZones
+                            fvgZones: fvgZones,
+                            tp1Hit: false,
+                            tp2Hit: false
                         };
                     } else if (position !== null) {
                         const high = candle.high;
@@ -3531,25 +3629,25 @@
                         let exitReason = '';
                         let exitSize = 0;
 
-                        if (position.type === 'LONG') {
+                        if (position.side === 'LONG') {
                             if (high > position.highestPrice) position.highestPrice = high;
                         } else {
                             if (low < position.lowestPrice) position.lowestPrice = low;
                         }
 
-                        // Trailing V7 com suporte/resistência dinâmicos
-                        const currentStop = advancedTrailingStopV7(position, dataset.slice(0, i + 1), i, price,
-                            atr, atrPctRankNorm, position.fvgZones, simData.support, simData.resistance);
-                        position.stop = currentStop;
+                        // Trailing V8
+                        const newStop = updateTrailingStopV8(regime, position, price, atr, conf.support, conf
+                        .resistance);
+                        position.stop = newStop;
 
                         for (let idx = 0; idx < position.targets.length; idx++) {
                             if (!position.tpHit[idx] && position.remainingSize > 0) {
                                 const tp = position.targets[idx];
                                 let hit = false;
-                                if (position.type === 'LONG' && high >= tp.price) {
+                                if (position.side === 'LONG' && high >= tp.price) {
                                     hit = true;
                                     exitPrice = tp.price * (1 - SLIPPAGE);
-                                } else if (position.type === 'SHORT' && low <= tp.price) {
+                                } else if (position.side === 'SHORT' && low <= tp.price) {
                                     hit = true;
                                     exitPrice = tp.price * (1 + SLIPPAGE);
                                 }
@@ -3560,7 +3658,15 @@
                                     position.tpHit[idx] = true;
                                     position.remainingSize -= sizeToClose;
                                     if (idx === 0) {
-                                        updateBreakevenStopV3(position, 'TP1', atr, regime);
+                                        updateBreakevenStopV8(position, 'TP1', atr, regime);
+                                        position.tp1Hit = true;
+                                    }
+                                    if (idx === 1) {
+                                        position.tp2Hit = true;
+                                        // Em range, fecha tudo
+                                        if (regime === 'RANGE' || position.targets.length === 2) {
+                                            // Já fechou tudo em TP2
+                                        }
                                     }
                                     break;
                                 }
@@ -3568,11 +3674,11 @@
                         }
 
                         if (exitPrice === null && position.remainingSize > 0) {
-                            if (position.type === 'LONG' && low <= position.stop) {
+                            if (position.side === 'LONG' && low <= position.stop) {
                                 exitPrice = position.stop * (1 - SLIPPAGE);
                                 exitReason = 'Stop Loss';
                                 exitSize = position.remainingSize;
-                            } else if (position.type === 'SHORT' && high >= position.stop) {
+                            } else if (position.side === 'SHORT' && high >= position.stop) {
                                 exitPrice = position.stop * (1 + SLIPPAGE);
                                 exitReason = 'Stop Loss';
                                 exitSize = position.remainingSize;
@@ -3581,33 +3687,33 @@
 
                         if (exitPrice === null && position.remainingSize > 0) {
                             const currentSignal = signal;
-                            if ((position.type === 'LONG' && (currentSignal === 'SHORT' || currentSignal === 'NEUTRAL')) ||
-                                (position.type === 'SHORT' && (currentSignal === 'LONG' || currentSignal === 'NEUTRAL'))
+                            if ((position.side === 'LONG' && (currentSignal === 'SHORT' || currentSignal === 'NEUTRAL')) ||
+                                (position.side === 'SHORT' && (currentSignal === 'LONG' || currentSignal === 'NEUTRAL'))
                                 ) {
-                                exitPrice = price * (1 + (position.type === 'LONG' ? -SLIPPAGE : SLIPPAGE));
+                                exitPrice = price * (1 + (position.side === 'LONG' ? -SLIPPAGE : SLIPPAGE));
                                 exitReason = 'Reversão';
                                 exitSize = position.remainingSize;
                             }
                         }
 
                         if (exitPrice === null && i === dataset.length - 1 && position.remainingSize > 0) {
-                            exitPrice = price * (1 + (position.type === 'LONG' ? -SLIPPAGE : SLIPPAGE));
+                            exitPrice = price * (1 + (position.side === 'LONG' ? -SLIPPAGE : SLIPPAGE));
                             exitReason = 'Fim';
                             exitSize = position.remainingSize;
                         }
 
                         if (exitPrice !== null && exitSize > 0) {
-                            const pnl = (position.type === 'LONG') ? (exitPrice - position.entry) : (position.entry -
-                                exitPrice);
-                            const pnlPct = (pnl / position.entry) * 100;
+                            const pnl = (position.side === 'LONG') ? (exitPrice - position.entryPrice) : (position
+                                .entryPrice - exitPrice);
+                            const pnlPct = (pnl / position.entryPrice) * 100;
                             const pnlUsd = pnl * exitSize * (1 - FEE);
                             balance += pnlUsd;
 
                             trades.push({
                                 entryDate: dataset[position.entryIndex].date,
                                 exitDate: candle.date,
-                                type: position.type,
-                                entryPrice: position.entry,
+                                type: position.side,
+                                entryPrice: position.entryPrice,
                                 exitPrice: exitPrice,
                                 pnlPct: pnlPct,
                                 pnlUsd: pnlUsd,
@@ -3702,7 +3808,7 @@
                     html += `<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>`;
                 } else {
                     html += `
-                        <h4 style="color:var(--text-light); margin: 20px 0 10px 0;">📋 Histórico de Trades V7 (4h)</h4>
+                        <h4 style="color:var(--text-light); margin: 20px 0 10px 0;">📋 Histórico de Trades V8 (4h)</h4>
                         <div class="backtest-table-wrap">
                             <table>
                                 <thead>
@@ -3743,7 +3849,7 @@
                 html += `
                     <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 12px;">
                         Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • Capital inicial: US$ ${initialCapital.toFixed(0)}
-                        • Filtros V7: Suporte/Resistência/Volume dinâmicos, Liquidez real, Divergência RSI+MACD+OBV (-40 penalidade), Volatilidade extrema (90º perc), Trailing com SR
+                        • Filtros V8: Regime Adaptativo, Choppiness, S/R horizontal, Volume anormal, Clusters de ordens, Divergência de volume delta, Trailing com S/R
                     </p>
                 `;
 
@@ -3761,7 +3867,7 @@
 
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest V7';
+            btn.textContent = '▶ Executar Backtest V8';
         }
 
         // ================================================================
@@ -3841,6 +3947,7 @@
         window.refreshAll = fetchBinanceDerivatives;
         window.optimizeWeights = updateFilterWeightsV6;
         window.filterWeights = filterWeights;
+        window.currentRegime = currentRegime;
     </script>
 </body>
 </html>
