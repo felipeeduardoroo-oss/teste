@@ -297,7 +297,7 @@ footer { background:var(--primary); border-top:2px solid var(--accent-blue); pad
 <div class="chart-wrapper"><canvas id="chart_allocation"></canvas></div>
 </section>
 <section>
-<h2 class="section-title">📊 BACKTEST — V14 (COM REENTRADA E STOP-REVERSE)</h2>
+<h2 class="section-title">📊 BACKTEST — V14.1 (CONF CORRIGIDO)</h2>
 <div class="backtest-section">
 <div class="backtest-header">
 <div class="config-group">
@@ -312,12 +312,12 @@ footer { background:var(--primary); border-top:2px solid var(--accent-blue); pad
 </select>
 </span>
 </div>
-<button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V14</button>
+<button class="btn-backtest-run" id="runBacktestBtn">▶ Executar Backtest V14.1</button>
 </div>
 <div id="backtestResults"><div class="backtest-loading"><div class="spinner"></div><p>Carregando dados históricos (4h) + on-chain...</p></div></div>
 </div>
 </section>
-<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V14</h4><p>Base V13 + duas estratégias opcionais: (1) Reentrada independente após stop (com cooldown, score e regime confirmando); (2) Stop-and-reverse com confirmação (rejeição de candle + score oposto, restrito a BULL/BEAR). Última notificação Telegram exibida no score card.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
+<footer><div class="footer-content"><div class="footer-section"><h4>📋 Metodologia V14.1</h4><p>Base V13 + duas estratégias opcionais: (1) Reentrada independente após stop (com cooldown, score e regime confirmando); (2) Stop-and-reverse com confirmação (rejeição de candle + score oposto, restrito a BULL/BEAR). Última notificação Telegram exibida no score card. Corrigido erro 'conf is not defined'.</p><p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p><p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p></div><div class="disclaimer"><strong>🔴 AVISO LEGAL</strong><br>Uso exclusivamente informativo. Não é recomendação de investimento.</div></div></footer>
 </div>
 <button class="telegram-test-btn" id="test-telegram-btn"><span id="test-btn-label">📨 Testar Alerta</span></button>
 <script>
@@ -800,7 +800,7 @@ function evaluateStopReverse(stoppedPosition, candles, currentSimData, currentRe
 }
 
 // ================================================================
-// CONFIRMAÇÃO DE SINAL V14 (integra estratégias avançadas)
+// CONFIRMAÇÃO DE SINAL V14
 // ================================================================
 function getDynamicWeights(regime) { return regimeWeights[regime] || regimeWeights.BULL; }
 function getDynamicFilterWeights(regime) {
@@ -1327,7 +1327,7 @@ function updateScoreDisplay(scoreData) {
 }
 
 // ================================================================
-// ALERTA EM TEMPO REAL V14 (com reentrada e stop-reverse)
+// ALERTA EM TEMPO REAL V14
 // ================================================================
 async function checkAdditionalAlertsV14(score, components) {
     const now = Date.now();
@@ -1409,7 +1409,7 @@ async function checkAdditionalAlertsV14(score, components) {
 }
 
 // ================================================================
-// BACKTEST V14 (com checkboxes para reentrada e stop-reverse)
+// BACKTEST V14.1 (CORRIGIDO: conf is not defined)
 // ================================================================
 async function fetchOnChainSeriesForBacktest(candles4h) {
     if (!candles4h || candles4h.length < 2) return new Map();
@@ -1446,7 +1446,6 @@ async function runBacktest() {
     btn.textContent = '⏳ Carregando...';
     container.innerHTML = '<div class="backtest-loading"><div class="spinner"></div><p>Carregando dados 4h + on-chain...</p></div>';
 
-    // Ler checkboxes
     enableReentry = document.getElementById('enableReentry').checked;
     enableStopReverse = document.getElementById('enableStopReverse').checked;
 
@@ -1499,7 +1498,7 @@ async function runBacktest() {
                 `<div class="no-trades"><p>⚠️ Dados insuficientes (${dataset.length} candles 4h).</p></div>`;
             backtestRunning = false;
             btn.disabled = false;
-            btn.textContent = '▶ Executar Backtest V14';
+            btn.textContent = '▶ Executar Backtest V14.1';
             return;
         }
         console.log(`📥 Buscando on-chain histórico para ${days} dias...`);
@@ -1538,6 +1537,9 @@ async function runBacktest() {
             const slice = dataset.slice(Math.max(0, i - 14), i + 1);
             atrValues.push(calcATR(slice, 14));
         }
+
+        // Variável conf declarada fora do loop
+        let conf = null;
 
         for (let i = 20; i < dataset.length; i++) {
             const candle = dataset[i],
@@ -1612,25 +1614,19 @@ async function runBacktest() {
                 }
             }
 
-            // Prioridade: se reverse ativo, override; senão reentry; senão sinal normal
             if (reverseSignal !== null) {
                 signal = reverseSignal;
-                // Forçar entrada mesmo que o score normal não tenha gerado sinal
             } else if (reentrySignal !== null && signal === 'NEUTRAL') {
                 signal = reentrySignal;
-                // Reentry só ocorre se não há sinal normal (evita duplicação)
             }
 
-            // Se signal for NEUTRAL, não avança
             if (signal === 'NEUTRAL') {
-                // Ainda assim, incrementa contagem de candles desde stop
                 if (lastStoppedPosition) candlesSinceStop++;
                 continue;
             }
 
-            // Reset do cooldown se entrou em uma nova posição
+            // Se position é null, tenta abrir nova posição
             if (position === null) {
-                // Verifica se é reentry ou reverse e registra
                 const fullData = {
                     price,
                     rsi,
@@ -1658,7 +1654,8 @@ async function runBacktest() {
                 const mtfDataPoint = buildHistoricalMTF(dataset, i);
                 const clusterData = { cluster: false, volume: 0 };
 
-                const conf = await confirmSignalV14(signal, fullData, dataset.slice(0, i + 1), rsiSlice, macdSlice,
+                // Chamada para confirmSignalV14; conf é definida aqui
+                conf = await confirmSignalV14(signal, fullData, dataset.slice(0, i + 1), rsiSlice, macdSlice,
                     obvSlice, mtfDataPoint, true, clusterData);
                 if (!conf.approved) {
                     rejectedCount++;
@@ -1699,16 +1696,12 @@ async function runBacktest() {
                     tp1Hit: false,
                     tp2Hit: false
                 };
-                // Reset contagem de stop se reentrou
-                if (lastStoppedPosition && (signal === lastStoppedPosition.side || signal !== lastStoppedPosition.side)) {
-                    // Se entrou (seja reentry ou reverse), reset
-                    if (enableReentry || enableStopReverse) {
-                        // Reset apenas se a ação foi tomada
-                        lastStoppedPosition = null;
-                        candlesSinceStop = 999;
-                    }
+                if (lastStoppedPosition) {
+                    lastStoppedPosition = null;
+                    candlesSinceStop = 999;
                 }
             } else {
+                // Gerenciar posição existente
                 const high = candle.high,
                     low = candle.low;
                 let exitPrice = null,
@@ -1716,8 +1709,10 @@ async function runBacktest() {
                     exitSize = 0;
                 if (position.side === 'LONG') { if (high > position.highestPrice) position.highestPrice = high; } else { if (
                         low < position.lowestPrice) position.lowestPrice = low; }
-                const newStop = updateTrailingStopV8(position.regime || 'NEUTRO', position, price, atr, conf?.support ||
-                    0, conf?.resistance || Infinity);
+                // Se conf não foi definido (não houve nova confirmação), usamos valores padrão
+                const support = conf?.support || position.fvgZones[0]?.low || 0;
+                const resistance = conf?.resistance || position.fvgZones[0]?.high || Infinity;
+                const newStop = updateTrailingStopV8(position.regime || 'NEUTRO', position, price, atr, support, resistance);
                 position.stop = newStop;
                 for (let idx = 0; idx < position.targets.length; idx++) {
                     if (!position.tpHit[idx] && position.remainingSize > 0) {
@@ -1792,7 +1787,6 @@ async function runBacktest() {
                     const dd = (peak - balance) / peak;
                     if (dd > maxDrawdown) maxDrawdown = dd;
                     position.remainingSize -= exitSize;
-                    // Se saiu por Stop Loss, guardar para reentrada/reverse
                     if (exitReason === 'Stop Loss') {
                         lastStoppedPosition = {
                             side: position.side,
@@ -1803,7 +1797,6 @@ async function runBacktest() {
                         };
                         candlesSinceStop = 0;
                     } else {
-                        // Se saiu por TP ou reversão, não guarda para reentrada
                         lastStoppedPosition = null;
                         candlesSinceStop = 999;
                     }
@@ -1840,7 +1833,7 @@ async function runBacktest() {
         '<div class="no-trades"><p>Nenhum trade gerado no período (4h).</p></div>';
         else {
             html +=
-                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V14</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
+                `<h4 style="color:var(--text-light);margin:20px 0 10px 0;">📋 Histórico de Trades V14.1</h4><div class="backtest-table-wrap"><table><thead><tr><th>Entrada</th><th>Saída</th><th>Tipo</th><th>Preço Entrada</th><th>Preço Saída</th><th>PnL %</th><th>Dias</th><th>Motivo</th><th>Regime</th><th>Confirmação</th></tr></thead><tbody>${trades.slice().reverse().map(t=>`<tr class="${t.pnlUsd>0?'row-win':'row-loss'}"><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.type}</td><td>$${t.entryPrice.toFixed(0)}</td><td>$${t.exitPrice.toFixed(0)}</td><td style="color:${t.pnlUsd>0?'var(--accent-green)':'var(--accent-red)'}">${t.pnlPct.toFixed(2)}%</td><td>${t.daysOpen.toFixed(1)}</td><td>${t.exitReason}</td><td>${t.regime||'N/A'}</td><td>${t.confScore?t.confScore.toFixed(0):'N/A'}</td></tr>`).join('')}</tbody></table></div>`;
         }
         html +=
             `<p style="color:var(--text-muted);font-size:.85em;margin-top:12px;">Período: ${dataset[0]?.date} — ${dataset[dataset.length-1]?.date} (${dataset.length} candles 4h) • ${days} dias • Reentrada: ${enableReentry?'ON':'OFF'} • Stop-Reverse: ${enableStopReverse?'ON':'OFF'}</p>`;
@@ -1851,7 +1844,7 @@ async function runBacktest() {
     }
     backtestRunning = false;
     btn.disabled = false;
-    btn.textContent = '▶ Executar Backtest V14';
+    btn.textContent = '▶ Executar Backtest V14.1';
 }
 
 // ================================================================
@@ -2393,7 +2386,6 @@ async function init() {
     document.getElementById('runBacktestBtn').addEventListener('click', runBacktest);
     setTimeout(runBacktest, 2000);
 
-    // Inicializar checkboxes com valores padrão
     document.getElementById('enableReentry').checked = enableReentry;
     document.getElementById('enableStopReverse').checked = enableStopReverse;
 
