@@ -346,6 +346,7 @@
             assetsData[symbol] = {
                 price: 0, candles1H: [], candles4H: [], candles1D: [],
                 ema50_1H: 0, ema200_4H: 0, rsi_1H: 50, atr_1H: 0,
+                atrHistory: [],          // <-- added for volatility spike proxy
                 swingHighs: [], swingLows: [], currentBOS: 'NEUTRAL', mtfTrend: 'NEUTRAL',
                 oiDelta: 0, volumeRel: 1.0, rsiState: { avgGain: 0, avgLoss: 0, rsi: 50 }
             };
@@ -357,9 +358,6 @@
         let alertLog = JSON.parse(localStorage.getItem('alertLog') || '[]');
         let tradeStats = JSON.parse(localStorage.getItem('tradeStats') || '{ "wins": 0, "losses": 0, "totalPNL": 0 }');
 
-        // Macro Filter State (Hardcoded High Impact Events - Update monthly)
-        const macroBlockDates = ['2024-03-20', '2024-04-10']; // Example: FOMC, CPI days
-        
         // Orderflow Liquidation Map
         let liqMap = { 'BTCUSDT': { longs: 0, shorts: 0 }, 'ETHUSDT': { longs: 0, shorts: 0 }, 'SOLUSDT': { longs: 0, shorts: 0 } };
 
@@ -428,15 +426,19 @@
             return { avgGain, avgLoss, rsi };
         }
 
-        // SMC: Swing Points & BOS
+        // SMC: Swing Points & BOS with volume confirmation (#6)
         function updateSwingPoints(data) {
             const c1H = data.candles1H;
             if (c1H.length < 10) return;
             
             let recentHighs = [], recentLows = [];
+            // Compute average volume of last 10 candles for confirmation
+            const avgVol = c1H.slice(-11, -1).reduce((s,k) => s + k.volume, 0) / 10;
+            
             for (let i = c1H.length - 10; i < c1H.length - 1; i++) {
-                if (c1H[i].high > c1H[i-1].high && c1H[i].high > c1H[i+1].high) recentHighs.push(c1H[i].high);
-                if (c1H[i].low < c1H[i-1].low && c1H[i].low < c1H[i+1].low) recentLows.push(c1H[i].low);
+                const volConfirm = c1H[i].volume > avgVol * 1.3;
+                if (c1H[i].high > c1H[i-1].high && c1H[i].high > c1H[i+1].high && volConfirm) recentHighs.push(c1H[i].high);
+                if (c1H[i].low < c1H[i-1].low && c1H[i].low < c1H[i+1].low && volConfirm) recentLows.push(c1H[i].low);
             }
             data.swingHighs = recentHighs.slice(-3);
             data.swingLows = recentLows.slice(-3);
@@ -519,15 +521,47 @@
         // ================================================================
         // 4. SCORE & SIGNAL ENGINE
         // ================================================================
+        // (#1) Dynamic macro filter + volatility spike proxy
         function isSafeToTrade() {
             const now = new Date();
-            const day = now.toISOString().split('T')[0];
-            if (macroBlockDates.includes(day)) return false; // Macro Event Block
-            
             const hourUTC = now.getUTCHours();
-            // NY/London Overlap is best. Asian open is acceptable.
+            const minUTC = now.getUTCMinutes();
+            const day = now.getUTCDate();
+
+            // Bloqueio: primeira quarta-feira do mês às 18:00-19:00 UTC (FOMC)
+            // e todo dia 1-5 do mês entre 12:30-13:30 UTC (CPI/NFP)
+            if (day <= 5 && hourUTC === 12 && minUTC >= 20) return false;
+            if (day <= 5 && hourUTC === 13 && minUTC <= 40) return false;
+
+            // Proxy dinâmico: ATR 1H vs média móvel do próprio ATR → spike = evento em curso
+            // Usamos o atrHistory do BTC (benchmark)
+            const data = assetsData['BTCUSDT'];
+            if (data && data.atrHistory && data.atrHistory.length > 20) {
+                const avgATR = data.atrHistory.slice(-20).reduce((a,b)=>a+b,0)/20;
+                if (data.atr_1H > avgATR * 2.5) return false;
+            }
+
+            // Janela de horário permitida
             if ((hourUTC >= 13 && hourUTC <= 17) || (hourUTC >= 0 && hourUTC <= 4)) return true;
             return false;
+        }
+
+        // (#2) Choppiness Index (dampening)
+        function computeChoppiness(data) {
+            const c = data.candles1H.slice(-14);
+            if (c.length < 14) return 50;
+            const highs = c.map(k=>k.high), lows = c.map(k=>k.low);
+            // ATR * period
+            const trs = [];
+            for (let i=1; i<c.length; i++) {
+                trs.push(Math.max(c[i].high - c[i].low, Math.abs(c[i].high - c[i-1].close), Math.abs(c[i].low - c[i-1].close)));
+            }
+            const avgTR = trs.slice(-14).reduce((a,b)=>a+b,0)/14;
+            const trueRange = avgTR * 14;
+            const range = Math.max(...highs) - Math.min(...lows);
+            if (range === 0) return 100;
+            const chop = 100 * Math.log10(trueRange / range) / Math.log10(14);
+            return clamp(chop, 0, 100);
         }
 
         function computeScore(symbol) {
@@ -544,25 +578,36 @@
             if (data.currentBOS === 'BULLISH') smcScore = 80;
             if (data.currentBOS === 'BEARISH') smcScore = 20;
 
-            // 3. Momentum (RSI)
+            // 3. Momentum (RSI) - with anti-trap (#5)
             let momScore = clamp(data.rsi_1H, 0, 100);
+            // Penalizar entrada quando RSI em zona extrema
+            if (mtfTrend === 'LONG' && data.rsi_1H > 75) momScore *= 0.6;
+            if (mtfTrend === 'SHORT' && data.rsi_1H < 25) momScore = 100 - momScore;
 
             // 4. Orderflow / Liquidation Safety
             let ofScore = 50;
             const liq = liqMap[symbol] || { longs: 0, shorts: 0 };
-            if (mtfTrend === 'LONG' && liq.shorts > 50000) ofScore = 80; // Shorts being liq pushes up
-            if (mtfTrend === 'LONG' && liq.longs > 50000) ofScore = 20; // Longs being liq, danger
+            if (mtfTrend === 'LONG' && liq.shorts > 50000) ofScore = 80;
+            if (mtfTrend === 'LONG' && liq.longs > 50000) ofScore = 20;
             if (mtfTrend === 'SHORT' && liq.longs > 50000) ofScore = 80;
             if (mtfTrend === 'SHORT' && liq.shorts > 50000) ofScore = 20;
 
             // 5. Macro & Session Safety
             let macroSafe = isSafeToTrade() ? 100 : 0;
 
-            // 6. OI Delta (Fallback neutral)
+            // 6. OI Delta (now live via fetch)
             let oiScore = clamp(50 + (data.oiDelta * 2), 0, 100);
 
             // Weighted Score Calculation
             let rawScore = (mtfScore * 0.30) + (smcScore * 0.30) + (momScore * 0.15) + (ofScore * 0.10) + (oiScore * 0.05) + (macroSafe * 0.10);
+
+            // (#2) Choppiness dampening
+            const chop = computeChoppiness(data);
+            data.chopIndex = chop;
+            if (chop > 61) {
+                rawScore = 50 + (rawScore - 50) * 0.3;
+            }
+
             let finalScore = Math.round(clamp(rawScore, 0, 100));
 
             return {
@@ -579,8 +624,8 @@
             const W = winRate;
             const R = rrRatio;
             const kelly = ((W * R) - (1 - W)) / R;
-            const fraction = Math.max(kelly * 0.25, 0.005); // Quarter Kelly
-            return Math.min(fraction, 0.05); // Max 5% risk
+            const fraction = Math.max(kelly * 0.25, 0.005);
+            return Math.min(fraction, 0.05);
         }
 
         // ================================================================
@@ -604,11 +649,14 @@
                     }
                 }
                 
-                // Exits Check
-                if (currentPrice >= pos.tp1 && !pos.movedToBE) {
-                    pos.trailingStop = pos.entryPrice; // Move to breakeven first
+                // (#3) Take profit parcial real
+                if (currentPrice >= pos.tp1 && !pos.partialTaken) {
+                    pos.partialTaken = true;
+                    pos.sizeRemaining = 0.5;
+                    pos.realizedPNL = (pos.tp1 - pos.entryPrice) * 0.5;
+                    pos.trailingStop = pos.entryPrice + (data.atr_1H * 0.1); // BE + buffer
                     pos.movedToBE = true;
-                    sendTelegramAlert(`🎯 <b>TP1 ATINGIDO (${symbol})</b>\nStop movido para Breakeven. Trailing Ativado.`);
+                    sendTelegramAlert(`🎯 <b>TP1 PARCIAL (${symbol})</b>\n50% realizado em $${pos.tp1.toFixed(2)}\nRestante com trailing ativo (BE+${(data.atr_1H*0.1).toFixed(2)})`);
                     updateUI = true;
                 }
                 if (currentPrice >= pos.tp2) {
@@ -620,7 +668,6 @@
                     updateUI = true;
                 }
             } else if (pos.type === 'SHORT') {
-                // Trailing Stop: Adjust to last Swing High + ATR Buffer
                 if (data.swingHighs.length > 0) {
                     const lastSwingHigh = Math.max(...data.swingHighs);
                     const newTrail = lastSwingHigh + (data.atr_1H * 0.2);
@@ -630,10 +677,13 @@
                     }
                 }
 
-                if (currentPrice <= pos.tp1 && !pos.movedToBE) {
-                    pos.trailingStop = pos.entryPrice;
+                if (currentPrice <= pos.tp1 && !pos.partialTaken) {
+                    pos.partialTaken = true;
+                    pos.sizeRemaining = 0.5;
+                    pos.realizedPNL = (pos.entryPrice - pos.tp1) * 0.5;
+                    pos.trailingStop = pos.entryPrice - (data.atr_1H * 0.1);
                     pos.movedToBE = true;
-                    sendTelegramAlert(`🎯 <b>TP1 ATINGIDO (${symbol})</b>\nStop movido para Breakeven. Trailing Ativado.`);
+                    sendTelegramAlert(`🎯 <b>TP1 PARCIAL (${symbol})</b>\n50% realizado em $${pos.tp1.toFixed(2)}\nRestante com trailing ativo (BE-${(data.atr_1H*0.1).toFixed(2)})`);
                     updateUI = true;
                 }
                 if (currentPrice <= pos.tp2) {
@@ -684,7 +734,7 @@
                 if (!activePositions[symbol] && isSafeToTrade()) {
                     const now = Date.now();
                     const cooldown = alertCooldowns[symbol] || 0;
-                    if (now - cooldown > 1800000) { // 30 min cooldown per asset
+                    if (now - cooldown > 1800000) {
                         const atr = data.atr_1H || (data.price * 0.02);
                         
                         if (score >= 75 && data.mtfTrend === 'LONG' && findSMCSetup(data, 'LONG')) {
@@ -695,7 +745,7 @@
                             const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
                             
                             sendTradeAlert(symbol, 'long', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Long + BOS Bullish + SMC Setup`, riskPct);
-                            activePositions[symbol] = { type: 'LONG', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop };
+                            activePositions[symbol] = { type: 'LONG', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
                             updateActiveTradesUI();
                         } else if (score <= 25 && data.mtfTrend === 'SHORT' && findSMCSetup(data, 'SHORT')) {
                             const stop = data.price + (atr * 1.5);
@@ -705,7 +755,7 @@
                             const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
                             
                             sendTradeAlert(symbol, 'short', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Short + BOS Bearish + SMC Setup`, riskPct);
-                            activePositions[symbol] = { type: 'SHORT', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop };
+                            activePositions[symbol] = { type: 'SHORT', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
                             updateActiveTradesUI();
                         }
                     }
@@ -733,6 +783,30 @@
             } catch(e) { return []; }
         }
 
+        // (#4) Fetch Open Interest Delta
+        async function fetchOpenInterest(symbol) {
+            try {
+                const url = `https://fapi.binance.com/futures/data/openInterestHist?symbol=${symbol}&period=15m&limit=2`;
+                const r = await fetch(url);
+                if (!r.ok) return;
+                const d = await r.json();
+                if (d.length === 2) {
+                    const prev = parseFloat(d[0].sumOpenInterest);
+                    const curr = parseFloat(d[1].sumOpenInterest);
+                    const delta = ((curr - prev) / prev) * 100;
+                    if (assetsData[symbol]) {
+                        assetsData[symbol].oiDelta = delta;
+                        // update UI OI Delta column
+                        const el = document.getElementById('oi-delta');
+                        if (el && symbol === 'BTCUSDT') {
+                            el.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + '%';
+                            document.getElementById('oi-delta-interp').textContent = delta > 5 ? '🟢 Alta' : delta < -5 ? '🔴 Baixa' : 'ℹ️ Neutro';
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+
         async function warmUpIndicators() {
             for (const symbol of ASSETS) {
                 const [c1H, c4H, c1D] = await Promise.all([
@@ -756,6 +830,17 @@
                     assetsData[symbol].ema200_4H = closes.slice(-200).reduce((a,b)=>a+b,0) / 200; 
                     assetsData[symbol].atr_1H = calculateATR(highs, lows, closes, 14);
                     
+                    // Build ATR history for proxy
+                    const atrHist = [];
+                    for (let i = 14; i < highs.length; i++) {
+                        const sliceHighs = highs.slice(i-14, i);
+                        const sliceLows = lows.slice(i-14, i);
+                        const sliceCloses = closes.slice(i-14, i);
+                        const atr = calculateATR(sliceHighs, sliceLows, sliceCloses, 14);
+                        atrHist.push(atr);
+                    }
+                    assetsData[symbol].atrHistory = atrHist.slice(-50);
+
                     // RSI State Init
                     let gains = 0, losses = 0;
                     for(let i=1; i<15; i++) { const d = closes[i]-closes[i-1]; if(d>0) gains+=d; else losses-=d; }
@@ -848,7 +933,7 @@
             } catch (e) {}
         }
         // Auxiliars Preserved
-        let globalData = { mvrv: 1.2, sopr: 0.95 }; // Kept for BRK fetch compatibility
+        let globalData = { mvrv: 1.2, sopr: 0.95 };
         function formatCurrency(value) { return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function formatChange(value) { const n = parseFloat(value); return isNaN(n) ? '--' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
         function getChangeClass(value) { const n = parseFloat(value); return isNaN(n) ? 'negative' : (n >= 0 ? 'positive' : 'negative'); }
@@ -891,9 +976,13 @@
                 
                 const pos = activePositions[symbol];
                 if (pos) {
+                    let details = `Entry: $${pos.entryPrice.toFixed(2)} | Trail Stop: $${pos.trailingStop.toFixed(2)} | TP1: $${pos.tp1.toFixed(2)}`;
+                    if (pos.partialTaken) {
+                        details += ` | PARCIAL (50%) realizado | Restante ${pos.sizeRemaining*100}%`;
+                    }
                     el.className = `trade-item ${pos.type.toLowerCase()}`;
                     el.innerHTML = `<div class="trade-title">${symbol} ${pos.type}</div>
-                                   <div class="trade-details">Entry: $${pos.entryPrice.toFixed(2)} | Trail Stop: $${pos.trailingStop.toFixed(2)} | TP1: $${pos.tp1.toFixed(2)}</div>`;
+                                   <div class="trade-details">${details}</div>`;
                 } else {
                     el.className = 'trade-item';
                     el.innerHTML = `<div class="trade-title">${symbol}</div><div class="trade-details">Aguardando sinal...</div>`;
@@ -1020,7 +1109,11 @@
             setInterval(() => fetchPrices(), 60000);
             setInterval(() => fetchFearGreed(), 300000);
             setInterval(() => fetchDeFiData(), 300000);
-            setInterval(() => fetchBinanceDerivatives(), 120000);
+            setInterval(() => {
+                fetchBinanceDerivatives();
+                // (#4) Fetch OI Delta for all assets
+                ASSETS.forEach(sym => fetchOpenInterest(sym));
+            }, 120000);
             setInterval(() => { fetchBRK(); fetchHashrate(); fetchGasPrice(); }, 600000);
             setInterval(() => updateTimestamps(), 1000);
             
@@ -1028,7 +1121,23 @@
             setInterval(async () => {
                 for (const symbol of ASSETS) {
                     const c1H = await fetchHistoricalCandles(symbol, '1h', 10);
-                    if(c1H.length > 0) assetsData[symbol].candles1H = [...assetsData[symbol].candles1H.slice(0, -10), ...c1H];
+                    if(c1H.length > 0) {
+                        assetsData[symbol].candles1H = [...assetsData[symbol].candles1H.slice(0, -10), ...c1H];
+                        // Update ATR history with new data
+                        const closes = assetsData[symbol].candles1H.map(c => c.close);
+                        const highs = assetsData[symbol].candles1H.map(c => c.high);
+                        const lows = assetsData[symbol].candles1H.map(c => c.low);
+                        // Recompute ATR history for last 50
+                        const atrHist = [];
+                        for (let i = 14; i < highs.length; i++) {
+                            const sliceHighs = highs.slice(i-14, i);
+                            const sliceLows = lows.slice(i-14, i);
+                            const sliceCloses = closes.slice(i-14, i);
+                            const atr = calculateATR(sliceHighs, sliceLows, sliceCloses, 14);
+                            atrHist.push(atr);
+                        }
+                        assetsData[symbol].atrHistory = atrHist.slice(-50);
+                    }
                     if(assetsData[symbol].candles1H.length > 0 && candleCharts[symbol]) {
                         candleCharts[symbol].candleSeries.setData(assetsData[symbol].candles1H);
                     }
