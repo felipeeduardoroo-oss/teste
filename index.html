@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Institucional - v3.0 (Price Action + ATR Stops)</title>
+    <title>Dashboard Institucional - v3.1 (Comitê: Cache/MTF/Regime Fix)</title>
     <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js">
     </script>
@@ -702,21 +702,28 @@
 
         // 1. Regime Adaptativo (EMA50/EMA200 + ATR)
         function getRegime(klines) {
-            const cacheKey = 'regime_' + currentSymbol;
+            // FIX A: chave de cache agora inclui o timestamp do último candle da janela.
+            // Antes a chave era só 'regime_SYMBOL' com TTL de 60s de RELÓGIO. No backtest,
+            // o loop inteiro roda em poucos ms, então o cache NUNCA expirava: o regime calculado
+            // na 1ª iteração (i=100, com <200 candles => isRange forçado true) ficava CONGELADO
+            // para as 720 velas seguintes. Resultado: filtro "regime" travado em falso o backtest inteiro
+            // -> 0 (ou quase 0) trades, winrate/PNL sem significado. Isso também afeta a Etapa 4.
+            const lastTime = klines.length ? klines[klines.length - 1].time : 0;
+            const cacheKey = 'regime_' + currentSymbol + '_' + lastTime;
             return getCached(cacheKey, CONFIG.cacheTTL, () => {
-                if (klines.length < 200) return { isTrending: false, isRange: true, ema50: null, ema200: null, atr: 0,
-                        atrSMA: 0 };
+                if (klines.length < 200) return { isTrending: false, isRange: true, isRangeFlat: true, ema50: null,
+                        ema200: null, atr: 0, atrSMA: 0 };
                 const closes = klines.map(k => k.close);
                 const ema50 = calcEMA(closes, CONFIG.emaFast);
                 const ema200 = calcEMA(closes, CONFIG.emaSlow);
-                if (ema50 === null || ema200 === null) return { isTrending: false, isRange: true, ema50, ema200, atr: 0,
-                        atrSMA: 0 };
+                if (ema50 === null || ema200 === null) return { isTrending: false, isRange: true, isRangeFlat: true,
+                        ema50, ema200, atr: 0, atrSMA: 0 };
 
                 const atr = calcATR(klines, 14);
                 const atrSMA = calcATR(klines.slice(-40), 14);
                 const priceNow = closes[closes.length - 1];
 
-                // Condições para lateral
+                // Condições para lateral (separadas: baixa volatilidade vs EMAs realmente achatadas)
                 const emaDiff = Math.abs(ema50 - ema200) / ema200;
                 const lowVolatility = atr < atrSMA * CONFIG.regimeATRFactor;
                 const flat = emaDiff < CONFIG.regimeEMADiffThreshold;
@@ -727,13 +734,18 @@
                 // Direção da tendência (baseado na posição do preço em relação à EMA50)
                 const direction = priceNow > ema50 ? 'BULLISH' : (priceNow < ema50 ? 'BEARISH' : 'NEUTRAL');
 
-                return { isTrending, isRange, ema50, ema200, atr, atrSMA, direction, price: priceNow };
+                // isRangeFlat = EMAs realmente sem direção (lateral "de verdade").
+                // isRange (geral) também fica true durante uma PAUSA de baixa volatilidade dentro
+                // de uma tendência saudável (ex: pullback) - isso não deveria ser tratado como
+                // "sem tendência" para fins do filtro de entrada. Ver FIX E.
+                return { isTrending, isRange, isRangeFlat: flat, ema50, ema200, atr, atrSMA, direction, price: priceNow };
             });
         }
 
         // 2. Pullback + RSI (entrada após rompimento da EMA50 e pullback)
         function getPullbackSignal(klines, currentPrice) {
-            const cacheKey = 'pullback_' + currentSymbol;
+            const lastTime = klines.length ? klines[klines.length - 1].time : 0;
+            const cacheKey = 'pullback_' + currentSymbol + '_' + lastTime + '_' + currentPrice;
             return getCached(cacheKey, CONFIG.cacheTTL, () => {
                 if (klines.length < 60) return { ready: false, signal: 'NEUTRAL', rsi: 50, ema50: null,
                     distance: Infinity };
@@ -790,9 +802,13 @@
             const pullback = getPullbackSignal(klines1h, price);
             const paScore = pullback.ready ? (pullback.signal === 'BUY' ? 80 : 20) : 50;
 
-            // OI Delta (mock)
-            const oiDelta = mtf.aligned === 'BUY' ? 60 + (mtf.confidence * 30) : mtf.aligned === 'SELL' ? 40 - (mtf
-                .confidence * 30) : 50;
+            // FIX H: "OI Delta" antes era (mtf.aligned/confidence) reescalado — ou seja, o MESMO
+            // sinal de MTF contando DUAS vezes com pesos diferentes (0.15 direto + até 0.10
+            // disfarçado), criando falsa diversificação entre os 7 componentes do score.
+            // Sem feed real de Open Interest gratuito e confiável no client-side, usamos um proxy
+            // genuinely distinto: expansão de volume na direção do preço (proxy de convicção de
+            // fluxo), calculado sobre a MESMA janela do volZ mas correlacionando com o retorno.
+            const oiDelta = getVolumeMomentumProxy(klines1h);
 
             // Pesos ajustados (incluindo novos indicadores)
             const weights = {
@@ -828,10 +844,14 @@
             } else if (finalScore < CONFIG.scoreSellThreshold && isBearish) {
                 direction = 'BEARISH';
                 conviction = 'VENDA FORTE';
-            } else if (finalScore > 55) {
+            } else if (finalScore > 55 && regime.direction === 'BULLISH') {
+                // FIX C: antes esse ramo não checava alinhamento nenhum (nem isBullish, nem
+                // regime), deixando passar "COMPRA MODERADA" mesmo com regime BEARISH — sinal
+                // contra-tendência disfarçado de sinal válido. Agora exige ao menos o regime
+                // (EMA50 vs preço) alinhado, mesmo que MTF/pullback não estejam 100% de acordo.
                 direction = 'BULLISH';
                 conviction = 'COMPRA MODERADA';
-            } else if (finalScore < 45) {
+            } else if (finalScore < 45 && regime.direction === 'BEARISH') {
                 direction = 'BEARISH';
                 conviction = 'VENDA MODERADA';
             } else {
@@ -842,7 +862,11 @@
             // Filtros de qualidade (incluindo os novos)
             const filters = {
                 mtf: mtf.confidence > 0.6,
-                regime: regime.isTrending,
+                // FIX E: aceita regime.isTrending (tendência clara) OU uma pausa de baixa
+                // volatilidade que NÃO é lateralização de verdade (isRangeFlat=false), já que
+                // essa pausa é exatamente o cenário onde um pullback+RSI válido acontece.
+                // Continua reprovando quando as EMAs estão de fato achatadas (mercado sem direção).
+                regime: regime.isTrending || (!regime.isRangeFlat && regime.direction !== 'NEUTRAL'),
                 volume: volZ.passed,
                 smc: getSMCConfidence(price, klines1h).confirmed,
                 pa: pullback.ready
@@ -889,7 +913,10 @@
         // FUNÇÕES AUXILIARES (MTF, Volume Z, SMC) – mantidas
         // ================================================================
         function getMTFAlignment(klines1h, klines4h, klines1d) {
-            const cacheKey = 'mtf_' + currentSymbol;
+            const t1 = klines1h.length ? klines1h[klines1h.length - 1].time : 0;
+            const t4 = klines4h.length ? klines4h[klines4h.length - 1].time : 0;
+            const t1d = klines1d.length ? klines1d[klines1d.length - 1].time : 0;
+            const cacheKey = 'mtf_' + currentSymbol + '_' + t1 + '_' + t4 + '_' + t1d;
             return getCached(cacheKey, CONFIG.cacheTTL, () => {
                 const tf1h = klines1h.length > 20 ? calcEMA(klines1h.map(k => k.close), 20) : null;
                 const tf4h = klines4h.length > 20 ? calcEMA(klines4h.map(k => k.close), 20) : null;
@@ -913,7 +940,8 @@
         }
 
         function getVolumeZScore(vol, klines) {
-            const cacheKey = 'volz_' + currentSymbol;
+            const lastTime = klines.length ? klines[klines.length - 1].time : 0;
+            const cacheKey = 'volz_' + currentSymbol + '_' + lastTime + '_' + vol;
             return getCached(cacheKey, CONFIG.cacheTTL, () => {
                 if (klines.length < 20) return { zScore: 0, passed: false };
                 const vols = klines.slice(-20).map(k => k.volume);
@@ -925,8 +953,33 @@
             });
         }
 
+        // Proxy de "fluxo institucional" livre: correlaciona retorno de preço com volume
+        // relativo nos últimos 10 candles. Positivo = alta com volume crescente (acumulação);
+        // negativo = queda com volume crescente (distribuição). Sinal independente do MTF/EMA.
+        function getVolumeMomentumProxy(klines) {
+            const lastTime = klines.length ? klines[klines.length - 1].time : 0;
+            const cacheKey = 'oiproxy_' + currentSymbol + '_' + lastTime;
+            return getCached(cacheKey, CONFIG.cacheTTL, () => {
+                if (klines.length < 11) return 50;
+                const recent = klines.slice(-10);
+                const avgVol = recent.reduce((a, k) => a + k.volume, 0) / recent.length;
+                let weighted = 0,
+                    totalW = 0;
+                for (const k of recent) {
+                    const ret = (k.close - k.open) / k.open;
+                    const relVol = avgVol > 0 ? k.volume / avgVol : 1;
+                    weighted += ret * relVol;
+                    totalW += relVol;
+                }
+                const avgWeightedReturn = totalW > 0 ? weighted / totalW : 0;
+                // normaliza para escala 0-100 em torno de 50, sensibilidade ~2% -> +-100
+                return Math.min(100, Math.max(0, 50 + avgWeightedReturn * 5000));
+            });
+        }
+
         function getSMCConfidence(price, klines) {
-            const cacheKey = 'smc_' + currentSymbol;
+            const lastTime = klines.length ? klines[klines.length - 1].time : 0;
+            const cacheKey = 'smc_' + currentSymbol + '_' + lastTime + '_' + price;
             return getCached(cacheKey, CONFIG.cacheTTL, () => {
                 if (klines.length < 50) return { confirmed: false, level: 0, confidence: 0 };
                 const recent = klines.slice(-50);
@@ -934,10 +987,17 @@
                 const swingLow = Math.min(...recent.map(k => k.low));
                 const aboveHigh = price > swingHigh;
                 const belowLow = price < swingLow;
+                // FIX D: guarda de exaustão. "SMC" aqui é essencialmente rompimento de swing
+                // high/low de 50 candles. Sem essa guarda, o filtro confirma igualmente um
+                // rompimento fresco (bom p/ entrada) e um preço que já correu muito além do nível
+                // (entrada tardia, alto risco de reversão/exaustão). Usamos o ATR para limitar
+                // a distância aceitável além do nível a 2x ATR.
+                const atr = calcATR(klines, 14) || 0;
+                const maxExtension = atr > 0 ? atr * 2 : Infinity;
                 let confirmed = false,
                     confidence = 0;
-                if (aboveHigh) { confirmed = true;
-                    confidence = 0.9; } else if (belowLow) { confirmed = true;
+                if (aboveHigh && (price - swingHigh) <= maxExtension) { confirmed = true;
+                    confidence = 0.9; } else if (belowLow && (swingLow - price) <= maxExtension) { confirmed = true;
                     confidence = 0.9; }
                 return { confirmed, level: confirmed ? (aboveHigh ? swingHigh : swingLow) : 0, confidence };
             });
@@ -1178,30 +1238,62 @@
             chartScore.update('none');
         }
 
+        // Agrega candles de 1h em candles maiores (ex: factor=4 -> 4h, factor=24 -> 1d).
+        // Usado para dar ao backtest um MTF real, em vez de reusar a mesma série 1h três vezes.
+        function resampleKlines(klines1h, factor) {
+            const out = [];
+            for (let i = 0; i + factor <= klines1h.length; i += factor) {
+                const chunk = klines1h.slice(i, i + factor);
+                out.push({
+                    time: chunk[0].time,
+                    open: chunk[0].open,
+                    high: Math.max(...chunk.map(c => c.high)),
+                    low: Math.min(...chunk.map(c => c.low)),
+                    close: chunk[chunk.length - 1].close,
+                    volume: chunk.reduce((a, c) => a + c.volume, 0)
+                });
+            }
+            return out;
+        }
+
         // ================================================================
         // BACKTEST (ATUALIZADO COM NOVAS REGRAS E SL/TP DINÂMICO)
         // ================================================================
+        // Custos de execução aproximados (Binance taker ~0.04-0.10% a depender do tier + slippage
+        // em book de futuros líquido). Aplicado como fração de retorno, nos dois lados do trade.
+        const BACKTEST_FEE_RATE = 0.0006; // 0.06% round-trip (taxa)
+        const BACKTEST_SLIPPAGE = 0.0005; // 0.05% round-trip (slippage estimado)
+        const RISK_PER_TRADE = 0.01; // 1% do capital arriscado por trade (fixed-fractional)
+
         async function runBacktest(symbol, days = 30) {
             try {
                 const klines = await fetchBinanceKlines(symbol, '1h', days * 24);
                 if (klines.length < 100) return null;
 
                 let capital = 10000;
+                let peakCapital = 10000;
+                let maxDrawdown = 0;
                 let position = null;
                 let trades = [];
                 let wins = 0,
                     losses = 0;
+                let sumR = 0;
 
                 for (let i = 100; i < klines.length - 1; i++) {
                     const candle = klines[i];
                     const lookback = klines.slice(0, i + 1);
+                    // FIX B: MTF real no backtest. Antes a mesma série 1h era passada como
+                    // "1h", "4h" e "1d" simultaneamente -> os 3 timeframes SEMPRE concordavam
+                    // entre si (confiança MTF artificialmente ~1.0), o que não reflete o
+                    // comportamento ao vivo (onde 4h/1d vêm de dados reais e podem divergir).
+                    const lookback4h = resampleKlines(lookback, 4);
+                    const lookback1d = resampleKlines(lookback, 24);
                     const priceNow = candle.close;
                     const vol = candle.volume;
 
                     // Usa a mesma lógica de score com todas as melhorias
-                    const data = calculateFullScore(priceNow, vol, lookback, lookback, lookback);
+                    const data = calculateFullScore(priceNow, vol, lookback, lookback4h, lookback1d);
                     const signal = data.direction;
-                    const score = data.score;
                     const quality = data.quality;
                     const allPass = data.filters.mtf && data.filters.regime && data.filters.volume &&
                         data.filters.smc && data.filters.pa;
@@ -1213,67 +1305,76 @@
                     const stopMult = CONFIG.atrStopMultiplier;
                     const targetMult = CONFIG.atrTargetMultiplier;
 
-                    if (!position && shouldEnter) {
+                    if (!position && shouldEnter && atr > 0) {
                         if (signal === 'BULLISH') {
-                            position = {
-                                type: 'BUY',
-                                entry: priceNow,
-                                stop: priceNow - stopMult * atr,
-                                target: priceNow + targetMult * atr,
-                                size: 1
-                            };
+                            position = { type: 'BUY', entry: priceNow, stop: priceNow - stopMult * atr,
+                                target: priceNow + targetMult * atr };
                         } else {
-                            position = {
-                                type: 'SELL',
-                                entry: priceNow,
-                                stop: priceNow + stopMult * atr,
-                                target: priceNow - targetMult * atr,
-                                size: 1
-                            };
+                            position = { type: 'SELL', entry: priceNow, stop: priceNow + stopMult * atr,
+                                target: priceNow - targetMult * atr };
                         }
+                        // FIX G: position sizing por risco fixo (1% do capital), em vez de
+                        // 'size: 1' fixo sem relação com o capital ou a distância do stop.
+                        // Fixed-fractional é simples, robusto e evita sobre-exposição em séries
+                        // de perdas (ao contrário de sizing fixo em unidades, que ignora
+                        // completamente o tamanho da conta e a distância do stop/ATR).
+                        const stopDistance = Math.abs(position.entry - position.stop);
+                        position.riskAmount = capital * RISK_PER_TRADE;
+                        position.rMultiplierUnit = stopDistance > 0 ? position.riskAmount / stopDistance : 0;
                     } else if (position) {
                         const nextCandle = klines[i + 1];
                         const high = nextCandle.high;
                         const low = nextCandle.low;
                         let closed = false;
+                        let exitPrice = null,
+                            result = null;
+
                         if (position.type === 'BUY') {
-                            if (low <= position.stop) {
-                                capital += (position.stop - position.entry) / position.entry * capital;
-                                trades.push({ type: 'BUY', result: 'LOSS', pnl: (position.stop - position.entry) /
-                                        position.entry });
-                                losses++;
-                                closed = true;
-                            } else if (high >= position.target) {
-                                capital += (position.target - position.entry) / position.entry * capital;
-                                trades.push({ type: 'BUY', result: 'WIN', pnl: (position.target - position.entry) /
-                                        position.entry });
-                                wins++;
-                                closed = true;
-                            }
-                        } else { // SELL
-                            if (high >= position.stop) {
-                                capital += (position.entry - position.stop) / position.entry * capital;
-                                trades.push({ type: 'SELL', result: 'LOSS', pnl: (position.entry - position.stop) /
-                                        position.entry });
-                                losses++;
-                                closed = true;
-                            } else if (low <= position.target) {
-                                capital += (position.entry - position.target) / position.entry * capital;
-                                trades.push({ type: 'SELL', result: 'WIN', pnl: (position.entry - position.target) /
-                                        position.entry });
-                                wins++;
-                                closed = true;
-                            }
+                            if (low <= position.stop) { exitPrice = position.stop;
+                                result = 'LOSS';
+                                closed = true; } else if (high >= position.target) { exitPrice = position.target;
+                                result = 'WIN';
+                                closed = true; }
+                        } else {
+                            if (high >= position.stop) { exitPrice = position.stop;
+                                result = 'LOSS';
+                                closed = true; } else if (low <= position.target) { exitPrice = position.target;
+                                result = 'WIN';
+                                closed = true; }
                         }
-                        if (closed) position = null;
+
+                        if (closed) {
+                            const priceDelta = position.type === 'BUY' ? (exitPrice - position.entry) : (position.entry -
+                                exitPrice);
+                            // PnL em $ = distância percorrida * unidades compradas com o risco definido,
+                            // menos taxas+slippage aplicados sobre o valor nocional aproximado.
+                            const grossPnl = priceDelta * position.rMultiplierUnit;
+                            const notionalApprox = position.riskAmount / RISK_PER_TRADE; // aprox. do capital exposto
+                            const costs = notionalApprox * (BACKTEST_FEE_RATE + BACKTEST_SLIPPAGE);
+                            const netPnl = grossPnl - costs;
+                            capital += netPnl;
+                            const rMultiple = position.riskAmount > 0 ? netPnl / position.riskAmount : 0;
+                            sumR += rMultiple;
+                            trades.push({ type: position.type, result, pnl: netPnl, r: rMultiple });
+                            if (result === 'WIN') wins++;
+                            else losses++;
+                            peakCapital = Math.max(peakCapital, capital);
+                            const dd = peakCapital > 0 ? (peakCapital - capital) / peakCapital : 0;
+                            maxDrawdown = Math.max(maxDrawdown, dd);
+                            position = null;
+                        }
                     }
                 }
 
                 const totalTrades = wins + losses;
                 const winrate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
                 const pnl = ((capital - 10000) / 10000) * 100;
+                const avgR = totalTrades > 0 ? sumR / totalTrades : 0;
 
-                return { winrate, pnl, trades: totalTrades, wins, losses, capital, period: `${days} dias` };
+                return {
+                    winrate, pnl, trades: totalTrades, wins, losses, capital, period: `${days} dias`,
+                    maxDrawdown: maxDrawdown * 100, avgR
+                };
             } catch (e) {
                 console.warn('Backtest error:', e);
                 return null;
@@ -1319,8 +1420,10 @@
                         `
                                     <span>📅 ${result.period}</span>
                                     <span>📊 Winrate: ${result.winrate.toFixed(1)}%</span>
-                                    <span>📈 PNL: ${result.pnl.toFixed(2)}%</span>
+                                    <span>📈 PNL líquido (c/ taxas): ${result.pnl.toFixed(2)}%</span>
                                     <span>🎯 Trades: ${result.trades} (${result.wins}W / ${result.losses}L)</span>
+                                    <span>📉 Max Drawdown: ${result.maxDrawdown.toFixed(2)}%</span>
+                                    <span>⚖️ R médio/trade: ${result.avgR.toFixed(2)}R</span>
                                 `;
                     backtestResult = result;
                 } else {
