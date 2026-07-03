@@ -7,6 +7,7 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        /* ===== ESTILOS ORIGINAIS (NÃO ALTERADOS) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -223,7 +224,7 @@
 
 <script>
     // ============================================================
-    //  CONFIGURAÇÕES GLOBAIS
+    //  CONFIGURAÇÕES GLOBAIS (ORIGINAL)
     // ============================================================
     const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
     const INTERVAL_1H = '1h';
@@ -233,7 +234,7 @@
     const TELEGRAM_CHAT_ID = '5828578057';
 
     // ============================================================
-    //  ESTADO GLOBAL
+    //  ESTADO GLOBAL (ORIGINAL)
     // ============================================================
     const assetsData = {};
     let activePositions = {};
@@ -242,7 +243,7 @@
     let lastUpdateTime = Date.now();
 
     // ============================================================
-    //  FUNÇÕES AUXILIARES
+    //  FUNÇÕES AUXILIARES (ORIGINAL)
     // ============================================================
     function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
 
@@ -266,7 +267,6 @@
 
         // --- Bloqueio de eventos de alto impacto ---
         // 1) Primeira quarta-feira do mês -> FOMC statement (14:00 ET = 18:00-19:00 UTC)
-        //    Aproximadamente 18:00-19:00 UTC
         const firstWednesday = (() => {
             let d = new Date(Date.UTC(year, month-1, 1));
             while (d.getUTCDay() !== 3) d.setUTCDate(d.getUTCDate() + 1);
@@ -295,7 +295,6 @@
         }
 
         // --- Janela de horário favorável (UTC) ---
-        // Permite operar das 13h às 17h UTC (manhã NY) e das 0h às 4h UTC (Ásia)
         if ((hourUTC >= 13 && hourUTC <= 17) || (hourUTC >= 0 && hourUTC <= 4)) {
             return true;
         }
@@ -311,8 +310,6 @@
         const slice = candles.slice(-14);
         const highs = slice.map(k => k.high);
         const lows = slice.map(k => k.low);
-        const closes = slice.map(k => k.close);
-        // True Range médio * 14 (aproximação do total de movimento)
         let trSum = 0;
         for (let i = 1; i < slice.length; i++) {
             const high = slice[i].high;
@@ -381,7 +378,7 @@
     }
 
     // ============================================================
-    //  CÁLCULO DE INDICADORES (ATR, RSI, Médias)
+    //  CÁLCULO DE INDICADORES (ORIGINAL)
     // ============================================================
     function calculateATR(highs, lows, closes, period) {
         if (highs.length < period + 1) return 0;
@@ -442,8 +439,8 @@
         let momScore = clamp(rsi, 0, 100);
 
         // --- Penalização por extremos (anti-trap) ---
-        if (mtfTrend === 'LONG' && rsi > 75) momScore = momScore * 0.6;   // não persegue topo
-        if (mtfTrend === 'SHORT' && rsi < 25) momScore = 100 - momScore;  // inverte em sobrevenda
+        if (mtfTrend === 'LONG' && rsi > 75) momScore = momScore * 0.6;
+        if (mtfTrend === 'SHORT' && rsi < 25) momScore = 100 - momScore;
 
         // Orderflow / Liquidez (simulado)
         let liqScore = 50;
@@ -469,7 +466,6 @@
         const chop = computeChoppiness(data);
         data.chopIndex = chop;
         if (chop > 61) {
-            // Achata o score puxando para 50
             rawScore = 50 + (rawScore - 50) * 0.3;
         }
         rawScore = clamp(rawScore, 0, 100);
@@ -494,9 +490,9 @@
             // TP1 parcial (50%)
             if (currentPrice >= pos.tp1 && !pos.partialTaken) {
                 pos.partialTaken = true;
-                pos.realizedPNL = (pos.tp1 - pos.entryPrice) * 0.5; // lucro da metade
-                pos.sizeRemaining = 0.5;  // mantém 50%
-                pos.trailingStop = pos.entryPrice + (atr * 0.1); // BE + buffer
+                pos.realizedPNL = (pos.tp1 - pos.entryPrice) * 0.5;
+                pos.sizeRemaining = 0.5;
+                pos.trailingStop = pos.entryPrice + (atr * 0.1);
                 pos.movedToBE = true;
                 sendTelegramAlert(`🎯 <b>TP1 PARCIAL (${symbol})</b>\n50% realizado em $${pos.tp1.toFixed(2)}\nRestante com trailing ativo`);
                 updateUI = true;
@@ -504,14 +500,12 @@
             // Trailing para a parte restante
             if (pos.partialTaken && pos.trailingStop) {
                 if (currentPrice > pos.trailingStop) {
-                    // Ajusta trailing para cima (simples: mantém distância fixa de 1.2*ATR)
                     const newStop = currentPrice - (atr * 1.2);
                     if (newStop > pos.trailingStop) {
                         pos.trailingStop = newStop;
                         updateUI = true;
                     }
                 }
-                // Se preço cai abaixo do trailing, fecha o restante
                 if (currentPrice <= pos.trailingStop) {
                     pos.sizeRemaining = 0;
                     pos.realizedPNL += (currentPrice - pos.entryPrice) * 0.5;
@@ -581,7 +575,7 @@
     }
 
     // ============================================================
-    //  DETECÇÃO DE SMC SETUP (BOS + Breakout)
+    //  DETECÇÃO DE SMC SETUP (ORIGINAL)
     // ============================================================
     function findSMCSetup(data) {
         const highs = data.recentHighs || [];
@@ -593,15 +587,13 @@
         const prevLow = lows[lows.length-2];
         const price = data.price;
 
-        // Breakout de alta: preço acima do último high e último high > anterior
         if (price > lastHigh && lastHigh > prevHigh) return 'LONG';
-        // Breakout de baixa: preço abaixo do último low e último low < anterior
         if (price < lastLow && lastLow < prevLow) return 'SHORT';
         return 'NEUTRAL';
     }
 
     // ============================================================
-    //  TELEGRAM
+    //  TELEGRAM (ORIGINAL)
     // ============================================================
     async function sendTelegramAlert(message) {
         try {
@@ -620,7 +612,7 @@
     }
 
     // ============================================================
-    //  ATUALIZAÇÃO DE DADOS (BINANCE)
+    //  ATUALIZAÇÃO DE DADOS (BINANCE) - ORIGINAL
     // ============================================================
     async function fetchBinanceKlines(symbol, interval, limit = 100) {
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
@@ -645,7 +637,7 @@
     }
 
     // ============================================================
-    //  WARM-UP & ATUALIZAÇÃO COMPLETA
+    //  WARM-UP & ATUALIZAÇÃO COMPLETA (modificada para incluir atrHistory e oiDelta)
     // ============================================================
     async function warmUpIndicators(symbol) {
         try {
@@ -660,7 +652,7 @@
             const rsi = calculateRSI(closes1H, 14);
             const atr = calculateATR(highs1H, lows1H, closes1H, 14);
 
-            // Histórico de ATR para proxy de volatilidade
+            // --- #1 Manter histórico de ATR para proxy de volatilidade ---
             let atrHistory = [];
             if (assetsData[symbol] && assetsData[symbol].atrHistory) {
                 atrHistory = assetsData[symbol].atrHistory;
@@ -690,19 +682,17 @@
                 candles4H: c4H,
                 rsi_1H: rsi,
                 atr_1H: atr,
-                atrHistory,
+                atrHistory,           // <-- adicionado
                 mtfTrend,
                 volumeSpike,
                 recentHighs: [],
                 recentLows: [],
-                oiDelta: assetsData[symbol]?.oiDelta || 0,
+                oiDelta: assetsData[symbol]?.oiDelta || 0, // <-- mantém valor
                 chopIndex: 50,
             };
 
             // Atualiza swing points com volume
             updateSwingPoints(data);
-
-            // Choppiness já será computado no computeScore
 
             assetsData[symbol] = data;
         } catch (e) {
@@ -713,7 +703,7 @@
     async function refreshAll() {
         for (const sym of SYMBOLS) {
             await warmUpIndicators(sym);
-            // Busca OI Delta (real)
+            // --- #4 Busca OI Delta (real) ---
             await fetchOpenInterest(sym);
         }
         lastUpdateTime = Date.now();
@@ -725,7 +715,7 @@
     }
 
     // ============================================================
-    //  RENDER CARDS
+    //  RENDER CARDS (ORIGINAL, com exibição do chopIndex e oiDelta)
     // ============================================================
     function renderCards() {
         const container = document.getElementById('cardsContainer');
@@ -739,7 +729,6 @@
             const change = data.price ? ((data.price - data.candles1H[data.candles1H.length-2]?.close) / data.candles1H[data.candles1H.length-2]?.close * 100) : 0;
             const changeClass = change >= 0 ? 'positive' : 'negative';
 
-            // Verifica se há posição ativa
             const pos = activePositions[sym];
             let signalText = 'Aguardando';
             let signalClass = 'neutral';
@@ -747,7 +736,6 @@
                 signalText = pos.side + ' (ativo)';
                 signalClass = pos.side.toLowerCase();
             } else {
-                // Último sinal (simulado)
                 const lastSignal = logEntries.filter(e => e.symbol === sym && e.type === 'signal').pop();
                 if (lastSignal) {
                     signalText = lastSignal.signal;
@@ -781,12 +769,11 @@
             `;
             container.appendChild(card);
         }
-        // Inicializa gráficos após renderização
         setTimeout(initCharts, 100);
     }
 
     // ============================================================
-    //  GRÁFICOS (Chart.js)
+    //  GRÁFICOS (ORIGINAL)
     // ============================================================
     function initCharts() {
         for (const sym of SYMBOLS) {
@@ -845,37 +832,32 @@
     }
 
     // ============================================================
-    //  LÓGICA DE SINAIS E ENTRADAS
+    //  LÓGICA DE SINAIS E ENTRADAS (ORIGINAL, com uso de isSafeToTrade)
     // ============================================================
     function checkSignals() {
         for (const sym of SYMBOLS) {
             const data = assetsData[sym];
             if (!data) continue;
 
-            // Se já tem posição ativa, apenas gerencia
             if (activePositions[sym]) {
                 const updated = checkPositionManagement(sym, data);
                 if (updated) renderCards();
                 continue;
             }
 
-            // Verifica se pode operar (filtro macro)
+            // #1 - Filtro macro dinâmico
             if (!isSafeToTrade(sym)) {
-                // Atualiza badge de filtro
                 document.getElementById('tradeFilter').textContent = '🔒 Filtro Ativo (Evento/Vol)';
                 continue;
             } else {
                 document.getElementById('tradeFilter').textContent = '🔓 Mercado Aberto';
             }
 
-            // Computa score
             const score = computeScore(data, data.mtfTrend);
             data.score = score;
 
-            // Detecta setup SMC
             const smcSetup = findSMCSetup(data);
 
-            // Condições de entrada
             let entrySignal = null;
             if (score >= 75 && smcSetup === 'LONG' && data.mtfTrend === 'LONG') {
                 entrySignal = 'LONG';
@@ -884,7 +866,6 @@
             }
 
             if (entrySignal && !activePositions[sym]) {
-                // Abrir posição
                 const atr = data.atr_1H || 0;
                 const entryPrice = data.price;
                 let stopLoss, tp1, tp2;
@@ -911,7 +892,6 @@
                     trailingStop: null,
                 };
 
-                // Log
                 logEntries.push({
                     time: new Date().toISOString(),
                     symbol: sym,
@@ -929,7 +909,7 @@
     }
 
     // ============================================================
-    //  LOG
+    //  LOG (ORIGINAL)
     // ============================================================
     function updateLog() {
         const area = document.getElementById('logArea');
@@ -952,7 +932,7 @@
     }
 
     // ============================================================
-    //  POLLING
+    //  POLLING (ORIGINAL)
     // ============================================================
     setInterval(refreshAll, POLLING_MS);
 
@@ -966,7 +946,7 @@
     });
 
     // ============================================================
-    //  EXPORTA PARA DEBUG (opcional)
+    //  EXPORTA PARA DEBUG (ORIGINAL)
     // ============================================================
     window.__engine = { assetsData, activePositions, logEntries, refreshAll };
 </script>
