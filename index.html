@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Institucional — Score + Alertas + Performance (V2 Institutional)</title>
+    <title>Dashboard Institucional — Score + Alertas + Performance (V2 Institutional Engine)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -31,7 +31,7 @@
         .telegram-badge { background: rgba(0, 217, 142, 0.15); border: 1px solid var(--accent-green); color: var(--accent-green); padding: 4px 12px; border-radius: 12px; font-size: 0.75em; font-weight: 700; }
         .telegram-badge.error { border-color: var(--accent-red); color: var(--accent-red); }
         
-        /* Active Trades Panel */
+        /* Active Trades Panel - NEW */
         .active-trades-panel { background: var(--bg-card); border: 1px solid var(--accent-blue); border-radius: 8px; padding: 15px; margin-bottom: 30px; display: flex; gap: 20px; flex-wrap: wrap; }
         .trade-item { background: var(--primary); padding: 10px 20px; border-radius: 6px; flex: 1; min-width: 200px; border-left: 4px solid var(--text-muted); }
         .trade-item.long { border-left-color: var(--accent-green); }
@@ -131,7 +131,7 @@
     <div class="container">
         <header>
             <div class="header-content">
-                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas (V2)</h1>
+                <h1 class="header-title">📊 RELATÓRIO INSTITUCIONAL — Score + Alertas (V2 SMC Engine)</h1>
                 <div class="header-meta">
                     <div class="badge" id="header-timestamp">📅 Carregando...</div>
                     <div class="badge sentiment-bearish" id="header-sentiment">⚠️ SENTIMENTO: PESSIMISTA</div>
@@ -173,9 +173,9 @@
         <section>
             <h2 class="section-title">🎯 POSIÇÕES ATIVAS & GESTÃO</h2>
             <div class="active-trades-panel" id="active-trades-panel">
-                <div class="trade-item" id="trade-btc"><div class="trade-title">BTCUSDT</div><div class="trade-details">Aguardando sinal...</div></div>
-                <div class="trade-item" id="trade-eth"><div class="trade-title">ETHUSDT</div><div class="trade-details">Aguardando sinal...</div></div>
-                <div class="trade-item" id="trade-sol"><div class="trade-title">SOLUSDT</div><div class="trade-details">Aguardando sinal...</div></div>
+                <div class="trade-item" id="trade-btcusdt"><div class="trade-title">BTCUSDT</div><div class="trade-details">Aguardando sinal...</div></div>
+                <div class="trade-item" id="trade-ethusdt"><div class="trade-title">ETHUSDT</div><div class="trade-details">Aguardando sinal...</div></div>
+                <div class="trade-item" id="trade-solusdt"><div class="trade-title">SOLUSDT</div><div class="trade-details">Aguardando sinal...</div></div>
             </div>
         </section>
 
@@ -335,43 +335,41 @@
         // ================================================================
         // 0. CONFIGURAÇÃO & STATE
         // ================================================================
-        const TELEGRAM_TOKEN = 'SEU_TOKEN_AQUI'; // SUBSTITUA
-        const TELEGRAM_CHAT_ID = 'SEU_CHAT_ID_AQUI'; // SUBSTITUA
+        const TELEGRAM_TOKEN = '8670184440:AAFBfhFFTMnUWsgIFyRh0huBYbL-Q_vhT5k';
+        const TELEGRAM_CHAT_ID = '1137196768';
         
         const ASSETS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
-        const ASSET_NAMES = { 'BTCUSDT': 'BTC', 'ETHUSDT': 'ETH', 'SOLUSDT': 'SOL' };
         
         // Stateful Data per Asset
         let assetsData = {};
-        ASSETS.forEach(asset => {
-            assetsData[asset] = {
+        ASSETS.forEach(symbol => {
+            assetsData[symbol] = {
                 price: 0, candles1H: [], candles4H: [], candles1D: [],
                 ema50_1H: 0, ema200_4H: 0, rsi_1H: 50, atr_1H: 0,
-                swingHighs: [], swingLows: [], currentBOS: 'NEUTRAL', 
-                obList: [], fvgList: [], mtfTrend: 'NEUTRAL',
-                oiDelta: 0, volumeRel: 1.0
+                swingHighs: [], swingLows: [], currentBOS: 'NEUTRAL', mtfTrend: 'NEUTRAL',
+                oiDelta: 0, volumeRel: 1.0, rsiState: { avgGain: 0, avgLoss: 0, rsi: 50 }
             };
         });
 
-        let activePositions = {}; // { 'BTCUSDT': { type: 'LONG', entryPrice: 60000, stop: ..., tp1: ..., movedToBE: false, trailingStop: ... } }
-        let alertCooldowns = {}; // Per asset
+        let activePositions = {}; 
+        let alertCooldowns = {}; 
         let telegramStatus = 'online';
         let alertLog = JSON.parse(localStorage.getItem('alertLog') || '[]');
         let tradeStats = JSON.parse(localStorage.getItem('tradeStats') || '{ "wins": 0, "losses": 0, "totalPNL": 0 }');
 
-        // Macro Filter State
-        const macroBlockDates = []; // Add dates manually e.g. '2024-03-20' (FOMC)
+        // Macro Filter State (Hardcoded High Impact Events - Update monthly)
+        const macroBlockDates = ['2024-03-20', '2024-04-10']; // Example: FOMC, CPI days
+        
+        // Orderflow Liquidation Map
         let liqMap = { 'BTCUSDT': { longs: 0, shorts: 0 }, 'ETHUSDT': { longs: 0, shorts: 0 }, 'SOLUSDT': { longs: 0, shorts: 0 } };
 
-        // Chart Data
-        let scoreHistories = { 'BTCUSDT': [], 'ETHUSDT': [], 'SOLUSDT': [] };
+        let scoreHistory = []; 
         let previousScores = { 'BTCUSDT': 50, 'ETHUSDT': 50, 'SOLUSDT': 50 };
 
         // ================================================================
-        // 1. TELEGRAM & ALERTS
+        // 1. TELEGRAM & ALERTS (Enriched)
         // ================================================================
         async function sendTelegramAlert(message) {
-            if (TELEGRAM_TOKEN.includes('SEU_TOKEN')) return false; // Safety
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
                 const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' }) });
@@ -385,7 +383,7 @@
             const dir = signalType.toUpperCase();
             const emoji = signalType === 'long' ? '🟢' : '🔴';
             let msg = `${emoji} <b>SINAL ${dir} - ${symbol}</b>\n`;
-            msg += `Score: ${score}/100 | Risco: ${riskPct.toFixed(1)}%\n`;
+            msg += `Score: ${score}/100 | Risco Alocado: ${riskPct.toFixed(1)}%\n`;
             msg += `Preço: $${price.toFixed(2)}\nStop: $${stop.toFixed(2)}\n`;
             msg += `Alvos:\n  TP1: $${targets[0].price.toFixed(2)} (R:R ${targets[0].rr.toFixed(1)})\n  TP2: $${targets[1].price.toFixed(2)} (R:R ${targets[1].rr.toFixed(1)})\n`;
             msg += `Estrutura: ${rationale}\n⏰ ${getCurrentTimestamp()}`;
@@ -418,14 +416,14 @@
             return (newPrice * k) + (prevEMA * (1 - k));
         }
 
-        function updateStatefulRSI(prevAvgGain, prevAvgLoss, newPrice, prevPrice, period=14) {
+        function updateStatefulRSI(prevState, newPrice, prevPrice, period=14) {
             if (!prevPrice) return { avgGain: 0, avgLoss: 0, rsi: 50 };
             let diff = newPrice - prevPrice;
             let gain = diff > 0 ? diff : 0;
             let loss = diff < 0 ? Math.abs(diff) : 0;
             
-            let avgGain = (prevAvgGain * (period - 1) + gain) / period;
-            let avgLoss = (prevAvgLoss * (period - 1) + loss) / period;
+            let avgGain = (prevState.avgGain * (period - 1) + gain) / period;
+            let avgLoss = (prevState.avgLoss * (period - 1) + loss) / period;
             let rsi = avgLoss === 0 ? 100 : 100 - (100 / (1 + (avgGain / avgLoss)));
             return { avgGain, avgLoss, rsi };
         }
@@ -443,7 +441,6 @@
             data.swingHighs = recentHighs.slice(-3);
             data.swingLows = recentLows.slice(-3);
 
-            // BOS (Break of Structure) Logic
             const lastHigh = data.swingHighs.length > 0 ? data.swingHighs[data.swingHighs.length-1] : 0;
             const lastLow = data.swingLows.length > 0 ? data.swingLows[data.swingLows.length-1] : Infinity;
             const currentPrice = data.price;
@@ -452,15 +449,16 @@
             else if (currentPrice < lastLow) data.currentBOS = 'BEARISH';
         }
 
-        // SMC: Order Blocks & FVG (Simplified for efficiency)
+        // SMC: Entry Logic (Pullback to OB/FVG proxy)
         function findSMCSetup(data, direction) {
             const c = data.candles1H;
-            if (c.length < 5) return false;
-            // Bullish Setup: Procurando FVG/OB em zona de suporte após BOS Bullish
+            if (c.length < 5 || data.swingLows.length === 0 || data.swingHighs.length === 0) return false;
+            
+            // Bullish Setup: BOS Bullish + Pullback to EMA50/Support Zone
             if (direction === 'LONG' && data.currentBOS === 'BULLISH') {
-                // Simulação: Preço recuou para abaixo do EMA50 mas acima do último swing low?
                 if (data.price < data.ema50_1H && data.price > Math.min(...data.swingLows)) return true;
             }
+            // Bearish Setup: BOS Bearish + Pullback to EMA50/Resistance Zone
             if (direction === 'SHORT' && data.currentBOS === 'BEARISH') {
                 if (data.price > data.ema50_1H && data.price < Math.max(...data.swingHighs)) return true;
             }
@@ -471,7 +469,7 @@
         // 3. WEBSOCKETS (Real-Time Execution & Liquidations)
         // ================================================================
         function initWebSockets() {
-            // Spot Price & Trade Stream
+            // 1. Spot Price Stream
             const streams = ASSETS.map(a => a.toLowerCase() + '@trade').join('/');
             const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
             
@@ -484,32 +482,31 @@
                     const prevPrice = assetsData[symbol].price;
                     assetsData[symbol].price = price;
                     
-                    // Stateful Indicator Updates
+                    // O(1) Indicator Updates
                     if (prevPrice > 0) {
                         assetsData[symbol].ema50_1H = updateStatefulEMA(assetsData[symbol].ema50_1H, price, 50);
-                        assetsData[symbol].ema200_4H = updateStatefulEMA(assetsData[symbol].ema200_4H, price, 200); // Approx on every tick for responsiveness
-                        const rsiData = updateStatefulRSI(assetsData[symbol].rsiState?.avgGain, assetsData[symbol].rsiState?.avgLoss, price, prevPrice);
-                        assetsData[symbol].rsiState = rsiData;
-                        assetsData[symbol].rsi_1H = rsiData.rsi;
+                        assetsData[symbol].ema200_4H = updateStatefulEMA(assetsData[symbol].ema200_4H, price, 200);
+                        assetsData[symbol].rsiState = updateStatefulRSI(assetsData[symbol].rsiState, price, prevPrice);
+                        assetsData[symbol].rsi_1H = assetsData[symbol].rsiState.rsi;
                     }
                     
                     checkPositionManagement(symbol, price);
+                    updateLivePriceUI(symbol, price);
                 }
-                updateLivePriceUI(symbol, price);
             };
-            ws.onclose = () => setTimeout(initWebSockets, 3000); // Reconnect
+            ws.onclose = () => setTimeout(initWebSockets, 3000);
 
-            // Futures Liquidation Stream
+            // 2. Futures Liquidation Stream (Orderflow Filter)
             const wsLiq = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
             wsLiq.onmessage = (event) => {
                 const orders = JSON.parse(event.data);
                 orders.forEach(o => {
                     const symbol = o.order.symbol;
                     if (liqMap[symbol]) {
-                        const side = o.order.side; // 'BUY' means Long Liquidated (Short win), 'SELL' means Short Liquidated
+                        const side = o.order.side; // 'BUY' = Longs liquidated, 'SELL' = Shorts liquidated
                         const qty = parseFloat(o.order.origQty) * parseFloat(o.order.price);
-                        if (side === 'BUY') liqMap[symbol].longs += qty; // Longs sendo estopados
-                        else liqMap[symbol].shorts += qty; // Shorts sendo estopados
+                        if (side === 'BUY') liqMap[symbol].longs += qty; 
+                        else liqMap[symbol].shorts += qty;
                     }
                 });
             };
@@ -525,19 +522,19 @@
         function isSafeToTrade() {
             const now = new Date();
             const day = now.toISOString().split('T')[0];
-            if (macroBlockDates.includes(day)) return false; // Macro Event Day
+            if (macroBlockDates.includes(day)) return false; // Macro Event Block
             
             const hourUTC = now.getUTCHours();
-            // Overlap NY/London (13:00 - 17:00 UTC) is best. Allow also 00:00-04:00 UTC (Asia open)
+            // NY/London Overlap is best. Asian open is acceptable.
             if ((hourUTC >= 13 && hourUTC <= 17) || (hourUTC >= 0 && hourUTC <= 4)) return true;
-            return false; // Block outside high volume
+            return false;
         }
 
         function computeScore(symbol) {
             const data = assetsData[symbol];
             if (!data || data.price === 0) return { score: 50, components: {} };
 
-            // 1. Multi-Timeframe Trend (1D / 4H)
+            // 1. Multi-Timeframe Trend
             const mtfTrend = data.ema200_4H > 0 ? (data.price > data.ema200_4H ? 'LONG' : 'SHORT') : 'NEUTRAL';
             data.mtfTrend = mtfTrend;
             let mtfScore = mtfTrend === 'LONG' ? 100 : mtfTrend === 'SHORT' ? 0 : 50;
@@ -550,21 +547,21 @@
             // 3. Momentum (RSI)
             let momScore = clamp(data.rsi_1H, 0, 100);
 
-            // 4. Orderflow / Liquidation Safety (Contrarian logic)
+            // 4. Orderflow / Liquidation Safety
             let ofScore = 50;
             const liq = liqMap[symbol] || { longs: 0, shorts: 0 };
-            if (mtfTrend === 'LONG' && liq.shorts > 50000) ofScore = 80; // Shorts sendo liq, empurrando preço pra cima
-            if (mtfTrend === 'LONG' && liq.longs > 50000) ofScore = 20; // Longs sendo liq, cuidado com dump
+            if (mtfTrend === 'LONG' && liq.shorts > 50000) ofScore = 80; // Shorts being liq pushes up
+            if (mtfTrend === 'LONG' && liq.longs > 50000) ofScore = 20; // Longs being liq, danger
             if (mtfTrend === 'SHORT' && liq.longs > 50000) ofScore = 80;
             if (mtfTrend === 'SHORT' && liq.shorts > 50000) ofScore = 20;
 
             // 5. Macro & Session Safety
             let macroSafe = isSafeToTrade() ? 100 : 0;
 
-            // 6. OI Delta (From REST polling, fallback neutral)
+            // 6. OI Delta (Fallback neutral)
             let oiScore = clamp(50 + (data.oiDelta * 2), 0, 100);
 
-            // Weighted Score
+            // Weighted Score Calculation
             let rawScore = (mtfScore * 0.30) + (smcScore * 0.30) + (momScore * 0.15) + (ofScore * 0.10) + (oiScore * 0.05) + (macroSafe * 0.10);
             let finalScore = Math.round(clamp(rawScore, 0, 100));
 
@@ -578,12 +575,12 @@
         }
 
         function KellyPositionSize(winRate, rrRatio) {
-            if (winRate <= 0 || rrRatio <= 0) return 0.01; // Min 1%
+            if (winRate <= 0 || rrRatio <= 0) return 0.01;
             const W = winRate;
             const R = rrRatio;
             const kelly = ((W * R) - (1 - W)) / R;
-            const fraction = Math.max(kelly * 0.25, 0.005); // Quarter Kelly, min 0.5%
-            return Math.min(fraction, 0.05); // Max 5% risk per trade
+            const fraction = Math.max(kelly * 0.25, 0.005); // Quarter Kelly
+            return Math.min(fraction, 0.05); // Max 5% risk
         }
 
         // ================================================================
@@ -597,19 +594,19 @@
             let updateUI = false;
 
             if (pos.type === 'LONG') {
-                // Trailing Stop: Ajusta para o último Swing Low - ATR Buffer
+                // Trailing Stop: Adjust to last Swing Low - ATR Buffer
                 if (data.swingLows.length > 0) {
                     const lastSwingLow = Math.min(...data.swingLows);
                     const newTrail = lastSwingLow - (data.atr_1H * 0.2);
                     if (newTrail > pos.trailingStop) {
                         pos.trailingStop = newTrail;
-                        sendTelegramAlert(`📈 <b>TRAILING STOP AJUSTADO (${symbol})</b>\nNovo Stop: $${newTrail.toFixed(2)} (Swing Low + Buffer)`);
+                        sendTelegramAlert(`📈 <b>TRAILING STOP AJUSTADO (${symbol})</b>\nNovo Stop: $${newTrail.toFixed(2)} (Swing Low Buffer)`);
                     }
                 }
                 
-                // Check Exits
+                // Exits Check
                 if (currentPrice >= pos.tp1 && !pos.movedToBE) {
-                    pos.trailingStop = pos.entryPrice; // Breakeven inicial antes de trailing dominar
+                    pos.trailingStop = pos.entryPrice; // Move to breakeven first
                     pos.movedToBE = true;
                     sendTelegramAlert(`🎯 <b>TP1 ATINGIDO (${symbol})</b>\nStop movido para Breakeven. Trailing Ativado.`);
                     updateUI = true;
@@ -619,11 +616,11 @@
                     updateUI = true;
                 } else if (currentPrice <= pos.trailingStop) {
                     const reason = pos.movedToBE ? 'Trailing Stop/Breakeven' : 'Stop Loss Inicial';
-                    closePosition(symbol, reason, pos.movedToBE); // movedToBE means we didn't lose money at least
+                    closePosition(symbol, reason, pos.movedToBE);
                     updateUI = true;
                 }
             } else if (pos.type === 'SHORT') {
-                // Trailing Stop: Ajusta para o último Swing High + ATR Buffer
+                // Trailing Stop: Adjust to last Swing High + ATR Buffer
                 if (data.swingHighs.length > 0) {
                     const lastSwingHigh = Math.max(...data.swingHighs);
                     const newTrail = lastSwingHigh + (data.atr_1H * 0.2);
@@ -664,22 +661,21 @@
         }
 
         // ================================================================
-        // 6. MAIN LOGIC LOOP (Triggered by REST Candle Closes & Score Calc)
+        // 6. MAIN LOGIC LOOP
         // ================================================================
         function evaluateMarkets() {
             ASSETS.forEach(symbol => {
                 const data = assetsData[symbol];
-                updateSwingPoints(data); // Update structure on every evaluation
+                updateSwingPoints(data); 
 
                 const scoreData = computeScore(symbol);
                 const score = scoreData.score;
 
-                // Update Chart History
-                if (!scoreHistories[symbol]) scoreHistories[symbol] = [];
-                scoreHistories[symbol].push({ time: getCurrentTimestamp().split(' ')[1], score: score });
-                if (scoreHistories[symbol].length > 50) scoreHistories[symbol].shift();
+                // Chart History
+                scoreHistory.push({ time: getCurrentTimestamp().split(' ')[1], symbol: symbol, score: score });
+                if (scoreHistory.length > 150) scoreHistory.shift();
 
-                // Main BTC UI Score Update
+                // BTC UI Update (Benchmark kept)
                 if (symbol === 'BTCUSDT') updateMainScoreUI(scoreData);
 
                 const prevScore = previousScores[symbol] || 50;
@@ -689,7 +685,7 @@
                     const now = Date.now();
                     const cooldown = alertCooldowns[symbol] || 0;
                     if (now - cooldown > 1800000) { // 30 min cooldown per asset
-                        const atr = data.atr_1H || (data.price * 0.02); // fallback 2%
+                        const atr = data.atr_1H || (data.price * 0.02);
                         
                         if (score >= 75 && data.mtfTrend === 'LONG' && findSMCSetup(data, 'LONG')) {
                             const stop = data.price - (atr * 1.5);
@@ -755,8 +751,9 @@
                     const lows = c1H.map(c => c.low);
                     
                     assetsData[symbol].price = closes[closes.length-1];
-                    assetsData[symbol].ema50_1H = closes.slice(0, 50).reduce((a,b)=>a+b,0) / 50; // Base init
-                    assetsData[symbol].ema200_4H = closes.slice(0, 200).reduce((a,b)=>a+b,0) / 200; // Approx init from 1h
+                    // Base init for stateful updates
+                    assetsData[symbol].ema50_1H = closes.slice(-50).reduce((a,b)=>a+b,0) / 50;
+                    assetsData[symbol].ema200_4H = closes.slice(-200).reduce((a,b)=>a+b,0) / 200; 
                     assetsData[symbol].atr_1H = calculateATR(highs, lows, closes, 14);
                     
                     // RSI State Init
@@ -765,7 +762,7 @@
                     assetsData[symbol].rsiState = { avgGain: gains/14, avgLoss: losses/14, rsi: 50 };
                 }
             }
-            evaluateMarkets(); // First evaluation
+            evaluateMarkets();
         }
 
         function calculateATR(highs, lows, closes, period=14) {
@@ -777,8 +774,8 @@
             return trs.slice(-period).reduce((a,b)=>a+b,0)/period;
         }
 
-        // Existing APIs kept intact
-        async function fetchPrices() { /* ... same as original ... */ 
+        // Existing API Fetches (PRESERVED)
+        async function fetchPrices() { 
             try {
                 const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true';
                 const resp = await fetch(url); if(!resp.ok) return;
@@ -788,24 +785,84 @@
                 if(data.solana) { document.getElementById('sol-price').textContent = '$' + data.solana.usd.toLocaleString('en-US', {minimumFractionDigits: 2}); document.getElementById('sol-change').textContent = (data.solana.usd_24h_change >= 0 ? '+' : '') + data.solana.usd_24h_change.toFixed(2) + '%'; }
             } catch(e){}
         }
-        async function fetchFearGreed() { /* ... same as original ... */ 
+        async function fetchFearGreed() { 
             try { const r = await fetch('https://api.alternative.me/fng/?limit=1'); if(!r.ok) return; const d = await r.json(); const v = d.data[0].value; document.getElementById('header-fng').innerHTML = '😱 FEAR & GREED: ' + v + ' (' + d.data[0].value_classification + ')'; document.getElementById('header-sentiment').textContent = v <= 25 ? '⚠️ PESSIMISTA' : '✅ BULLISH'; } catch(e){}
         }
-        async function fetchDeFiData() { /* ... same as original ... */ 
+        async function fetchDeFiData() { 
             try { const r1 = await fetch('https://stablecoins.llama.fi/stablecoins'); if(!r1.ok) return; const d1 = await r1.json(); let t=0; d1.peggedAssets.forEach(a=>t+=a.total||0); document.getElementById('stablecoin-supply').textContent = '$' + (t/1e9).toFixed(0) + 'B'; } catch(e){}
         }
-        async function fetchBinanceDerivatives() { /* ... same as original ... */ 
+        async function fetchBinanceDerivatives() { 
             try { const r = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1'); if(!r.ok) return; const d = await r.json(); document.getElementById('funding-rate').textContent = (parseFloat(d[0].fundingRate)*100).toFixed(4) + '%'; } catch(e){}
         }
+        async function fetchBRK() {
+            const metrics = [
+                { id: 'mvrv', el: 'mvrv', interp: 'mvrv-interp', source: 'mvrv-source', fallback: '1,15' },
+                { id: 'mvrv_short', el: 'mvrv-sth', interp: 'mvrv-sth-interp', source: 'mvrv-sth-source', fallback: '0,84' },
+                { id: 'sopr', el: 'sopr', interp: 'sopr-interp', source: 'sopr-source', fallback: '0,80' },
+                { id: 'sopr_adjusted', el: 'asopr', interp: 'asopr-interp', source: 'asopr-source', fallback: '0,99' },
+                { id: 'realized_price', el: 'realized-price', interp: null, source: 'realized-price-source', fallback: '53600' },
+                { id: 'active_addresses', el: 'active-addresses', interp: null, source: 'active-addresses-source', fallback: '605298' }
+            ];
+            const promises = metrics.map(async m => {
+                try {
+                    const url = `https://bitview.space/api/metrics/btc/${m.id}?resolution=1d`;
+                    const resp = await fetch(url); if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    let val = data?.[0]?.[1];
+                    if (val !== undefined && val !== null) {
+                        let display = (m.id === 'realized_price' || m.id === 'active_addresses') ? Number(val).toLocaleString('en-US', { maximumFractionDigits: 0 }) : Number(val).toFixed(2);
+                        document.getElementById(m.el).textContent = display + ' (live)';
+                        if (m.id === 'realized_price') document.getElementById(m.el).textContent = '$' + display + ' (live)';
+                        if (m.interp) {
+                            const num = parseFloat(val);
+                            let interpText = '';
+                            if (m.id === 'mvrv') interpText = num > 1.0 ? '⚠️ Acima de 1.0' : 'ℹ️ Abaixo de 1.0';
+                            else if (m.id === 'mvrv_short') interpText = num < 1.0 ? '✅ STH em perda' : '⚠️ STH em lucro';
+                            else if (m.id === 'sopr') interpText = num < 1.0 ? '🔴 Weakness' : '🟢 Strength';
+                            else if (m.id === 'sopr_adjusted') interpText = num < 1.0 ? '⚠️ Ajustado fraco' : 'ℹ️ Ajustado neutro';
+                            document.getElementById(m.interp).textContent = interpText;
+                        }
+                        if (m.id === 'mvrv') globalData.mvrv = parseFloat(val);
+                        if (m.id === 'sopr') globalData.sopr = parseFloat(val);
+                    }
+                } catch (err) {}
+            });
+            await Promise.all(promises);
+        }
+        async function fetchHashrate() {
+            try {
+                const response = await fetch('https://blockchain.info/q/hashrate', { headers: { 'User-Agent': 'Mozilla/5.0' } });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const text = await response.text();
+                const hr = parseFloat(text) / 1e18;
+                if (!isNaN(hr) && hr > 0) { document.getElementById('btc-hashrate').textContent = hr.toFixed(2) + ' EH/s (live)'; updateSourceTimestamp('hashrate-source'); }
+            } catch (e) {}
+        }
+        async function fetchGasPrice() {
+            const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
+            try {
+                const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_KEY}`;
+                const response = await fetch(url); if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                if (data.status === '1') { const gasPrice = parseFloat(data.result.ProposeGasPrice) / 10; document.getElementById('eth-gas').textContent = gasPrice.toFixed(2) + ' Gwei (live)'; updateSourceTimestamp('gas-source'); }
+            } catch (e) {}
+        }
+        // Auxiliars Preserved
+        let globalData = { mvrv: 1.2, sopr: 0.95 }; // Kept for BRK fetch compatibility
+        function formatCurrency(value) { return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function formatChange(value) { const n = parseFloat(value); return isNaN(n) ? '--' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+        function getChangeClass(value) { const n = parseFloat(value); return isNaN(n) ? 'negative' : (n >= 0 ? 'positive' : 'negative'); }
+        function getCurrentTimestamp() { const now = new Date(); const o = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'America/Sao_Paulo' }; return now.toLocaleString('pt-BR', o); }
+        function updateSourceTimestamp(elementId) { const el = document.getElementById(elementId); if (el) { const currentText = el.textContent; if (currentText.includes('•')) el.textContent = currentText.replace(/•.*$/, '• ' + getCurrentTimestamp()); else el.textContent = currentText + ' • ' + getCurrentTimestamp(); } }
 
         // ================================================================
         // 8. UI UPDATES
         // ================================================================
         function updateLivePriceUI(symbol, price) {
-            const prefix = ASSET_NAMES[symbol]?.toLowerCase();
+            const prefix = symbol.replace('USDT', '').toLowerCase();
             if (prefix) {
                 const el = document.getElementById(`${prefix}-price`);
-                if (el) el.textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (el) el.textContent = formatCurrency(price);
             }
         }
 
@@ -828,7 +885,7 @@
 
         function updateActiveTradesUI() {
             ASSETS.forEach(symbol => {
-                const id = ASSET_NAMES[symbol]?.toLowerCase();
+                const id = symbol.toLowerCase();
                 const el = document.getElementById(`trade-${id}`);
                 if (!el) return;
                 
@@ -836,7 +893,7 @@
                 if (pos) {
                     el.className = `trade-item ${pos.type.toLowerCase()}`;
                     el.innerHTML = `<div class="trade-title">${symbol} ${pos.type}</div>
-                                   <div class="trade-details">Entry: $${pos.entryPrice.toFixed(2)} | Stop: $${pos.trailingStop.toFixed(2)} | TP1: $${pos.tp1.toFixed(2)}</div>`;
+                                   <div class="trade-details">Entry: $${pos.entryPrice.toFixed(2)} | Trail Stop: $${pos.trailingStop.toFixed(2)} | TP1: $${pos.tp1.toFixed(2)}</div>`;
                 } else {
                     el.className = 'trade-item';
                     el.innerHTML = `<div class="trade-title">${symbol}</div><div class="trade-details">Aguardando sinal...</div>`;
@@ -844,10 +901,9 @@
             });
         }
 
-        function getCurrentTimestamp() { return new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }); }
-        function updateTimestamps() { document.getElementById('header-timestamp').textContent = '📅 ' + getCurrentTimestamp(); document.getElementById('last-update').textContent = getCurrentTimestamp(); }
+        function updateTimestamps() { document.getElementById('header-timestamp').textContent = '📅 ' + getCurrentTimestamp(); document.getElementById('last-update').textContent = getCurrentTimestamp(); document.getElementById('live-update-time').textContent = getCurrentTimestamp(); const badge = document.getElementById('status-badge'); badge.textContent = '✅ LIVE'; badge.className = 'status-badge live'; }
 
-        // Chart.js Initialization (Kept as requested)
+        // Chart.js Initialization (PRESERVED)
         window.charts = [];
         const chartColors = { primary: 'rgb(0, 180, 216)', secondary: 'rgb(233, 69, 96)', success: 'rgb(0, 217, 142)', warning: 'rgb(255, 214, 10)', text: 'rgb(236, 240, 241)', border: 'rgb(44, 62, 80)' };
         
@@ -856,102 +912,140 @@
         window.charts.push(scoreChart);
 
         function updateScoreChart() {
-            const btcHist = scoreHistories['BTCUSDT'] || [];
+            const btcHist = scoreHistory.filter(s => s.symbol === 'BTCUSDT').slice(-50);
             scoreChart.data.labels = btcHist.map(s => s.time);
             scoreChart.data.datasets[0].data = btcHist.map(s => s.score);
             scoreChart.update('none');
         }
 
+        const ctx1 = document.getElementById('chart_etf_flows').getContext('2d');
+        window.charts.push(new Chart(ctx1, { type: 'bar', data: { labels: ['22 JUN', '23 JUN', '24 JUN', '25 JUN', '26 JUN', '27 JUN', '28 JUN'], datasets: [{ label: 'BTC ETF Flow (ref)', data: [-120, -85, -155, -92, -138, -165, -445], backgroundColor: 'rgba(233,69,96,0.6)', borderColor: 'rgb(233,69,96)', borderWidth: 2 }, { label: 'ETH ETF Flow (ref)', data: [-8, -12, -15, -10, -18, -20, -12.85], backgroundColor: 'rgba(0,180,216,0.4)', borderColor: 'rgb(0,180,216)', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: chartColors.text } }, title: { display: true, text: 'ETF Flows (referência)', color: chartColors.text } }, scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } }, x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } } }));
+
+        const ctx2 = document.getElementById('chart_macro_rates').getContext('2d');
+        window.charts.push(new Chart(ctx2, { type: 'line', data: { labels: ['17 JUN', '19 JUN', '21 JUN', '23 JUN', '25 JUN', '27 JUN', '28 JUN'], datasets: [{ label: 'DXY (ref)', data: [100.8, 100.95, 101.15, 101.28, 101.32, 101.35, 101.37], borderColor: 'rgb(233,69,96)', borderWidth: 2, tension: 0.4, yAxisID: 'y' }, { label: 'US10Y (ref)', data: [4.32, 4.30, 4.29, 4.28, 4.27, 4.28, 4.28], borderColor: 'rgb(255,214,10)', borderWidth: 2, tension: 0.4, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: chartColors.text } }, title: { display: true, text: 'Macro (referência)', color: chartColors.text } }, scales: { y: { position: 'left', ticks: { color: chartColors.text }, grid: { color: chartColors.border } }, y1: { position: 'right', ticks: { color: chartColors.text }, grid: { drawOnChartArea: false } }, x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } } }));
+
+        const ctx3 = document.getElementById('chart_scenarios').getContext('2d');
+        window.charts.push(new Chart(ctx3, { type: 'doughnut', data: { labels: ['Bounce Tático', 'Markdown Estendido', 'Reversal Estrutural'], datasets: [{ data: [35, 45, 20], backgroundColor: ['rgba(255,214,10,0.6)', 'rgba(233,69,96,0.6)', 'rgba(0,217,142,0.6)'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: chartColors.text } } } } }));
+
+        const ctx4 = document.getElementById('chart_allocation').getContext('2d');
+        window.charts.push(new Chart(ctx4, { type: 'pie', data: { labels: ['BTC (25%)', 'ETH (10%)', 'Stablecoins (65%)'], datasets: [{ data: [25, 10, 65], backgroundColor: ['rgba(0,180,216,0.6)', 'rgba(255,214,10,0.6)', 'rgba(0,217,142,0.6)'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartColors.text } } } } }));
+
+        const ctxW = document.getElementById('chart_whale_flow').getContext('2d');
+        window.charts.push(new Chart(ctxW, { type: 'bar', data: { labels: ['BTC', 'ETH'], datasets: [{ label: 'Acumulação (ref)', data: [700, 0], backgroundColor: 'rgba(0,217,142,0.7)', borderColor: 'rgb(0,217,142)', borderWidth: 2 }, { label: 'Distribuição (ref)', data: [0, 27.4], backgroundColor: 'rgba(233,69,96,0.7)', borderColor: 'rgb(233,69,96)', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: chartColors.text } }, title: { display: true, text: 'Fluxo de Baleias (referência)', color: chartColors.text } }, scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border }, title: { display: true, text: 'Volume (USD M)', color: chartColors.text } }, x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } } }));
+
         // Lightweight Charts
         let candleCharts = {};
         function initCandleChart(containerId, symbol, color) {
-            const container = document.getElementById(containerId); if(!container) return;
-            const chart = LightweightCharts.createChart(container, { width: container.clientWidth, height: 250, layout: { background: { color: '#1a1a2e' }, textColor: '#95a5a6' }, grid: { vertLines: { visible: false }, horzLines: { visible: false } }, timeScale: { borderColor: '#2c3e50', timeVisible: true } });
-            const series = chart.addCandlestickSeries({ upColor: color, downColor: '#e94560', borderDownColor: '#e94560', borderUpColor: color, wickDownColor: '#e94560', wickUpColor: color });
-            candleCharts[symbol] = { chart, series };
+            const container = document.getElementById(containerId); if(!container) return null;
+            const chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth, height: 250,
+                layout: { background: { color: '#1a1a2e' }, textColor: '#95a5a6' },
+                grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                priceScale: { borderColor: '#2c3e50' },
+                timeScale: { borderColor: '#2c3e50', timeVisible: true, secondsVisible: false },
+            });
+            const candleSeries = chart.addCandlestickSeries({
+                upColor: color || '#00d98e', downColor: '#e94560', borderDownColor: '#e94560', borderUpColor: '#00d98e', wickDownColor: '#e94560', wickUpColor: '#00d98e',
+            });
+            return { chart, candleSeries };
         }
 
-        function updateCandleChart(symbol) {
-            const data = assetsData[symbol]?.candles1H;
-            if (!data || data.length === 0 || !candleCharts[symbol]) return;
-            candleCharts[symbol].series.setData(data);
-            candleCharts[symbol].chart.timeScale().fitContent();
-        }
-
-        // Dummy charts for ETF/Macro to avoid breaking layout
-        function initStaticCharts() {
-            // ETF
-            const ctx1 = document.getElementById('chart_etf_flows').getContext('2d');
-            window.charts.push(new Chart(ctx1, { type: 'bar', data: { labels: ['22 JUN', '23 JUN', '24 JUN', '25 JUN', '26 JUN', '27 JUN', '28 JUN'], datasets: [{ label: 'BTC ETF Flow (ref)', data: [-120, -85, -155, -92, -138, -165, -445], backgroundColor: 'rgba(233,69,96,0.6)' }] }, options: { responsive: true, maintainAspectRatio: false } }));
-            // Macro
-            const ctx2 = document.getElementById('chart_macro_rates').getContext('2d');
-            window.charts.push(new Chart(ctx2, { type: 'line', data: { labels: ['17 JUN', '19 JUN', '21 JUN', '23 JUN', '25 JUN', '27 JUN'], datasets: [{ label: 'DXY (ref)', data: [100.8, 100.95, 101.15, 101.28, 101.32, 101.37], borderColor: 'rgb(233,69,96)', borderWidth: 2, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } }));
-            // Scenarios
-            const ctx3 = document.getElementById('chart_scenarios').getContext('2d');
-            window.charts.push(new Chart(ctx3, { type: 'doughnut', data: { labels: ['Bounce', 'Markdown', 'Reversal'], datasets: [{ data: [35, 45, 20], backgroundColor: ['rgba(255,214,10,0.6)', 'rgba(233,69,96,0.6)', 'rgba(0,217,142,0.6)'] }] }, options: { responsive: true, maintainAspectRatio: false } }));
-            // Allocation
-            const ctx4 = document.getElementById('chart_allocation').getContext('2d');
-            window.charts.push(new Chart(ctx4, { type: 'pie', data: { labels: ['BTC (25%)', 'ETH (10%)', 'Stablecoins (65%)'], datasets: [{ data: [25, 10, 65], backgroundColor: ['rgba(0,180,216,0.6)', 'rgba(255,214,10,0.6)', 'rgba(0,217,142,0.6)'] }] }, options: { responsive: true, maintainAspectRatio: false } }));
-            // Whale
-            const ctxW = document.getElementById('chart_whale_flow').getContext('2d');
-            window.charts.push(new Chart(ctxW, { type: 'bar', data: { labels: ['BTC', 'ETH'], datasets: [{ label: 'Acumulação', data: [700, 0], backgroundColor: 'rgba(0,217,142,0.7)' }, { label: 'Distribuição', data: [0, 27.4], backgroundColor: 'rgba(233,69,96,0.7)' }] }, options: { responsive: true, maintainAspectRatio: false } }));
+        async function fetchDailyStats(symbol) {
+            try {
+                const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=31`;
+                const response = await fetch(url); if (!response.ok) return null;
+                const data = await response.json();
+                const closes = data.map(k => parseFloat(k[4]));
+                const current = closes[closes.length - 1];
+                if (closes.length < 2) return null;
+                const dayAgo = closes[closes.length - 2];
+                const weekAgo = closes.length > 7 ? closes[closes.length - 8] : dayAgo;
+                const monthAgo = closes.length > 30 ? closes[closes.length - 31] : weekAgo;
+                return { current: current, day: dayAgo ? ((current - dayAgo) / dayAgo * 100) : 0, week: weekAgo ? ((current - weekAgo) / weekAgo * 100) : 0, month: monthAgo ? ((current - monthAgo) / monthAgo * 100) : 0 };
+            } catch (e) { return null; }
         }
 
         // ================================================================
         // 9. INITIALIZATION
         // ================================================================
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function initialLoad() {
             updateTimestamps();
-            initStaticCharts();
-            initCandleChart('candle-btc', 'BTCUSDT', '#00d98e');
-            initCandleChart('candle-eth', 'ETHUSDT', '#00b4d8');
-            initCandleChart('candle-sol', 'SOLUSDT', '#ffd60a');
+            
+            // Init Candle Charts
+            candleCharts['BTCUSDT'] = initCandleChart('candle-btc', 'BTCUSDT', '#00d98e');
+            candleCharts['ETHUSDT'] = initCandleChart('candle-eth', 'ETHUSDT', '#00b4d8');
+            candleCharts['SOLUSDT'] = initCandleChart('candle-sol', 'SOLUSDT', '#ffd60a');
 
-            // Warm up data & WS
+            // Warm Up Data & WS
             await warmUpIndicators();
             initWebSockets();
             
-            updateCandleChart('BTCUSDT');
-            updateCandleChart('ETHUSDT');
-            updateCandleChart('SOLUSDT');
+            // Render initial candles
+            if(assetsData['BTCUSDT'].candles1H.length > 0 && candleCharts['BTCUSDT']) { candleCharts['BTCUSDT'].candleSeries.setData(assetsData['BTCUSDT'].candles1H); candleCharts['BTCUSDT'].chart.timeScale().fitContent(); }
+            if(assetsData['ETHUSDT'].candles1H.length > 0 && candleCharts['ETHUSDT']) { candleCharts['ETHUSDT'].candleSeries.setData(assetsData['ETHUSDT'].candles1H); candleCharts['ETHUSDT'].chart.timeScale().fitContent(); }
+            if(assetsData['SOLUSDT'].candles1H.length > 0 && candleCharts['SOLUSDT']) { candleCharts['SOLUSDT'].candleSeries.setData(assetsData['SOLUSDT'].candles1H); candleCharts['SOLUSDT'].chart.timeScale().fitContent(); }
+
+            // Fetch Stats
+            const statsPromises = ASSETS.map(async (symbol) => {
+                const stats = await fetchDailyStats(symbol);
+                if (stats) {
+                    const prefix = symbol.replace('USDT', '').toLowerCase();
+                    const stat1d = document.getElementById(`${prefix}-stat-1d`);
+                    const stat1s = document.getElementById(`${prefix}-stat-1s`);
+                    const stat1m = document.getElementById(`${prefix}-stat-1m`);
+                    if (stat1d) { stat1d.textContent = (stats.day >= 0 ? '+' : '') + stats.day.toFixed(2) + '%'; stat1d.className = 'stat ' + (stats.day >= 0 ? 'positive' : 'negative'); }
+                    if (stat1s) { stat1s.textContent = (stats.week >= 0 ? '+' : '') + stats.week.toFixed(2) + '%'; stat1s.className = 'stat ' + (stats.week >= 0 ? 'positive' : 'negative'); }
+                    if (stat1m) { stat1m.textContent = (stats.month >= 0 ? '+' : '') + stats.month.toFixed(2) + '%'; stat1m.className = 'stat ' + (stats.month >= 0 ? 'positive' : 'negative'); }
+                }
+            });
+            await Promise.all(statsPromises);
+
             updateActiveTradesUI();
+
+            // Initial fetch existing data
+            await Promise.allSettled([ fetchPrices(), fetchFearGreed(), fetchDeFiData(), fetchBinanceDerivatives(), fetchBRK(), fetchHashrate(), fetchGasPrice() ]);
 
             // Test Telegram Button
             const btn = document.getElementById('test-telegram-btn');
             btn.addEventListener('click', async () => {
                 btn.disabled = true;
                 document.getElementById('test-btn-label').innerHTML = '<span class="spinner"></span> Enviando...';
-                const ok = await sendTelegramAlert('🔔 TESTE DE CONEXÃO V2 - Motor Institucional Ativo!');
+                const ok = await sendTelegramAlert('🔔 <b>TESTE DE CONEXÃO V2 - Motor Institucional Ativo!</b>\n⚛️ SMC + MTF + Orderflow + Trailing Stop\n⏰ ' + getCurrentTimestamp());
                 document.getElementById('test-btn-label').textContent = ok ? '✅ Enviado!' : '❌ Falha';
                 setTimeout(() => { document.getElementById('test-btn-label').textContent = '📨 Testar Alerta'; btn.disabled = false; }, 3000);
             });
 
-            // Polling Cycles for REST endpoints
+            // Polling Cycles
             setInterval(() => fetchPrices(), 60000);
             setInterval(() => fetchFearGreed(), 300000);
             setInterval(() => fetchDeFiData(), 300000);
             setInterval(() => fetchBinanceDerivatives(), 120000);
+            setInterval(() => { fetchBRK(); fetchHashrate(); fetchGasPrice(); }, 600000);
             setInterval(() => updateTimestamps(), 1000);
             
-            // Evaluation Cycle (Every 5 minutes for new candle structure checks)
+            // Evaluation Cycle (Fetch recent structure every 5 min)
             setInterval(async () => {
                 for (const symbol of ASSETS) {
-                    const c1H = await fetchHistoricalCandles(symbol, '1h', 10); // Fetch last 10 to update structure
+                    const c1H = await fetchHistoricalCandles(symbol, '1h', 10);
                     if(c1H.length > 0) assetsData[symbol].candles1H = [...assetsData[symbol].candles1H.slice(0, -10), ...c1H];
-                    updateCandleChart(symbol);
+                    if(assetsData[symbol].candles1H.length > 0 && candleCharts[symbol]) {
+                        candleCharts[symbol].candleSeries.setData(assetsData[symbol].candles1H);
+                    }
                 }
                 evaluateMarkets();
-            }, 300000); // 5 min
+            }, 300000); 
+        }
 
-            // Fetch initial static data
-            fetchPrices(); fetchFearGreed(); fetchDeFiData(); fetchBinanceDerivatives();
-        });
+        document.addEventListener('DOMContentLoaded', initialLoad);
 
         window.addEventListener('resize', () => {
-            Object.values(candleCharts).forEach(c => {
-                const container = c.chart.chartElement?.parentElement;
-                if(container) c.chart.resize(container.clientWidth, 250);
-            });
+            for (const key in candleCharts) {
+                if (candleCharts[key] && candleCharts[key].chart) {
+                    const container = document.getElementById(`candle-${key.replace('USDT', '').toLowerCase()}`);
+                    if (container) { candleCharts[key].chart.resize(container.clientWidth, 250); candleCharts[key].chart.timeScale().fitContent(); }
+                }
+            }
         });
     </script>
 </body>
