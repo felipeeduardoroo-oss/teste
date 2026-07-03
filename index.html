@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Institucional - Crypto & Forex</title>
+    <title>Dashboard Institucional - v3.0 (Price Action + ATR Stops)</title>
     <!-- Bibliotecas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js">
     </script>
@@ -294,6 +294,10 @@
         .history-table .signal-sell {
             color: #f44336;
         }
+        .history-table .sl-tp {
+            font-size: 11px;
+            color: #8e9bb5;
+        }
 
         /* ===== TOOLTIP ===== */
         [data-tooltip] {
@@ -371,7 +375,7 @@
 
         <!-- HEADER -->
         <header class="header">
-            <h1>📊 Institutional Signal Dashboard</h1>
+            <h1>📊 Institutional Signal Dashboard v3.0</h1>
             <div class="header-controls">
                 <select id="symbolSelect">
                     <option value="BTCUSDT">BTC/USDT</option>
@@ -417,12 +421,13 @@
 
             <!-- CARD: FILTROS E CONFIRMAÇÕES -->
             <div class="card">
-                <div class="card-title">🔍 Confirmações (SMC + MTF + Volume)</div>
+                <div class="card-title">🔍 Confirmações (SMC + MTF + PA + ATR Stops)</div>
                 <div class="filters-grid" id="filtersContainer">
                     <div class="filter-chip fail" id="filterMTF"><span class="icon">⏳</span> MTF Alinhado</div>
-                    <div class="filter-chip fail" id="filterTrend"><span class="icon">📊</span> Tendência (ATR)</div>
+                    <div class="filter-chip fail" id="filterTrend"><span class="icon">📊</span> Regime (EMA/ATR)</div>
                     <div class="filter-chip fail" id="filterVolume"><span class="icon">📈</span> Volume Z-Score</div>
                     <div class="filter-chip fail" id="filterSMC"><span class="icon">🧱</span> Estrutura (SMC)</div>
+                    <div class="filter-chip fail" id="filterPA"><span class="icon">🔄</span> Pullback + RSI</div>
                 </div>
                 <div style="margin-top: 14px; font-size:13px; color:#7e8aa6;">
                     Última atualização: <span id="lastUpdate">--</span>
@@ -446,10 +451,10 @@
         <!-- HISTÓRICO DE SINAIS E BACKTEST -->
         <div class="grid">
             <div class="card">
-                <div class="card-title">📋 Histórico de Sinais</div>
+                <div class="card-title">📋 Histórico de Sinais (com SL/TP dinâmico)</div>
                 <div style="max-height:200px; overflow-y:auto;">
                     <table class="history-table" id="historyTable">
-                        <thead><tr><th>Data</th><th>Ativo</th><th>Sinal</th><th>Score</th><th>Preço</th></tr></thead>
+                        <thead><tr><th>Data</th><th>Ativo</th><th>Sinal</th><th>Score</th><th>Preço</th><th>SL / TP</th></tr></thead>
                         <tbody id="historyBody"></tbody>
                     </table>
                 </div>
@@ -471,7 +476,7 @@
 
         <!-- RODAPÉ -->
         <footer style="margin-top:30px; font-size:12px; color:#3a455a; text-align:center; border-top:1px solid #1a1f2b; padding-top:20px;">
-            Dados em tempo real via Binance WebSocket • Análise Institucional • v2.0 (com MTF/SMC/ATR/Volume Z-Score)
+            Dados em tempo real via Binance • v3.0 – Regime Adaptativo, Pullback + RSI, ATR Stops 1.5x/3x
         </footer>
     </div>
 
@@ -481,14 +486,22 @@
         // ================================================================
         const CONFIG = {
             symbols: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'],
-            cooldown: 5 * 60 * 1000, // 5 minutos (melhoria aplicada)
+            cooldown: 5 * 60 * 1000, // 5 minutos
             historyLimit: 50,
             cacheTTL: 60000, // 1 minuto
             volumeZThreshold: 1.5,
-            atrMultiplierTrend: 1.5,
-            atrMultiplierRange: 0.5,
             scoreBuyThreshold: 75,
             scoreSellThreshold: 25,
+            // Novos parâmetros para as melhorias
+            emaFast: 50,
+            emaSlow: 200,
+            atrStopMultiplier: 1.5,
+            atrTargetMultiplier: 3.0,
+            pullbackThreshold: 0.01, // 1% de distância da EMA 50
+            rsiPullbackMin: 40,
+            rsiPullbackMax: 60,
+            regimeATRFactor: 0.5, // se ATR < 0.5 * ATR_SMA -> lateral
+            regimeEMADiffThreshold: 0.005, // 0.5% de diferença entre EMAs
         };
 
         // ================================================================
@@ -523,10 +536,9 @@
         let chartCandle = null;
         let chartScore = null;
         let isSimplified = false;
-        let updateTimer = null;
+        let restPollingTimer = null;
         let backtestResult = null;
 
-        // Cache para cálculos pesados
         const calcCache = new Map();
 
         // ================================================================
@@ -613,8 +625,6 @@
             };
         }
 
-        let restPollingTimer = null;
-
         function startRESTPolling() {
             if (restPollingTimer) clearInterval(restPollingTimer);
             restPollingTimer = setInterval(async () => {
@@ -634,6 +644,7 @@
         // INDICADORES TÉCNICOS
         // ================================================================
         function calcEMA(data, period) {
+            if (data.length < period) return null;
             const k = 2 / (period + 1);
             let ema = data[0];
             for (let i = 1; i < data.length; i++) {
@@ -686,88 +697,74 @@
         }
 
         // ================================================================
-        // FILTROS MELHORADOS
+        // NOVOS FILTROS (Regime Adaptativo, Pullback + RSI)
         // ================================================================
 
-        // 1. MTF Alignment (1h, 4h, 1d)
-        function getMTFAlignment(klines1h, klines4h, klines1d) {
-            const cacheKey = 'mtf_' + currentSymbol;
+        // 1. Regime Adaptativo (EMA50/EMA200 + ATR)
+        function getRegime(klines) {
+            const cacheKey = 'regime_' + currentSymbol;
             return getCached(cacheKey, CONFIG.cacheTTL, () => {
-                const tf1h = klines1h.length > 20 ? calcEMA(klines1h.map(k => k.close), 20) : null;
-                const tf4h = klines4h.length > 20 ? calcEMA(klines4h.map(k => k.close), 20) : null;
-                const tf1d = klines1d.length > 20 ? calcEMA(klines1d.map(k => k.close), 20) : null;
-
-                const price1h = klines1h.length ? klines1h[klines1h.length - 1].close : 0;
-                const price4h = klines4h.length ? klines4h[klines4h.length - 1].close : 0;
-                const price1d = klines1d.length ? klines1d[klines1d.length - 1].close : 0;
-
-                const dirs = [];
-                if (tf1h !== null) dirs.push(price1h > tf1h ? 'BUY' : 'SELL');
-                if (tf4h !== null) dirs.push(price4h > tf4h ? 'BUY' : 'SELL');
-                if (tf1d !== null) dirs.push(price1d > tf1d ? 'BUY' : 'SELL');
-
-                const buyCount = dirs.filter(d => d === 'BUY').length;
-                const total = dirs.length;
-                if (total === 0) return { aligned: 'NEUTRAL', confidence: 0, score: 50 };
-                const confidence = total === 3 ? (buyCount === 3 ? 1.0 : buyCount === 2 ? 0.66 : 0.33) :
-                    (buyCount >= 2 ? 0.8 : 0.2);
-                const aligned = buyCount > total / 2 ? 'BUY' : (buyCount < total / 2 ? 'SELL' : 'NEUTRAL');
-                const score = aligned === 'BUY' ? 65 + (confidence * 20) : aligned === 'SELL' ? 35 - (confidence * 20) : 50;
-                return { aligned, confidence, score: Math.min(100, Math.max(0, score)) };
-            });
-        }
-
-        // 2. ATR Regime Filter
-        function getATRRegime(klines) {
-            const cacheKey = 'atr_' + currentSymbol;
-            return getCached(cacheKey, CONFIG.cacheTTL, () => {
-                if (klines.length < 40) return { isTrending: false, isRange: true, atr: 0, atrSMA: 0 };
-                const atr = calcATR(klines, 14);
+                if (klines.length < 200) return { isTrending: false, isRange: true, ema50: null, ema200: null, atr: 0,
+                        atrSMA: 0 };
                 const closes = klines.map(k => k.close);
-                const sma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+                const ema50 = calcEMA(closes, CONFIG.emaFast);
+                const ema200 = calcEMA(closes, CONFIG.emaSlow);
+                if (ema50 === null || ema200 === null) return { isTrending: false, isRange: true, ema50, ema200, atr: 0,
+                        atrSMA: 0 };
+
+                const atr = calcATR(klines, 14);
                 const atrSMA = calcATR(klines.slice(-40), 14);
-                const isTrending = atr > atrSMA * CONFIG.atrMultiplierTrend;
-                const isRange = atr < atrSMA * CONFIG.atrMultiplierRange;
-                return { isTrending, isRange, atr, atrSMA };
+                const priceNow = closes[closes.length - 1];
+
+                // Condições para lateral
+                const emaDiff = Math.abs(ema50 - ema200) / ema200;
+                const lowVolatility = atr < atrSMA * CONFIG.regimeATRFactor;
+                const flat = emaDiff < CONFIG.regimeEMADiffThreshold;
+
+                const isRange = lowVolatility || flat;
+                const isTrending = !isRange;
+
+                // Direção da tendência (baseado na posição do preço em relação à EMA50)
+                const direction = priceNow > ema50 ? 'BULLISH' : (priceNow < ema50 ? 'BEARISH' : 'NEUTRAL');
+
+                return { isTrending, isRange, ema50, ema200, atr, atrSMA, direction, price: priceNow };
             });
         }
 
-        // 3. Volume Z-Score
-        function getVolumeZScore(vol, klines) {
-            const cacheKey = 'volz_' + currentSymbol;
+        // 2. Pullback + RSI (entrada após rompimento da EMA50 e pullback)
+        function getPullbackSignal(klines, currentPrice) {
+            const cacheKey = 'pullback_' + currentSymbol;
             return getCached(cacheKey, CONFIG.cacheTTL, () => {
-                if (klines.length < 20) return { zScore: 0, passed: false };
-                const vols = klines.slice(-20).map(k => k.volume);
-                const mean = vols.reduce((a, b) => a + b, 0) / vols.length;
-                const std = Math.sqrt(vols.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / vols.length);
-                if (std === 0) return { zScore: 0, passed: false };
-                const z = (vol - mean) / std;
-                return { zScore: z, passed: z > CONFIG.volumeZThreshold };
-            });
-        }
+                if (klines.length < 60) return { ready: false, signal: 'NEUTRAL', rsi: 50, ema50: null,
+                    distance: Infinity };
+                const closes = klines.map(k => k.close);
+                const ema50 = calcEMA(closes, CONFIG.emaFast);
+                if (ema50 === null) return { ready: false, signal: 'NEUTRAL', rsi: 50, ema50: null, distance: Infinity };
 
-        // 4. SMC Estrutura (swing highs/lows)
-        function getSMCConfidence(price, klines) {
-            const cacheKey = 'smc_' + currentSymbol;
-            return getCached(cacheKey, CONFIG.cacheTTL, () => {
-                if (klines.length < 50) return { confirmed: false, level: 0, confidence: 0 };
-                const highs = klines.map(k => k.high);
-                const lows = klines.map(k => k.low);
-                const recent = klines.slice(-50);
-                const swingHigh = Math.max(...recent.map(k => k.high));
-                const swingLow = Math.min(...recent.map(k => k.low));
-                const nearHigh = Math.abs(price - swingHigh) / swingHigh < 0.01;
-                const nearLow = Math.abs(price - swingLow) / swingLow < 0.01;
-                const aboveHigh = price > swingHigh;
-                const belowLow = price < swingLow;
-                let confirmed = false;
-                let confidence = 0;
-                if (aboveHigh) { confirmed = true;
-                    confidence = 0.9; } else if (belowLow) { confirmed = true;
-                    confidence = 0.9; } else if (nearHigh) { confirmed = true;
-                    confidence = 0.6; } else if (nearLow) { confirmed = true;
-                    confidence = 0.6; }
-                return { confirmed, level: confirmed ? (aboveHigh ? swingHigh : swingLow) : 0, confidence };
+                const rsi = calcRSI(closes, 14);
+                const distance = (currentPrice - ema50) / ema50; // positivo = acima
+
+                // Condição: preço deve estar acima da EMA50 para compra, abaixo para venda
+                const aboveEMA = currentPrice > ema50;
+                const belowEMA = currentPrice < ema50;
+
+                // Pullback: preço deve estar próximo da EMA50 (distância absoluta < threshold)
+                const isPullback = Math.abs(distance) < CONFIG.pullbackThreshold;
+
+                // RSI deve estar entre 40 e 60 (exaustão da correção)
+                const rsiOk = rsi >= CONFIG.rsiPullbackMin && rsi <= CONFIG.rsiPullbackMax;
+
+                let signal = 'NEUTRAL';
+                let ready = false;
+                if (aboveEMA && isPullback && rsiOk) {
+                    signal = 'BUY';
+                    ready = true;
+                } else if (belowEMA && isPullback && rsiOk) {
+                    signal = 'SELL';
+                    ready = true;
+                }
+
+                return { ready, signal, rsi, ema50, distance };
             });
         }
 
@@ -775,49 +772,60 @@
         // CÁLCULO DO SCORE PRINCIPAL (COM TODOS OS FILTROS)
         // ================================================================
         function calculateFullScore(price, volume, klines1h, klines4h, klines1d) {
-            // Sub-scores base
+            // Sub-scores base (mantidos)
             const mtf = getMTFAlignment(klines1h, klines4h, klines1d);
             const momentum = klines1h.length > 20 ? calcRSI(klines1h.map(k => k.close), 14) : 50;
-            const atrRegime = getATRRegime(klines1h);
-            const structScore = atrRegime.isTrending ? 70 : (atrRegime.isRange ? 40 : 55);
+            const structScore = 55; // será substituído pelo regime
             const volZ = getVolumeZScore(volume, klines1h);
-            const onChainBase = 53.5; // mock, mantido similar ao original
+            const onChainBase = 53.5;
 
-            // Mapeia RSI para 0-100 (50 é neutro)
             const momentumScore = Math.min(100, Math.max(0, (momentum - 30) * 1.8));
-
-            // Volume score: escala Z-score para 0-100
             const volScore = Math.min(100, Math.max(0, 50 + volZ.zScore * 15));
 
-            // OI Delta (mock, baseado na direção do MTF)
-            const oiDelta = mtf.aligned === 'BUY' ? 60 + (mtf.confidence * 30) : mtf.aligned === 'SELL' ? 40 - (mtf
-            .confidence * 30) : 50;
+            // Novo: Regime Adaptativo
+            const regime = getRegime(klines1h);
+            const regimeScore = regime.isTrending ? (regime.direction === 'BULLISH' ? 75 : 25) : 50;
 
-            // Ponderado
+            // Pullback + RSI
+            const pullback = getPullbackSignal(klines1h, price);
+            const paScore = pullback.ready ? (pullback.signal === 'BUY' ? 80 : 20) : 50;
+
+            // OI Delta (mock)
+            const oiDelta = mtf.aligned === 'BUY' ? 60 + (mtf.confidence * 30) : mtf.aligned === 'SELL' ? 40 - (mtf
+                .confidence * 30) : 50;
+
+            // Pesos ajustados (incluindo novos indicadores)
             const weights = {
-                mtf: 0.20,
-                momentum: 0.20,
-                struct: 0.15,
-                onChain: 0.15,
+                mtf: 0.15,
+                momentum: 0.15,
+                regime: 0.15,
+                onChain: 0.10,
                 volume: 0.15,
-                oi: 0.15
+                oi: 0.10,
+                pa: 0.20 // maior peso para a entrada baseada em PA
             };
+
             const rawScore = (mtf.score * weights.mtf) +
                 (momentumScore * weights.momentum) +
-                (structScore * weights.struct) +
+                (regimeScore * weights.regime) +
                 (onChainBase * weights.onChain) +
                 (volScore * weights.volume) +
-                (oiDelta * weights.oi);
+                (oiDelta * weights.oi) +
+                (paScore * weights.pa);
 
             const finalScore = Math.min(100, Math.max(0, Math.round(rawScore)));
 
-            // Determina direção com base no score e MTF
+            // Direção combinada
             let direction = 'NEUTRAL';
             let conviction = 'NEUTRAL';
-            if (finalScore > CONFIG.scoreBuyThreshold && mtf.aligned === 'BUY') {
+
+            const isBullish = (mtf.aligned === 'BUY' || pullback.signal === 'BUY') && regime.direction === 'BULLISH';
+            const isBearish = (mtf.aligned === 'SELL' || pullback.signal === 'SELL') && regime.direction === 'BEARISH';
+
+            if (finalScore > CONFIG.scoreBuyThreshold && isBullish) {
                 direction = 'BULLISH';
                 conviction = 'COMPRA FORTE';
-            } else if (finalScore < CONFIG.scoreSellThreshold && mtf.aligned === 'SELL') {
+            } else if (finalScore < CONFIG.scoreSellThreshold && isBearish) {
                 direction = 'BEARISH';
                 conviction = 'VENDA FORTE';
             } else if (finalScore > 55) {
@@ -831,14 +839,27 @@
                 conviction = 'NEUTRO';
             }
 
-            // Filtros de qualidade (para as estrelas)
+            // Filtros de qualidade (incluindo os novos)
             const filters = {
                 mtf: mtf.confidence > 0.6,
-                trend: atrRegime.isTrending,
+                regime: regime.isTrending,
                 volume: volZ.passed,
-                smc: getSMCConfidence(price, klines1h).confirmed
+                smc: getSMCConfidence(price, klines1h).confirmed,
+                pa: pullback.ready
             };
             const qualityCount = Object.values(filters).filter(Boolean).length;
+
+            // Calcular SL/TP dinâmico
+            const atr = regime.atr || calcATR(klines1h, 14);
+            let stopLoss = null,
+                takeProfit = null;
+            if (direction === 'BULLISH') {
+                stopLoss = price - CONFIG.atrStopMultiplier * atr;
+                takeProfit = price + CONFIG.atrTargetMultiplier * atr;
+            } else if (direction === 'BEARISH') {
+                stopLoss = price + CONFIG.atrStopMultiplier * atr;
+                takeProfit = price - CONFIG.atrTargetMultiplier * atr;
+            }
 
             return {
                 score: finalScore,
@@ -847,7 +868,7 @@
                 subScores: {
                     mtf: Math.round(mtf.score),
                     momentum: Math.round(momentumScore),
-                    struct: Math.round(structScore),
+                    struct: Math.round(regimeScore),
                     onChain: Math.round(onChainBase),
                     volume: Math.round(volScore),
                     oi: Math.round(oiDelta)
@@ -855,11 +876,71 @@
                 filters,
                 quality: qualityCount,
                 mtfAlignment: mtf.aligned,
-                atrTrending: atrRegime.isTrending,
-                volZ: volZ.zScore,
-                smcConfirmed: getSMCConfidence(price, klines1h).confirmed,
+                regimeDirection: regime.direction,
+                pullbackSignal: pullback.signal,
+                atr: atr,
+                stopLoss,
+                takeProfit,
                 price
             };
+        }
+
+        // ================================================================
+        // FUNÇÕES AUXILIARES (MTF, Volume Z, SMC) – mantidas
+        // ================================================================
+        function getMTFAlignment(klines1h, klines4h, klines1d) {
+            const cacheKey = 'mtf_' + currentSymbol;
+            return getCached(cacheKey, CONFIG.cacheTTL, () => {
+                const tf1h = klines1h.length > 20 ? calcEMA(klines1h.map(k => k.close), 20) : null;
+                const tf4h = klines4h.length > 20 ? calcEMA(klines4h.map(k => k.close), 20) : null;
+                const tf1d = klines1d.length > 20 ? calcEMA(klines1d.map(k => k.close), 20) : null;
+                const price1h = klines1h.length ? klines1h[klines1h.length - 1].close : 0;
+                const price4h = klines4h.length ? klines4h[klines4h.length - 1].close : 0;
+                const price1d = klines1d.length ? klines1d[klines1d.length - 1].close : 0;
+                const dirs = [];
+                if (tf1h !== null) dirs.push(price1h > tf1h ? 'BUY' : 'SELL');
+                if (tf4h !== null) dirs.push(price4h > tf4h ? 'BUY' : 'SELL');
+                if (tf1d !== null) dirs.push(price1d > tf1d ? 'BUY' : 'SELL');
+                const buyCount = dirs.filter(d => d === 'BUY').length;
+                const total = dirs.length;
+                if (total === 0) return { aligned: 'NEUTRAL', confidence: 0, score: 50 };
+                const confidence = total === 3 ? (buyCount === 3 ? 1.0 : buyCount === 2 ? 0.66 : 0.33) :
+                    (buyCount >= 2 ? 0.8 : 0.2);
+                const aligned = buyCount > total / 2 ? 'BUY' : (buyCount < total / 2 ? 'SELL' : 'NEUTRAL');
+                const score = aligned === 'BUY' ? 65 + (confidence * 20) : aligned === 'SELL' ? 35 - (confidence * 20) : 50;
+                return { aligned, confidence, score: Math.min(100, Math.max(0, score)) };
+            });
+        }
+
+        function getVolumeZScore(vol, klines) {
+            const cacheKey = 'volz_' + currentSymbol;
+            return getCached(cacheKey, CONFIG.cacheTTL, () => {
+                if (klines.length < 20) return { zScore: 0, passed: false };
+                const vols = klines.slice(-20).map(k => k.volume);
+                const mean = vols.reduce((a, b) => a + b, 0) / vols.length;
+                const std = Math.sqrt(vols.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / vols.length);
+                if (std === 0) return { zScore: 0, passed: false };
+                const z = (vol - mean) / std;
+                return { zScore: z, passed: z > CONFIG.volumeZThreshold };
+            });
+        }
+
+        function getSMCConfidence(price, klines) {
+            const cacheKey = 'smc_' + currentSymbol;
+            return getCached(cacheKey, CONFIG.cacheTTL, () => {
+                if (klines.length < 50) return { confirmed: false, level: 0, confidence: 0 };
+                const recent = klines.slice(-50);
+                const swingHigh = Math.max(...recent.map(k => k.high));
+                const swingLow = Math.min(...recent.map(k => k.low));
+                const aboveHigh = price > swingHigh;
+                const belowLow = price < swingLow;
+                let confirmed = false,
+                    confidence = 0;
+                if (aboveHigh) { confirmed = true;
+                    confidence = 0.9; } else if (belowLow) { confirmed = true;
+                    confidence = 0.9; }
+                return { confirmed, level: confirmed ? (aboveHigh ? swingHigh : swingLow) : 0, confidence };
+            });
         }
 
         // ================================================================
@@ -867,9 +948,8 @@
         // ================================================================
         function renderDashboard(data) {
             if (!data) return;
-            const { score, direction, conviction, subScores, filters, quality, price: p } = data;
+            const { score, direction, conviction, subScores, filters, quality, price: p, stopLoss, takeProfit, atr } = data;
 
-            // Score principal
             document.getElementById('scoreDisplay').textContent = score;
             document.getElementById('directionLabel').textContent = direction;
             const badge = document.getElementById('convictionBadge');
@@ -879,7 +959,6 @@
             else if (direction === 'BEARISH') badge.classList.add('bearish');
             else badge.classList.add('neutral');
 
-            // Sub-scores
             document.getElementById('subMTF').textContent = subScores.mtf;
             document.getElementById('subMomentum').textContent = subScores.momentum;
             document.getElementById('subStruct').textContent = subScores.struct;
@@ -887,7 +966,6 @@
             document.getElementById('subVolume').textContent = subScores.volume;
             document.getElementById('subOI').textContent = subScores.oi;
 
-            // Estrelas de qualidade
             const stars = document.querySelectorAll('#qualityStars .star');
             stars.forEach((el, i) => {
                 el.className = 'star' + (i < quality ? ' active' : '');
@@ -895,18 +973,20 @@
             });
             document.getElementById('qualityLabel').textContent = `${quality}/5 filtros`;
 
-            // Filtros
+            // Filtros (incluindo PA)
             const filterEls = {
                 mtf: document.getElementById('filterMTF'),
-                trend: document.getElementById('filterTrend'),
+                regime: document.getElementById('filterTrend'),
                 volume: document.getElementById('filterVolume'),
-                smc: document.getElementById('filterSMC')
+                smc: document.getElementById('filterSMC'),
+                pa: document.getElementById('filterPA')
             };
             const statusMap = {
-                mtf: { pass: filters.mtf, icon: '📈', label: 'MTF Alinhado' },
-                trend: { pass: filters.trend, icon: '📊', label: 'Tendência (ATR)' },
+                mtf: { pass: filters.mtf, icon: '⏳', label: 'MTF Alinhado' },
+                regime: { pass: filters.regime, icon: '📊', label: 'Regime (EMA/ATR)' },
                 volume: { pass: filters.volume, icon: '📈', label: 'Volume Z-Score' },
-                smc: { pass: filters.smc, icon: '🧱', label: 'Estrutura (SMC)' }
+                smc: { pass: filters.smc, icon: '🧱', label: 'Estrutura (SMC)' },
+                pa: { pass: filters.pa, icon: '🔄', label: 'Pullback + RSI' }
             };
             for (const [key, el] of Object.entries(filterEls)) {
                 const s = statusMap[key];
@@ -914,12 +994,10 @@
                 el.innerHTML = `<span class="icon">${s.icon}</span> ${s.label}`;
             }
 
-            // Atualiza histórico de scores para o gráfico
             scoreHistory.push({ time: Date.now(), score: score, price: p });
             if (scoreHistory.length > 200) scoreHistory.shift();
             updateScoreChart();
 
-            // Verifica se deve gerar sinal + alerta
             checkAndGenerateSignal(data);
         }
 
@@ -929,14 +1007,12 @@
 
         async function refreshDataAndRender() {
             try {
-                // Busca dados históricos se não estiverem em cache
                 if (!klinesCache['1h'] || klinesCache['1h'].length === 0) {
                     await fetchAllKlines();
                 }
                 const k1h = klinesCache['1h'] || [];
                 const k4h = klinesCache['4h'] || [];
                 const k1d = klinesCache['1d'] || [];
-
                 const data = calculateFullScore(price || 50000, volume || 1, k1h, k4h, k1d);
                 renderDashboard(data);
             } catch (e) {
@@ -961,51 +1037,55 @@
         }
 
         // ================================================================
-        // GERADOR DE SINAIS E ALERTAS
+        // GERADOR DE SINAIS (com as novas regras)
         // ================================================================
         function checkAndGenerateSignal(data) {
             const now = Date.now();
             if (now - lastAlertTime < CONFIG.cooldown) return;
 
-            const { score, direction, filters, price: p, quality } = data;
-            // Só gera sinal se qualidade >= 4 e direção forte
-            const isStrong = (direction === 'BULLISH' || direction === 'BEARISH') && quality >= 4;
-            if (!isStrong) return;
+            const { score, direction, filters, price: p, quality, stopLoss, takeProfit, atr } = data;
 
-            // Verifica se todos os filtros passaram para sinal de alta qualidade
-            const allPass = filters.mtf && filters.trend && filters.volume && filters.smc;
-            if (!allPass) return;
+            // Exige qualidade >= 4 e todos os filtros (incluindo os novos)
+            const allPass = filters.mtf && filters.regime && filters.volume && filters.smc && filters.pa;
+            const isStrong = (direction === 'BULLISH' || direction === 'BEARISH') && quality >= 4 && allPass;
+
+            if (!isStrong) return;
 
             const signalType = direction === 'BULLISH' ? 'COMPRA' : 'VENDA';
             const entryPrice = p;
 
-            // Registra no histórico
             const signal = {
                 time: new Date().toISOString(),
                 symbol: currentSymbol,
                 type: signalType,
                 score: score,
                 price: entryPrice,
-                quality: quality
+                quality: quality,
+                stopLoss: stopLoss ? stopLoss.toFixed(2) : '--',
+                takeProfit: takeProfit ? takeProfit.toFixed(2) : '--',
+                atr: atr ? atr.toFixed(2) : '--'
             };
+
             signalHistory.unshift(signal);
             if (signalHistory.length > CONFIG.historyLimit) signalHistory.pop();
             localStorage.setItem('signalHistory', JSON.stringify(signalHistory));
             renderHistory();
 
-            // Envia alerta Telegram (mantido intacto)
+            // Alerta Telegram (mantido)
             const msg =
                 `🚨 <b>SINAL ${signalType}</b>\n` +
                 `📌 ${currentSymbol}\n` +
                 `💰 Preço: $${entryPrice.toFixed(2)}\n` +
                 `📊 Score: ${score}/100\n` +
                 `⭐ Qualidade: ${quality}/5\n` +
+                `🛑 Stop Loss: $${signal.stopLoss}\n` +
+                `🎯 Take Profit: $${signal.takeProfit}\n` +
+                `📉 ATR: $${signal.atr}\n` +
                 `🔗 ${window.location.href}`;
             sendTelegramAlert(msg);
 
             lastAlertTime = now;
 
-            // Atualiza badge de convicção com destaque
             const badge = document.getElementById('convictionBadge');
             badge.textContent = `🔥 ${signalType} CONFIRMADA`;
             badge.className = 'score-conviction ' + (signalType === 'COMPRA' ? 'bullish' : 'bearish');
@@ -1035,7 +1115,7 @@
                 const tr = document.createElement('tr');
                 const cls = s.type === 'COMPRA' ? 'signal-buy' : 'signal-sell';
                 tr.innerHTML =
-                    `<td>${new Date(s.time).toLocaleString()}</td><td>${s.symbol}</td><td class="${cls}">${s.type}</td><td>${s.score}</td><td>$${s.price.toFixed(2)}</td>`;
+                    `<td>${new Date(s.time).toLocaleString()}</td><td>${s.symbol}</td><td class="${cls}">${s.type}</td><td>${s.score}</td><td>$${s.price}</td><td class="sl-tp">SL $${s.stopLoss} / TP $${s.takeProfit}</td>`;
                 tbody.appendChild(tr);
             }
             document.getElementById('historyCount').textContent = `${signalHistory.length} sinais registrados`;
@@ -1045,7 +1125,6 @@
         // GRÁFICOS
         // ================================================================
         function initCharts() {
-            // Lightweight Charts - Candlestick
             const chartContainer = document.getElementById('candleChart');
             chartCandle = LightweightCharts.createChart(chartContainer, {
                 width: chartContainer.clientWidth,
@@ -1065,22 +1144,11 @@
             });
             chartCandle.candleSeries = candleSeries;
 
-            // Chart.js - Score histórico
             const ctx = document.getElementById('scoreChart').getContext('2d');
             chartScore = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Score',
-                        data: [],
-                        borderColor: '#f0b90b',
-                        backgroundColor: 'rgba(240, 185, 11, 0.08)',
-                        fill: true,
-                        tension: 0.2,
-                        pointRadius: 1,
-                    }]
-                },
+                data: { labels: [], datasets: [{ label: 'Score', data: [], borderColor: '#f0b90b',
+                        backgroundColor: 'rgba(240, 185, 11, 0.08)', fill: true, tension: 0.2, pointRadius: 1 }] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -1096,13 +1164,7 @@
         function updateCandleChart(klines) {
             if (!chartCandle || !chartCandle.candleSeries) return;
             if (!klines || klines.length < 10) return;
-            const data = klines.map(k => ({
-                time: k.time,
-                open: k.open,
-                high: k.high,
-                low: k.low,
-                close: k.close
-            }));
+            const data = klines.map(k => ({ time: k.time, open: k.open, high: k.high, low: k.low, close: k.close }));
             chartCandle.candleSeries.setData(data);
             chartCandle.timeScale().fitContent();
         }
@@ -1117,12 +1179,12 @@
         }
 
         // ================================================================
-        // BACKTEST (MELHORIA IMPLEMENTADA)
+        // BACKTEST (ATUALIZADO COM NOVAS REGRAS E SL/TP DINÂMICO)
         // ================================================================
         async function runBacktest(symbol, days = 30) {
             try {
                 const klines = await fetchBinanceKlines(symbol, '1h', days * 24);
-                if (klines.length < 24) return null;
+                if (klines.length < 100) return null;
 
                 let capital = 10000;
                 let position = null;
@@ -1130,41 +1192,45 @@
                 let wins = 0,
                     losses = 0;
 
-                for (let i = 50; i < klines.length - 1; i++) {
+                for (let i = 100; i < klines.length - 1; i++) {
                     const candle = klines[i];
                     const lookback = klines.slice(0, i + 1);
                     const priceNow = candle.close;
                     const vol = candle.volume;
 
-                    // Calcula score com os dados disponíveis
+                    // Usa a mesma lógica de score com todas as melhorias
                     const data = calculateFullScore(priceNow, vol, lookback, lookback, lookback);
                     const signal = data.direction;
                     const score = data.score;
                     const quality = data.quality;
+                    const allPass = data.filters.mtf && data.filters.regime && data.filters.volume &&
+                        data.filters.smc && data.filters.pa;
 
-                    const shouldBuy = signal === 'BULLISH' && quality >= 4 && score > 70;
-                    const shouldSell = signal === 'BEARISH' && quality >= 4 && score < 30;
+                    const shouldEnter = (signal === 'BULLISH' || signal === 'BEARISH') && quality >= 4 && allPass;
 
-                    const atr = calcATR(lookback, 14);
-                    const stopPct = 0.02; // 2%
-                    const targetPct = 0.06; // 3:1 RR
+                    // SL/TP dinâmico (baseado no ATR do momento)
+                    const atr = data.atr || calcATR(lookback, 14);
+                    const stopMult = CONFIG.atrStopMultiplier;
+                    const targetMult = CONFIG.atrTargetMultiplier;
 
-                    if (!position && shouldBuy) {
-                        position = {
-                            type: 'BUY',
-                            entry: priceNow,
-                            stop: priceNow * (1 - stopPct),
-                            target: priceNow * (1 + targetPct),
-                            size: 1
-                        };
-                    } else if (!position && shouldSell) {
-                        position = {
-                            type: 'SELL',
-                            entry: priceNow,
-                            stop: priceNow * (1 + stopPct),
-                            target: priceNow * (1 - targetPct),
-                            size: 1
-                        };
+                    if (!position && shouldEnter) {
+                        if (signal === 'BULLISH') {
+                            position = {
+                                type: 'BUY',
+                                entry: priceNow,
+                                stop: priceNow - stopMult * atr,
+                                target: priceNow + targetMult * atr,
+                                size: 1
+                            };
+                        } else {
+                            position = {
+                                type: 'SELL',
+                                entry: priceNow,
+                                stop: priceNow + stopMult * atr,
+                                target: priceNow - targetMult * atr,
+                                size: 1
+                            };
+                        }
                     } else if (position) {
                         const nextCandle = klines[i + 1];
                         const high = nextCandle.high;
@@ -1207,15 +1273,7 @@
                 const winrate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
                 const pnl = ((capital - 10000) / 10000) * 100;
 
-                return {
-                    winrate,
-                    pnl,
-                    trades: totalTrades,
-                    wins,
-                    losses,
-                    capital,
-                    period: `${days} dias`
-                };
+                return { winrate, pnl, trades: totalTrades, wins, losses, capital, period: `${days} dias` };
             } catch (e) {
                 console.warn('Backtest error:', e);
                 return null;
@@ -1226,13 +1284,9 @@
         // EVENTOS E INICIALIZAÇÃO
         // ================================================================
         document.addEventListener('DOMContentLoaded', async () => {
-            // Carrega histórico
             loadHistory();
-
-            // Inicializa gráficos
             initCharts();
 
-            // Símbolo
             document.getElementById('symbolSelect').addEventListener('change', (e) => {
                 currentSymbol = e.target.value;
                 clearCache();
@@ -1243,23 +1297,16 @@
                 connectWebSocket();
             });
 
-            // Modo simplificado
             document.getElementById('simplifiedToggle').addEventListener('click', () => {
                 isSimplified = !isSimplified;
                 const cards = document.querySelectorAll('.card');
                 cards.forEach(c => {
-                    if (isSimplified) {
-                        c.style.opacity = '0.6';
-                        c.style.transition = '0.3s';
-                    } else {
-                        c.style.opacity = '1';
-                    }
+                    c.style.opacity = isSimplified ? '0.6' : '1';
                 });
                 document.getElementById('simplifiedToggle').textContent = isSimplified ? 'Modo Completo' :
                     'Modo Simplificado';
             });
 
-            // Backtest
             document.getElementById('runBacktestBtn').addEventListener('click', async () => {
                 const btn = document.getElementById('runBacktestBtn');
                 btn.textContent = '⏳ Rodando...';
@@ -1268,23 +1315,22 @@
                 btn.textContent = 'Executar Backtest';
                 btn.disabled = false;
                 if (result) {
-                    document.querySelector('#backtestResult .backtest-result').innerHTML = `
-                                <span>📅 ${result.period}</span>
-                                <span>📊 Winrate: ${result.winrate.toFixed(1)}%</span>
-                                <span>📈 PNL: ${result.pnl.toFixed(2)}%</span>
-                                <span>🎯 Trades: ${result.trades} (${result.wins}W / ${result.losses}L)</span>
-                            `;
+                    document.querySelector('#backtestResult .backtest-result').innerHTML =
+                        `
+                                    <span>📅 ${result.period}</span>
+                                    <span>📊 Winrate: ${result.winrate.toFixed(1)}%</span>
+                                    <span>📈 PNL: ${result.pnl.toFixed(2)}%</span>
+                                    <span>🎯 Trades: ${result.trades} (${result.wins}W / ${result.losses}L)</span>
+                                `;
                     backtestResult = result;
                 } else {
                     document.querySelector('#backtestResult .backtest-result').innerHTML =
-                        `<span style="color:#f44336;">❌ Falha no backtest. Tente novamente.</span>`;
+                        `<span style="color:#f44336;">❌ Falha no backtest.</span>`;
                 }
             });
 
-            // Fetch inicial e WebSocket
             await fetchAllKlines();
             connectWebSocket();
-            // Inicializa com preço mockado
             if (klinesCache['1h'] && klinesCache['1h'].length > 0) {
                 const last = klinesCache['1h'][klinesCache['1h'].length - 1];
                 price = last.close;
@@ -1293,7 +1339,6 @@
                 updateCandleChart(klinesCache['1h']);
             }
 
-            // Atualiza a cada 30s para manter
             setInterval(async () => {
                 if (!ws || ws.readyState !== WebSocket.OPEN) {
                     await fetchAllKlines();
@@ -1301,14 +1346,12 @@
                 }
             }, 30000);
 
-            // Atualiza gráfico de candle a cada 5 min se houver novos dados
-            setInterval(async () => {
+            setInterval(() => {
                 if (klinesCache['1h'] && klinesCache['1h'].length > 0) {
                     updateCandleChart(klinesCache['1h']);
                 }
             }, 60000);
 
-            // Redimensiona gráficos
             window.addEventListener('resize', () => {
                 if (chartCandle) {
                     const container = document.getElementById('candleChart');
@@ -1316,10 +1359,9 @@
                 }
             });
 
-            console.log('✅ Dashboard Institucional v2.0 carregado com todas as melhorias (MTF/SMC/ATR/Volume Z/Backtest)');
+            console.log('✅ Dashboard v3.0 – Regime Adaptativo, Pullback+RSI, ATR Stops implementados.');
         });
 
-        // Fallback de emergência para dados
         window.addEventListener('error', (e) => {
             console.warn('Erro capturado:', e.message);
         });
