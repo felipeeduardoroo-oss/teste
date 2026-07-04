@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        /* ===== CSS REFORMULADO ===== */
+        /* ===== CSS REFORMULADO (mesmo da versão anterior) ===== */
         :root {
             --bg-dark: #08090d;
             --bg-card: #0f1117;
@@ -364,8 +364,8 @@
                         <tr><td><strong>SOPR</strong></td><td id="sopr">0,80</td><td id="sopr-interp">🔴 Weakness</td><td><span class="data-source" id="sopr-source">BitView</span></td></tr>
                         <tr><td><strong>aSOPR 7D</strong></td><td id="asopr">0,99</td><td id="asopr-interp">⚠️ Ajustado fraco</td><td><span class="data-source" id="asopr-source">BitView</span></td></tr>
                         <tr><td><strong>Realized Price (BTC)</strong></td><td id="realized-price">$53.600</td><td>ℹ️ Preço médio</td><td><span class="data-source" id="realized-price-source">BitView</span></td></tr>
-                        <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etf-btc-live"><strong>-$445M</strong></td><td id="etf-btc-interp">🔴 Saída</td><td><span class="data-source" id="etf-btc-source">Farside</span></td></tr>
-                        <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etf-eth-live"><strong>-$12,85M</strong></td><td id="etf-eth-interp">🔴 Saída</td><td><span class="data-source" id="etf-eth-source">Farside</span></td></tr>
+                        <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etf-btc-live"><strong>-$445M</strong></td><td id="etf-btc-interp">🔴 Saída</td><td><span class="data-source" id="etf-btc-source">Farside • <span id="etf-btc-update">estático</span></span></td></tr>
+                        <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etf-eth-live"><strong>-$12,85M</strong></td><td id="etf-eth-interp">🔴 Saída</td><td><span class="data-source" id="etf-eth-source">Farside • <span id="etf-eth-update">estático</span></span></td></tr>
                         <tr><td><strong>Exchange Netflow</strong></td><td id="exchange-netflow">7.247 BTC</td><td id="exchange-netflow-interp">⚠️ Entrada</td><td><span class="data-source" id="exchange-netflow-source">CoinGlass</span></td></tr>
                         <tr><td><strong>Funding Rate (atual)</strong></td><td id="funding-rate">0,0043%</td><td id="funding-rate-interp">ℹ️ Neutro</td><td><span class="data-source" id="funding-rate-source">Binance</span></td></tr>
                         <tr><td><strong>Funding Rate (média 8h)</strong></td><td id="funding-rate-avg">0,0038%</td><td>ℹ️ Suavizado</td><td><span class="data-source" id="funding-rate-avg-source">Binance</span></td></tr>
@@ -405,12 +405,12 @@
                 <table>
                     <thead><tr><th>Indicador</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>DXY</strong></td><td>101,37</td><td>🔴 USD Forte</td><td><span class="data-source" id="dxy-source">FRED</span></td></tr>
-                        <tr><td><strong>Fed Rate</strong></td><td>3,62%</td><td>⚠️ Juros restritivos</td><td><span class="data-source" id="fed-source">FRED</span></td></tr>
-                        <tr><td><strong>US 10Y Yield</strong></td><td>4,28%</td><td>⚠️ Yields elevados</td><td><span class="data-source" id="us10y-source">FRED</span></td></tr>
-                        <tr><td><strong>VIX</strong></td><td>18,41</td><td>ℹ️ Estresse</td><td><span class="data-source" id="vix-source">FRED</span></td></tr>
-                        <tr><td><strong>NASDAQ % (24h)</strong></td><td>-1,09%</td><td>🔴 Tech</td><td><span class="data-source" id="nasdaq-source">Alpha Vantage</span></td></tr>
-                        <tr><td><strong>S&amp;P 500 % (24h)</strong></td><td>-0,05%</td><td>ℹ️ Broad market</td><td><span class="data-source" id="sp500-source">Alpha Vantage</span></td></tr>
+                        <tr><td><strong>DXY</strong></td><td id="dxy-value">101,37</td><td id="dxy-interp">🔴 USD Forte</td><td><span class="data-source" id="dxy-source">Yahoo Finance • <span id="dxy-update">--</span></span></td></tr>
+                        <tr><td><strong>Fed Rate</strong></td><td id="fed-rate">3,62%</td><td id="fed-interp">⚠️ Juros restritivos</td><td><span class="data-source" id="fed-source">FRED (estático)</span></td></tr>
+                        <tr><td><strong>US 10Y Yield</strong></td><td id="us10y-value">4,28%</td><td id="us10y-interp">⚠️ Yields elevados</td><td><span class="data-source" id="us10y-source">Yahoo Finance • <span id="us10y-update">--</span></span></td></tr>
+                        <tr><td><strong>VIX</strong></td><td id="vix-value">18,41</td><td id="vix-interp">ℹ️ Estresse</td><td><span class="data-source" id="vix-source">Yahoo Finance • <span id="vix-update">--</span></span></td></tr>
+                        <tr><td><strong>NASDAQ % (24h)</strong></td><td id="nasdaq-value">-1,09%</td><td>🔴 Tech</td><td><span class="data-source" id="nasdaq-source">Alpha Vantage (estático)</span></td></tr>
+                        <tr><td><strong>S&amp;P 500 % (24h)</strong></td><td id="sp500-value">-0,05%</td><td>ℹ️ Broad market</td><td><span class="data-source" id="sp500-source">Alpha Vantage (estático)</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -666,7 +666,7 @@
         }
 
         // ================================================================
-        // 3. FILTROS
+        // 3. FILTROS (mesmos da versão anterior)
         // ================================================================
         function checkLateralMarket(data, currentPrice) {
             const atr = data.atr_1H || 0;
@@ -1139,6 +1139,50 @@
             } catch(e) { handleApiError('OnChain', e); }
         }
 
+        // ===== NOVA FUNÇÃO: BUSCA DADOS MACRO VIA YAHOO FINANCE =====
+        async function fetchMacroIndicators() {
+            const symbols = ['DX-Y.NYB', '^TNX', '^VIX'];
+            const ids = ['dxy-value', 'us10y-value', 'vix-value'];
+            const updateIds = ['dxy-update', 'us10y-update', 'vix-update'];
+            try {
+                const promises = symbols.map(async (sym, idx) => {
+                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${sym}`);
+                    const data = await resp.json();
+                    const meta = data.chart.result[0].meta;
+                    const price = meta.regularMarketPrice;
+                    if (price !== undefined) {
+                        const el = document.getElementById(ids[idx]);
+                        const updateEl = document.getElementById(updateIds[idx]);
+                        if (el) {
+                            if (idx === 1) { // US10Y
+                                el.textContent = (price * 100).toFixed(2) + '%';
+                            } else {
+                                el.textContent = price.toFixed(2);
+                            }
+                        }
+                        if (updateEl) {
+                            updateEl.textContent = 'atualizado ' + getCurrentTimestamp();
+                        }
+                    }
+                });
+                await Promise.all(promises);
+            } catch(e) {
+                handleApiError('Macro (Yahoo)', e);
+            }
+        }
+
+        // Função para atualizar a UI macro com os valores estáticos iniciais (fallback)
+        function updateMacroUI() {
+            // Os valores já estão no HTML, apenas atualizamos os timestamps
+            const now = getCurrentTimestamp();
+            ['dxy-update', 'us10y-update', 'vix-update'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = 'atualizado ' + now;
+            });
+        }
+
         function calculateBB(data, period=20, multiplier=2) {
             const candles = data.candles1H;
             if (candles.length < period) return { bbWidth: 0.1, upper: 0, lower: 0 };
@@ -1200,6 +1244,7 @@
                 }
             }
             await fetchOnChainData();
+            await fetchMacroIndicators(); // busca inicial macro
             evaluateMarkets();
         }
 
@@ -1501,6 +1546,10 @@
                 fetchOpenInterest('SOLUSDT'),
                 fetchOnChainData()
             ]);
+
+            // Atualização macro
+            await fetchMacroIndicators();
+            setInterval(fetchMacroIndicators, 300000); // a cada 5 minutos
 
             const btn = document.getElementById('test-telegram-btn');
             btn.addEventListener('click', async () => {
