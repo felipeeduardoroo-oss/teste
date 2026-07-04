@@ -513,7 +513,7 @@
         }
 
         // ================================================================
-        // 3. FILTROS AVANÇADOS (Melhorias 1, 2, 3, 5, 6)
+        // 3. FILTROS AVANÇADOS (Melhorias 1, 2, 3, 5)
         // ================================================================
 
         // Melhoria 1: Filtro de Mercado Lateral (ATR + Bollinger Bands) - aprimorado
@@ -614,6 +614,96 @@
             if (volumeSpike && cvdSpike) bonus += 25;
             if (fvgConfluence) bonus += 15;
             return { volumeConfirmed: volumeSpike, orderflowConfirmed: cvdSpike, fvgConfluence, bonus };
+        }
+
+        // Filtro de Funding Rate e OI (derivativos)
+        function checkDerivativesFilter(data, direction) {
+            const fr = data.fundingRate || 0;
+            const oiDelta = data.oiDelta || 0;
+            const frThreshold = 0.0001;
+            const oiThreshold = 0.05;
+            if (fr > frThreshold && oiDelta > oiThreshold) {
+                return { allow: false, reason: `Funding alto (${(fr*100).toFixed(3)}%) e OI subindo (${oiDelta.toFixed(1)}%) - superaquecido` };
+            }
+            if (fr < -frThreshold && oiDelta < -oiThreshold) {
+                return { allow: false, reason: `Funding negativo (${(fr*100).toFixed(3)}%) e OI caindo (${oiDelta.toFixed(1)}%) - sobrevendido` };
+            }
+            if (Math.abs(fr) < 0.00005 && oiDelta > 0.02) {
+                return { allow: true, bonus: 8, reason: 'Funding neutro e OI subindo - tendência saudável' };
+            }
+            if (fr > 0.00005 && oiDelta < -0.02) {
+                return { allow: true, bonus: 8, reason: 'Funding positivo e OI caindo - correção provável' };
+            }
+            return { allow: true, bonus: 0 };
+        }
+
+        // Confluência com liquidações
+        function checkLiquidationConfluence(symbol, data) {
+            const levels = liquidationLevels[symbol] || [];
+            if (levels.length === 0) return { alert: false };
+            const currentPrice = data.price;
+            const smcZones = getSMCZones(data);
+            for (const level of levels) {
+                if (Math.abs(currentPrice - level) / currentPrice < 0.01) {
+                    for (const zone of smcZones) {
+                        if (zone.type === 'support' && level > zone.level - 0.005*currentPrice && level < zone.level + 0.005*currentPrice) {
+                            return { 
+                                alert: true, 
+                                level: level, 
+                                action: 'COMPRA',
+                                message: `🔔 Confluência de liquidação em $${level.toFixed(2)} com zona de suporte SMC`
+                            };
+                        }
+                        if (zone.type === 'resistance' && level > zone.level - 0.005*currentPrice && level < zone.level + 0.005*currentPrice) {
+                            return { 
+                                alert: true, 
+                                level: level, 
+                                action: 'VENDA',
+                                message: `🔔 Confluência de liquidação em $${level.toFixed(2)} com zona de resistência SMC`
+                            };
+                        }
+                    }
+                }
+            }
+            return { alert: false };
+        }
+
+        function getSMCZones(data) {
+            const zones = [];
+            if (data.swingHighs.length > 0) {
+                zones.push({ type: 'resistance', level: Math.max(...data.swingHighs) });
+            }
+            if (data.swingLows.length > 0) {
+                zones.push({ type: 'support', level: Math.min(...data.swingLows) });
+            }
+            return zones;
+        }
+
+        // Confirmação MTF (tendência em timeframes menores)
+        function checkMTFAlignment(data, direction) {
+            let aligned = 0;
+            const trend4H = data.trend4H || 'NEUTRAL';
+            const trend1D = data.trend1D || 'NEUTRAL';
+            if (direction === 'LONG') {
+                if (trend4H === 'LONG') aligned++;
+                if (trend1D === 'LONG') aligned++;
+            } else if (direction === 'SHORT') {
+                if (trend4H === 'SHORT') aligned++;
+                if (trend1D === 'SHORT') aligned++;
+            }
+            if (aligned === 0) {
+                return { passed: false, reason: `Sem confirmação MTF (4H: ${trend4H}, 1D: ${trend1D})` };
+            }
+            return { passed: true, alignedCount: aligned };
+        }
+
+        // Cap de exposição correlacionada (Melhoria 6 - corrigido)
+        function checkPortfolioExposure(direction) {
+            const sameDir = Object.values(activePositions).filter(p => p.type === direction).length;
+            if (sameDir >= 1) {
+                return { blocked: true, reason: `Exposição correlacionada: já há ${sameDir} posição(ões) ${direction}` };
+            }
+            return { blocked: false };
         }
 
         // ================================================================
@@ -1528,7 +1618,6 @@
                         const qty = parseFloat(o.order.origQty) * price;
                         if (side === 'BUY') liqMap[symbol].longs += qty; 
                         else liqMap[symbol].shorts += qty;
-                        // Armazenar nível de liquidação para confluência
                         if (!liquidationLevels[symbol]) liquidationLevels[symbol] = [];
                         liquidationLevels[symbol].push(price);
                         if (liquidationLevels[symbol].length > 100) liquidationLevels[symbol].shift();
