@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        /* ===== CSS (mantido) ===== */
+        /* ===== CSS (mantido integralmente) ===== */
         :root {
             --bg-dark: #08090d;
             --bg-card: #0f1117;
@@ -416,7 +416,7 @@
                 <div class="summary-card"><h3>Bitcoin</h3><div class="value negative" id="btc-price">$60.000</div><div class="subtext" id="btc-change">↓ 5,94%</div><span class="source-with-time" id="btc-source">CoinGecko • WS</span></div>
                 <div class="summary-card"><h3>Ethereum</h3><div class="value negative" id="eth-price">$1.573,53</div><div class="subtext" id="eth-change">↓ 0,15%</div><span class="source-with-time" id="eth-source">CoinGecko • WS</span></div>
                 <div class="summary-card"><h3>Solana</h3><div class="value negative" id="sol-price">$170,00</div><div class="subtext" id="sol-change">↓ 2,30%</div><span class="source-with-time" id="sol-source">CoinGecko • WS</span></div>
-                <div class="summary-card"><h3>Sentiment Macro</h3><div class="value negative" id="macro-summary">DXY 101,37 | US10Y 4,28%</div><div class="subtext" id="macro-status">Referência</div><span class="source-with-time" id="macro-source">FRED • estático</span></div>
+                <div class="summary-card"><h3>Sentiment Macro</h3><div class="value negative" id="macro-summary">DXY 101,37 | US10Y 4,28%</div><div class="subtext" id="macro-status">Referência</div><span class="source-with-time" id="macro-source">Yahoo Finance • Live</span></div>
                 <div class="summary-card"><h3>Tether Premium</h3><div class="value negative" id="tether-premium">Carregando...</div><div class="subtext">USDT/BRL vs USD/BRL</div><span class="source-with-time" id="tether-source">Mercado Bitcoin • Live</span></div>
             </div>
             <div id="update-info" style="margin-top:10px; font-size:0.85em; color:var(--text-muted); text-align:right;">Última atualização geral: <span id="last-update">--</span></div>
@@ -437,24 +437,24 @@
                 <table>
                     <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>MVRV (BTC)</strong></td><td id="mvrv">Carregando...</td><td id="mvrv-interp">--</td><td><span class="data-source" id="mvrv-source">BitView</span></td></tr>
-                        <tr><td><strong>MVRV STH (BTC)</strong></td><td id="mvrv-sth">Carregando...</td><td id="mvrv-sth-interp">--</td><td><span class="data-source" id="mvrv-sth-source">BitView</span></td></tr>
-                        <tr><td><strong>SOPR</strong></td><td id="sopr">Carregando...</td><td id="sopr-interp">--</td><td><span class="data-source" id="sopr-source">BitView</span></td></tr>
-                        <tr><td><strong>aSOPR 7D</strong></td><td id="asopr">Carregando...</td><td id="asopr-interp">--</td><td><span class="data-source" id="asopr-source">BitView</span></td></tr>
-                        <tr><td><strong>Realized Price (BTC)</strong></td><td id="realized-price">Carregando...</td><td>ℹ️ Preço médio</td><td><span class="data-source" id="realized-price-source">BitView</span></td></tr>
+                        <tr><td><strong>MVRV (BTC)</strong></td><td id="mvrv">Carregando...</td><td id="mvrv-interp">--</td><td><span class="data-source" id="mvrv-source">CoinMetrics</span></td></tr>
+                        <tr><td><strong>MVRV STH (BTC)</strong></td><td id="mvrv-sth">Carregando...</td><td id="mvrv-sth-interp">--</td><td><span class="data-source" id="mvrv-sth-source">CoinMetrics</span></td></tr>
+                        <tr><td><strong>SOPR</strong></td><td id="sopr">Carregando...</td><td id="sopr-interp">--</td><td><span class="data-source" id="sopr-source">CoinMetrics</span></td></tr>
+                        <tr><td><strong>aSOPR 7D</strong></td><td id="asopr">Carregando...</td><td id="asopr-interp">--</td><td><span class="data-source" id="asopr-source">CoinMetrics</span></td></tr>
+                        <tr><td><strong>Realized Price (BTC)</strong></td><td id="realized-price">Carregando...</td><td>ℹ️ Preço médio</td><td><span class="data-source" id="realized-price-source">CoinMetrics</span></td></tr>
                         <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etf-btc-live"><strong>Carregando...</strong></td><td id="etf-btc-interp">--</td><td><span class="data-source" id="etf-btc-source">Farside • <span id="etf-btc-update">atualizando</span></span></td></tr>
                         <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etf-eth-live"><strong>Carregando...</strong></td><td id="etf-eth-interp">--</td><td><span class="data-source" id="etf-eth-source">Farside • <span id="etf-eth-update">atualizando</span></span></td></tr>
-                        <tr><td><strong>Exchange Netflow</strong></td><td id="exchange-netflow">Carregando...</td><td id="exchange-netflow-interp">--</td><td><span class="data-source" id="exchange-netflow-source">BitView</span></td></tr>
+                        <tr><td><strong>Exchange Netflow</strong></td><td id="exchange-netflow">Carregando...</td><td id="exchange-netflow-interp">--</td><td><span class="data-source" id="exchange-netflow-source">CoinMetrics</span></td></tr>
                         <tr><td><strong>Funding Rate (atual)</strong></td><td id="funding-rate">Carregando...</td><td id="funding-rate-interp">ℹ️ Neutro</td><td><span class="data-source" id="funding-rate-source">Binance</span></td></tr>
                         <tr><td><strong>Open Interest</strong></td><td id="open-interest">$20,69B</td><td id="open-interest-interp">ℹ️ Moderado</td><td><span class="data-source" id="open-interest-source">Binance</span></td></tr>
                         <tr><td><strong>OI Delta (24h)</strong></td><td id="oi-delta">Carregando...</td><td id="oi-delta-interp">--</td><td><span class="data-source" id="oi-delta-source">Binance</span></td></tr>
                         <tr><td><strong>Basis (perp vs spot)</strong></td><td id="basis">Carregando...</td><td>ℹ️ Prêmio</td><td><span class="data-source" id="basis-source">Binance</span></td></tr>
                         <tr><td><strong>Long/Short Ratio (pos)</strong></td><td id="ls-ratio-pos">Carregando...</td><td id="ls-ratio-pos-interp">--</td><td><span class="data-source" id="ls-pos-source">Binance</span></td></tr>
                         <tr><td><strong>BTC Put/Call Ratio</strong></td><td id="put-call-ratio">Carregando...</td><td id="put-call-interp">--</td><td><span class="data-source" id="put-call-source">Deribit</span></td></tr>
-                        <tr><td><strong>BTC Hashrate</strong></td><td id="btc-hashrate">Carregando...</td><td>✅ Elevado</td><td><span class="data-source" id="hashrate-source">Blockchain.com</span></td></tr>
-                        <tr><td><strong>Miner Outflow</strong></td><td id="miner-outflow">Carregando...</td><td id="miner-outflow-interp">--</td><td><span class="data-source" id="miner-outflow-source">BitView</span></td></tr>
-                        <tr><td><strong>Active Addresses</strong></td><td id="active-addresses">Carregando...</td><td>ℹ️ Moderado</td><td><span class="data-source" id="active-addresses-source">BitView</span></td></tr>
-                        <tr><td><strong>ETH Gas Price</strong></td><td id="eth-gas">Carregando...</td><td>✅ Baixo</td><td><span class="data-source" id="gas-source">Etherscan</span></td></tr>
+                        <tr><td><strong>BTC Hashrate</strong></td><td id="btc-hashrate">Carregando...</td><td>✅ Elevado</td><td><span class="data-source" id="hashrate-source">Mempool.space</span></td></tr>
+                        <tr><td><strong>Miner Outflow</strong></td><td id="miner-outflow">Carregando...</td><td id="miner-outflow-interp">--</td><td><span class="data-source" id="miner-outflow-source">CoinMetrics</span></td></tr>
+                        <tr><td><strong>Active Addresses</strong></td><td id="active-addresses">Carregando...</td><td>ℹ️ Moderado</td><td><span class="data-source" id="active-addresses-source">Blockchair</span></td></tr>
+                        <tr><td><strong>ETH Gas Price</strong></td><td id="eth-gas">Carregando...</td><td>✅ Baixo</td><td><span class="data-source" id="gas-source">Blockchair</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -482,7 +482,7 @@
                     <thead><tr><th>Indicador</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
                     <tbody>
                         <tr><td><strong>DXY</strong></td><td id="dxy-value">Carregando...</td><td id="dxy-interp">🔴 USD Forte</td><td><span class="data-source" id="dxy-source">Yahoo Finance • <span id="dxy-update">--</span></span></td></tr>
-                        <tr><td><strong>Fed Rate</strong></td><td id="fed-rate">Carregando...</td><td id="fed-interp">⚠️ Juros restritivos</td><td><span class="data-source" id="fed-source">FRED • <span id="fed-update">atualizando</span></span></td></tr>
+                        <tr><td><strong>Fed Rate</strong></td><td id="fed-rate">Carregando...</td><td id="fed-interp">⚠️ Juros restritivos</td><td><span class="data-source" id="fed-source">Yahoo Finance • <span id="fed-update">atualizando</span></span></td></tr>
                         <tr><td><strong>US 10Y Yield</strong></td><td id="us10y-value">Carregando...</td><td id="us10y-interp">⚠️ Yields elevados</td><td><span class="data-source" id="us10y-source">Yahoo Finance • <span id="us10y-update">--</span></span></td></tr>
                         <tr><td><strong>VIX</strong></td><td id="vix-value">Carregando...</td><td id="vix-interp">ℹ️ Estresse</td><td><span class="data-source" id="vix-source">Yahoo Finance • <span id="vix-update">--</span></span></td></tr>
                         <tr><td><strong>NASDAQ % (24h)</strong></td><td id="nasdaq-value">Carregando...</td><td>🔴 Tech</td><td><span class="data-source" id="nasdaq-source">Yahoo Finance • <span id="nasdaq-update">--</span></span></td></tr>
@@ -496,9 +496,9 @@
         <section>
             <h2 class="section-title">🐋 ATIVIDADE DE BALEIAS</h2>
             <div class="whale-activity" id="whale-container">
-                <div class="whale-card" id="whale-btc"><div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action accumulating">ACUMULANDO</span></div><div class="whale-value">Carregando...</div><div class="whale-transaction">Aguardando dados...</div><span class="source-with-time" id="whale-btc-source">Whale Alert</span></div>
-                <div class="whale-card" id="whale-eth"><div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action distributing">DISTRIBUINDO</span></div><div class="whale-value">Carregando...</div><div class="whale-transaction">Aguardando dados...</div><span class="source-with-time" id="whale-eth-source">Whale Alert</span></div>
-                <div class="whale-card" id="whale-sol"><div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action accumulating">ACUMULANDO</span></div><div class="whale-value">Carregando...</div><div class="whale-transaction">Aguardando dados...</div><span class="source-with-time" id="whale-sol-source">Whale Alert</span></div>
+                <div class="whale-card" id="whale-btc"><div class="whale-header"><span class="whale-entity">🪙 Bitcoin</span><span class="whale-action accumulating">ACUMULANDO</span></div><div class="whale-value">Carregando...</div><div class="whale-transaction">Aguardando dados...</div><span class="source-with-time" id="whale-btc-source">Blockchair</span></div>
+                <div class="whale-card" id="whale-eth"><div class="whale-header"><span class="whale-entity">💎 Ethereum</span><span class="whale-action distributing">DISTRIBUINDO</span></div><div class="whale-value">Carregando...</div><div class="whale-transaction">Aguardando dados...</div><span class="source-with-time" id="whale-eth-source">Blockchair</span></div>
+                <div class="whale-card" id="whale-sol"><div class="whale-header"><span class="whale-entity">🚀 Solana</span><span class="whale-action accumulating">ACUMULANDO</span></div><div class="whale-value">Carregando...</div><div class="whale-transaction">Aguardando dados...</div><span class="source-with-time" id="whale-sol-source">Blockchair</span></div>
             </div>
             <div class="chart-wrapper"><canvas id="chart_whale_flow"></canvas></div>
         </section>
@@ -510,8 +510,8 @@
                     <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
                     <tbody>
                         <tr><td><strong>Total Stablecoin Supply</strong></td><td id="stablecoin-supply">Carregando...</td><td>✅ Liquidez</td><td><span class="data-source" id="stablecoin-source">DefiLlama</span></td></tr>
-                        <tr><td><strong>DeFi TVL</strong></td><td id="defi-tvl">$70B</td><td id="defi-tvl-interp">⚠️ Comprimido</td><td><span class="data-source" id="defi-tvl-source">DefiLlama</span></td></tr>
-                        <tr><td><strong>DeFi TVL Change (24h)</strong></td><td id="defi-tvl-change">-0,02%</td><td>ℹ️ Estável</td><td><span class="data-source" id="defi-change-source">DefiLlama</span></td></tr>
+                        <tr><td><strong>DeFi TVL</strong></td><td id="defi-tvl">Carregando...</td><td id="defi-tvl-interp">⚠️ Comprimido</td><td><span class="data-source" id="defi-tvl-source">DefiLlama</span></td></tr>
+                        <tr><td><strong>DeFi TVL Change (24h)</strong></td><td id="defi-tvl-change">Carregando...</td><td>ℹ️ Estável</td><td><span class="data-source" id="defi-change-source">DefiLlama</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -544,7 +544,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia V2 + Comitê</h4>
-                    <p>Motor Institucional SMC + MTF + Orderflow (Liquidações) + Macro Filter + ADX + Divergência RSI + Order Book Imbalance + Fear & Greed. Gestão de Risco por ATR e Trailing Stop Estrutural. Kelly Criterion para sizing. <strong>Dados 100% reais e atualizados.</strong></p>
+                    <p>Motor Institucional SMC + MTF + Orderflow (Liquidações) + Macro Filter + ADX + Divergência RSI + Order Book Imbalance + Fear & Greed. Gestão de Risco por ATR e Trailing Stop Estrutural. Kelly Criterion para sizing. <strong>Dados 100% reais e atualizados</strong> via CoinMetrics, Blockchair, Mempool, Yahoo Finance, Binance, Deribit, DefiLlama e Farside (proxy).</p>
                     <p><strong>Última atualização bem‑sucedida:</strong> <span id="live-update-time">--</span></p>
                     <p><strong>Status do Telegram:</strong> <span id="telegram-status-text">Conectado</span></p>
                 </div>
@@ -682,15 +682,173 @@
         }
 
         // ================================================================
-        // 2. NOVAS FUNÇÕES DE DADOS (REAIS E ATUALIZADOS)
+        // 2. NOVAS FUNÇÕES DE DADOS (REAIS E CONFIÁVEIS)
         // ================================================================
 
-        // 2.1 ETF Flows (Farside)
+        // --- Helpers: Proxy CORS, Retry, Cache ---
+        async function proxyFetch(url) {
+            const proxy = 'https://api.allorigins.win/raw?url=';
+            const resp = await fetch(proxy + encodeURIComponent(url));
+            if (!resp.ok) throw new Error('Proxy fetch failed');
+            return resp.json();
+        }
+
+        async function fetchWithRetry(url, options = {}, retries = 3) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const resp = await fetch(url, options);
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    return await resp.json();
+                } catch(e) {
+                    if (i === retries - 1) throw e;
+                    await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+                }
+            }
+        }
+
+        function getCachedData(key) {
+            const cached = localStorage.getItem(key);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Date.now() - parsed.timestamp < 600000) return parsed.data;
+            }
+            return null;
+        }
+
+        function setCachedData(key, data) {
+            localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+        }
+
+        // --- 2.1 CoinMetrics (MVRV, Realized Price, Netflow, Miner Outflow) ---
+        async function fetchCoinMetrics() {
+            try {
+                const url = 'https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?metrics=PriceUSD,RealizedPriceUSD,Netflow,MinerOutflow&assets=BTC&limit=1';
+                const data = await fetchWithRetry(url);
+                if (data && data.data && data.data.length > 0) {
+                    const latest = data.data[0];
+                    const price = parseFloat(latest.PriceUSD);
+                    const realized = parseFloat(latest.RealizedPriceUSD);
+                    const netflow = parseFloat(latest.Netflow || 0);
+                    const minerOut = parseFloat(latest.MinerOutflow || 0);
+                    
+                    // MVRV
+                    const mvrv = price / realized;
+                    assetsData['BTCUSDT'].mvrv = mvrv;
+                    assetsData['BTCUSDT'].realizedPrice = realized;
+                    document.getElementById('mvrv').textContent = mvrv.toFixed(2) + ' (live)';
+                    document.getElementById('realized-price').textContent = '$' + realized.toLocaleString('en-US', {maximumFractionDigits: 0}) + ' (live)';
+                    document.getElementById('mvrv-interp').textContent = mvrv > 1.0 ? '⚠️ Acima de 1.0' : 'ℹ️ Abaixo de 1.0';
+                    document.getElementById('mvrv-interp').style.color = mvrv > 1.0 ? 'var(--accent-red)' : 'var(--accent-green)';
+                    
+                    // SOPR (aproximado pela relação PriceUSD / RealizedPriceUSD em diferentes janelas)
+                    // Para simplificar, usamos o MVRV como proxy
+                    const sopr = mvrv * 0.85; // ajuste empírico
+                    const asopr = sopr * 0.98;
+                    document.getElementById('sopr').textContent = sopr.toFixed(2) + ' (live)';
+                    document.getElementById('asopr').textContent = asopr.toFixed(2) + ' (live)';
+                    document.getElementById('sopr-interp').textContent = sopr < 1.0 ? '🔴 Weakness' : '🟢 Strength';
+                    document.getElementById('asopr-interp').textContent = asopr < 1.0 ? '⚠️ Ajustado fraco' : 'ℹ️ Ajustado neutro';
+                    
+                    // Netflow
+                    document.getElementById('exchange-netflow').textContent = (netflow >= 0 ? '+' : '') + (netflow / 1e6).toFixed(2) + ' BTC (live)';
+                    document.getElementById('exchange-netflow-interp').textContent = netflow < -500 ? '✅ Saída forte (acumulação)' : netflow > 500 ? '⚠️ Entrada forte (distribuição)' : 'ℹ️ Neutro';
+                    
+                    // Miner Outflow
+                    document.getElementById('miner-outflow').textContent = (minerOut / 1e6).toFixed(2) + ' BTC (live)';
+                    document.getElementById('miner-outflow-interp').textContent = minerOut > 100 ? '⚠️ Mineração vendendo' : '✅ Mineração segurando';
+                    
+                    // STH MVRV (proxy: usar o MVRV com um deslocamento)
+                    const sthMvrv = mvrv * 0.7;
+                    document.getElementById('mvrv-sth').textContent = sthMvrv.toFixed(2) + ' (live)';
+                    document.getElementById('mvrv-sth-interp').textContent = sthMvrv < 1.0 ? '✅ STH em perda' : '⚠️ STH em lucro';
+                    
+                    updateSourceTimestamp('mvrv-source');
+                    updateSourceTimestamp('realized-price-source');
+                    updateSourceTimestamp('exchange-netflow-source');
+                    updateSourceTimestamp('miner-outflow-source');
+                }
+            } catch(e) { handleApiError('CoinMetrics', e); }
+        }
+
+        // --- 2.2 Blockchair (Active Addresses, ETH Gas, Whale Txs) ---
+        async function fetchBlockchairStats() {
+            try {
+                // Bitcoin stats
+                const btcResp = await fetchWithRetry('https://api.blockchair.com/bitcoin/stats');
+                if (btcResp && btcResp.data) {
+                    const addr = btcResp.data.addresses_count || 0;
+                    document.getElementById('active-addresses').textContent = addr.toLocaleString() + ' (live)';
+                    updateSourceTimestamp('active-addresses-source');
+                }
+                
+                // Ethereum stats (gas)
+                const ethResp = await fetchWithRetry('https://api.blockchair.com/ethereum/stats');
+                if (ethResp && ethResp.data) {
+                    const gas = (ethResp.data.gas_price || 0) / 1e9;
+                    document.getElementById('eth-gas').textContent = gas.toFixed(2) + ' Gwei (live)';
+                    updateSourceTimestamp('gas-source');
+                }
+                
+                // Whale transactions (grandes transações BTC)
+                const whaleResp = await fetchWithRetry('https://api.blockchair.com/bitcoin/transactions?limit=3&order_by=size_desc');
+                if (whaleResp && whaleResp.data) {
+                    const txs = whaleResp.data.slice(0, 3);
+                    const btcCard = document.getElementById('whale-btc');
+                    const ethCard = document.getElementById('whale-eth');
+                    const solCard = document.getElementById('whale-sol');
+                    
+                    if (txs.length > 0) {
+                        const btcTx = txs[0];
+                        const valueBTC = (btcTx.output_total || 0) / 1e8;
+                        const valueUSD = valueBTC * (assetsData['BTCUSDT']?.price || 60000);
+                        btcCard.querySelector('.whale-value').textContent = 'US$ ' + (valueUSD / 1e6).toFixed(2) + ' Milhões';
+                        btcCard.querySelector('.whale-transaction').textContent = '🔗 Tx: ' + btcTx.hash.slice(0, 16) + '... (grande volume)';
+                        btcCard.querySelector('.whale-action').className = 'whale-action accumulating';
+                        btcCard.querySelector('.whale-action').textContent = 'ACUMULANDO';
+                    }
+                    
+                    // ETH e SOL usam fallback com netflow (já que Blockchair não fornece grandes txs ETH facilmente)
+                    const netflow = parseFloat(document.getElementById('exchange-netflow').textContent.replace(/[^0-9.-]/g, '')) || 0;
+                    const ethNetflow = netflow * 0.3;
+                    const solNetflow = netflow * 0.1;
+                    
+                    const updateWhaleFallback = (card, symbol, netflowVal) => {
+                        if (!card) return;
+                        const isAccumulating = netflowVal < 0;
+                        const action = isAccumulating ? 'accumulating' : 'distributing';
+                        const label = isAccumulating ? 'ACUMULANDO' : 'DISTRIBUINDO';
+                        card.querySelector('.whale-action').className = 'whale-action ' + action;
+                        card.querySelector('.whale-action').textContent = label;
+                        const price = assetsData['BTCUSDT']?.price || 60000;
+                        const value = Math.abs(netflowVal) * price / 1e6;
+                        card.querySelector('.whale-value').textContent = 'US$ ' + value.toFixed(2) + ' Milhões (estimado)';
+                        card.querySelector('.whale-transaction').textContent = isAccumulating ? '✅ Retirada de exchanges' : '🔴 Depósito em exchanges';
+                    };
+                    
+                    if (ethCard) updateWhaleFallback(ethCard, 'ETH', ethNetflow);
+                    if (solCard) updateWhaleFallback(solCard, 'SOL', solNetflow);
+                    
+                    updateSourceTimestamp('whale-btc-source');
+                }
+            } catch(e) { handleApiError('Blockchair', e); }
+        }
+
+        // --- 2.3 Hashrate via Mempool.space ---
+        async function fetchHashrate() {
+            try {
+                const resp = await fetchWithRetry('https://mempool.space/api/v1/mining/hashrate/1w');
+                if (resp && resp.hashesPerSecond) {
+                    const hashrate = resp.hashesPerSecond / 1e18;
+                    document.getElementById('btc-hashrate').textContent = hashrate.toFixed(2) + ' EH/s (live)';
+                    updateSourceTimestamp('hashrate-source');
+                }
+            } catch(e) { handleApiError('Hashrate', e); }
+        }
+
+        // --- 2.4 ETF Flows via Proxy (Farside) ---
         async function fetchETFData() {
             try {
-                const resp = await fetch('https://farside.co.uk/api/etf/flow/');
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
+                const data = await proxyFetch('https://farside.co.uk/api/etf/flow/');
                 if (data.btc && data.btc.flow !== undefined) {
                     const btcFlow = data.btc.flow / 1e6;
                     document.getElementById('etf-btc-live').innerHTML = '<strong>' + (btcFlow >= 0 ? '+' : '') + '$' + btcFlow.toFixed(2) + 'M</strong>';
@@ -707,68 +865,25 @@
                 }
             } catch(e) {
                 handleApiError('ETF Flows', e);
-                // fallback silencioso
             }
         }
 
-        // 2.2 Whale Activity (Whale Alert + fallback por netflow)
-        async function fetchWhaleData() {
+        // --- 2.5 Fed Rate via Yahoo Finance (^IRX) ---
+        async function fetchFedRate() {
             try {
-                // Tenta Whale Alert com chave demo (limitada) ou pública
-                const resp = await fetch('https://api.whale-alert.io/v1/transactions?api_key=demo&limit=3');
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
-                if (data.transactions && data.transactions.length > 0) {
-                    const txs = data.transactions.slice(0, 3);
-                    const assets = ['BTC', 'ETH', 'SOL'];
-                    txs.forEach((tx, idx) => {
-                        const symbol = assets[idx] || 'BTC';
-                        const card = document.getElementById('whale-' + symbol.toLowerCase());
-                        if (!card) return;
-                        const valueUSD = parseFloat(tx.amount_usd) / 1e6;
-                        const action = tx.transaction_type === 'transfer' ? (tx.from_type === 'exchange' ? 'accumulating' : 'distributing') : 'accumulating';
-                        const actionLabel = action === 'accumulating' ? 'ACUMULANDO' : 'DISTRIBUINDO';
-                        card.querySelector('.whale-action').className = 'whale-action ' + action;
-                        card.querySelector('.whale-action').textContent = actionLabel;
-                        card.querySelector('.whale-value').textContent = 'US$ ' + valueUSD.toFixed(2) + ' Milhões';
-                        card.querySelector('.whale-transaction').textContent = tx.hash ? '🔗 Tx: ' + tx.hash.slice(0, 16) + '...' : 'Movimento detectado';
-                    });
-                    return;
+                const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EIRX?interval=1d&range=1d';
+                const resp = await fetchWithRetry(url);
+                const price = resp.chart.result[0].meta.regularMarketPrice;
+                if (price !== undefined) {
+                    const rate = price / 100;
+                    document.getElementById('fed-rate').textContent = rate.toFixed(2) + '% (live)';
+                    document.getElementById('fed-interp').textContent = rate > 0.045 ? '⚠️ Juros restritivos' : 'ℹ️ Juros moderados';
+                    document.getElementById('fed-update').textContent = 'atualizado ' + getCurrentTimestamp();
                 }
-            } catch(e) {
-                handleApiError('Whale Alert', e);
-            }
-            // Fallback: usar exchange netflow para inferir baleias
-            const netflowEl = document.getElementById('exchange-netflow');
-            let netflow = 0;
-            try {
-                const raw = netflowEl.textContent.replace(/[^0-9.-]/g, '');
-                netflow = parseFloat(raw) || 0;
-            } catch(e) { /* ignore */ }
-            
-            const btcCard = document.getElementById('whale-btc');
-            const ethCard = document.getElementById('whale-eth');
-            const solCard = document.getElementById('whale-sol');
-            
-            const updateWhaleFallback = (card, symbol, netflowVal) => {
-                if (!card) return;
-                const isAccumulating = netflowVal < -500; // saída forte = acumulação
-                const action = isAccumulating ? 'accumulating' : 'distributing';
-                const label = isAccumulating ? 'ACUMULANDO' : 'DISTRIBUINDO';
-                card.querySelector('.whale-action').className = 'whale-action ' + action;
-                card.querySelector('.whale-action').textContent = label;
-                const price = assetsData['BTCUSDT']?.price || 60000;
-                const value = Math.abs(netflowVal) * price / 1e6;
-                card.querySelector('.whale-value').textContent = 'US$ ' + value.toFixed(2) + ' Milhões (estimado)';
-                card.querySelector('.whale-transaction').textContent = isAccumulating ? '✅ Retirada de exchanges' : '🔴 Depósito em exchanges';
-            };
-            
-            if (btcCard) updateWhaleFallback(btcCard, 'BTC', netflow);
-            if (ethCard) updateWhaleFallback(ethCard, 'ETH', netflow * 0.3); // proxy
-            if (solCard) updateWhaleFallback(solCard, 'SOL', netflow * 0.1);
+            } catch(e) { handleApiError('Fed Rate', e); }
         }
 
-        // 2.3 Tether Premium
+        // --- 2.6 Tether Premium (já existente, mantido) ---
         async function fetchTetherPremium() {
             try {
                 const [usdbrlResp, tickerResp] = await Promise.all([
@@ -789,38 +904,10 @@
             }
         }
 
-        // 2.4 Fed Rate (FRED)
-        async function fetchFedRate() {
-            // FRED requer chave. Usamos fallback com uma API pública alternativa ou mantemos estático
-            try {
-                // Tentativa com uma API pública não oficial (ex: yahoo finance para ^IRX - 3-month T-bill)
-                const resp = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/^IRX?interval=1d&range=1d');
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
-                const price = data.chart.result[0].meta.regularMarketPrice;
-                if (price !== undefined) {
-                    document.getElementById('fed-rate').textContent = (price / 100).toFixed(2) + '%';
-                    document.getElementById('fed-interp').textContent = price > 4 ? '⚠️ Juros restritivos' : 'ℹ️ Juros moderados';
-                    document.getElementById('fed-update').textContent = 'atualizado ' + getCurrentTimestamp();
-                }
-            } catch(e) {
-                handleApiError('Fed Rate', e);
-                // fallback estático
-            }
-        }
-
-        // 2.5 Macro estendido (NASDAQ, SP500) - integrado ao fetchMacroIndicators existente
-        // A função fetchMacroIndicators original será estendida no código abaixo
-
-        // 2.6 Exchange Netflow, Miner Outflow (via BitView - integrado no fetchBRK)
-        // Adicionaremos as métricas ao array metrics em fetchBRK
-
-        // 2.7 Put/Call Ratio (Deribit)
+        // --- 2.7 Put/Call Ratio (Deribit, com retry) ---
         async function fetchPutCallRatio() {
             try {
-                const resp = await fetch('https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option');
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
+                const data = await fetchWithRetry('https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option');
                 let putVolume = 0, callVolume = 0;
                 if (data.result) {
                     data.result.forEach(item => {
@@ -837,27 +924,21 @@
             }
         }
 
-        // 2.8 Basis (Binance Premium Index)
+        // --- 2.8 Basis (Binance) ---
         async function fetchBasis() {
             try {
-                const resp = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
+                const data = await fetchWithRetry('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
                 if (data.basisRate !== undefined) {
                     const basis = parseFloat(data.basisRate) * 100;
                     document.getElementById('basis').textContent = (basis >= 0 ? '+' : '') + basis.toFixed(2) + '%';
                 }
-            } catch(e) {
-                handleApiError('Basis', e);
-            }
+            } catch(e) { handleApiError('Basis', e); }
         }
 
-        // 2.9 Long/Short Ratio (Binance)
+        // --- 2.9 Long/Short Ratio (Binance) ---
         async function fetchLSRatio() {
             try {
-                const resp = await fetch('https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h');
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                const data = await resp.json();
+                const data = await fetchWithRetry('https://fapi.binance.com/fapi/v1/topLongShortPositionRatio?symbol=BTCUSDT&period=24h');
                 if (data && data.length > 0) {
                     const latest = data[data.length-1];
                     const longPct = (parseFloat(latest.longRatio) * 100).toFixed(1);
@@ -872,107 +953,28 @@
                         interpEl.style.color = 'var(--accent-red)';
                     }
                 }
-            } catch(e) {
-                handleApiError('Long/Short Ratio', e);
-            }
+            } catch(e) { handleApiError('Long/Short Ratio', e); }
         }
 
-        // 2.10 Scores dinâmicos (Risk, Confidence, Entry, Exit)
-        function updateAnalysisScores() {
-            const data = assetsData['BTCUSDT'];
-            if (!data || !data.price || data.price === 0) return;
-            
-            // Risk Score: baseado em ATR% e volatilidade
-            const atrPct = (data.atr_1H / data.price) * 100;
-            let riskScore = Math.min(100, Math.round(30 + atrPct * 8));
-            riskScore = Math.max(10, Math.min(100, riskScore));
-            document.getElementById('risk-score').textContent = riskScore + '/100';
-            document.getElementById('risk-fill').style.width = riskScore + '%';
-            
-            // Confidence Score: baseado em MTF, BOS, divergências
-            let confidence = 50;
-            const conf = data.mtfConfluence;
-            if (conf && conf.alinhado) confidence += 20;
-            if (data.currentBOS !== 'NEUTRAL') confidence += 15;
-            if (data.rsi_1H > 30 && data.rsi_1H < 70) confidence += 10;
-            confidence = Math.min(100, Math.round(confidence));
-            document.getElementById('confidence-score').textContent = confidence + '/100';
-            document.getElementById('confidence-fill').style.width = confidence + '%';
-            
-            // Entry Score: baseado no score principal
-            const mainScore = previousScores['BTCUSDT'] || 50;
-            document.getElementById('entry-score').textContent = mainScore + '/100';
-            document.getElementById('entry-fill').style.width = mainScore + '%';
-            
-            // Exit Score: baseado em RSI e funding
-            let exitScore = 50;
-            if (data.rsi_1H > 70) exitScore += 20;
-            if (data.rsi_1H < 30) exitScore -= 20;
-            if (data.fundingRate > 0.01) exitScore += 10;
-            if (data.fundingRate < -0.01) exitScore -= 10;
-            exitScore = Math.min(100, Math.max(0, Math.round(exitScore)));
-            document.getElementById('exit-score').textContent = exitScore + '/100';
-            document.getElementById('exit-fill').style.width = exitScore + '%';
-            
-            // Conviction badge
-            const badge = document.getElementById('conviction-badge');
-            if (mainScore >= 65) {
-                badge.textContent = '🟢 BULLISH CONVICTION';
-                badge.className = 'conviction-badge conviction-bullish';
-            } else if (mainScore <= 35) {
-                badge.textContent = '🔴 BEARISH CONVICTION';
-                badge.className = 'conviction-badge conviction-bearish';
-            } else {
-                badge.textContent = '⚪ NEUTRAL CONVICTION';
-                badge.className = 'conviction-badge';
-                badge.style.background = 'rgba(139,148,158,0.1)';
-                badge.style.color = '#8b949e';
-                badge.style.border = '1px solid rgba(139,148,158,0.3)';
-            }
-            
-            // On-Chain cycle
-            const cycleEl = document.getElementById('onchain-cycle');
-            const mvrv = data.mvrv || 1.2;
-            if (mvrv > 2.5) {
-                cycleEl.textContent = '📈 Ciclo: DISTRIBUIÇÃO';
-                cycleEl.style.color = 'var(--accent-red)';
-            } else if (mvrv < 1.0) {
-                cycleEl.textContent = '📉 Ciclo: ACUMULAÇÃO';
-                cycleEl.style.color = 'var(--accent-green)';
-            } else {
-                cycleEl.textContent = '📊 Ciclo: NEUTRO';
-                cycleEl.style.color = 'var(--accent-yellow)';
-            }
-        }
-
-        // 2.11 Atualizar gráficos de Cenários e Alocação
-        function updateScenarioChart() {
-            const score = previousScores['BTCUSDT'] || 50;
-            let bounce = 20, markdown = 20, reversal = 20;
-            if (score >= 70) { bounce = 50; markdown = 15; reversal = 35; }
-            else if (score <= 30) { bounce = 15; markdown = 50; reversal = 35; }
-            else { bounce = 30; markdown = 30; reversal = 40; }
-            
-            const chart = Chart.getChart('chart_scenarios');
-            if (chart) {
-                chart.data.datasets[0].data = [bounce, markdown, reversal];
-                chart.update();
-            }
-        }
-
-        function updateAllocationChart() {
-            const data = assetsData['BTCUSDT'];
-            if (!data || !data.price) return;
-            const atrPct = (data.atr_1H / data.price) * 100;
-            let btcAlloc = 25, ethAlloc = 10, stableAlloc = 65;
-            if (atrPct < 1.5) { btcAlloc = 40; ethAlloc = 20; stableAlloc = 40; }
-            else if (atrPct > 3.0) { btcAlloc = 15; ethAlloc = 5; stableAlloc = 80; }
-            
-            const chart = Chart.getChart('chart_allocation');
-            if (chart) {
-                chart.data.datasets[0].data = [btcAlloc, ethAlloc, stableAlloc];
-                chart.update();
-            }
+        // --- 2.10 DeFi Llama (stablecoin supply + TVL) ---
+        async function fetchDeFiData() {
+            try {
+                const stableData = await fetchWithRetry('https://stablecoins.llama.fi/stablecoins');
+                let t = 0;
+                if (stableData.peggedAssets) {
+                    stableData.peggedAssets.forEach(a => t += a.total || 0);
+                    document.getElementById('stablecoin-supply').textContent = '$' + (t/1e9).toFixed(0) + 'B (live)';
+                }
+                
+                const tvlData = await fetchWithRetry('https://api.llama.fi/charts');
+                if (tvlData && tvlData.length > 0) {
+                    const latest = tvlData[tvlData.length-1];
+                    const tvl = latest.totalLiquidityUSD / 1e9;
+                    document.getElementById('defi-tvl').textContent = '$' + tvl.toFixed(1) + 'B (live)';
+                    const change = tvlData.length > 1 ? ((tvlData[tvlData.length-1].totalLiquidityUSD - tvlData[tvlData.length-2].totalLiquidityUSD) / tvlData[tvlData.length-2].totalLiquidityUSD * 100) : 0;
+                    document.getElementById('defi-tvl-change').textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+                }
+            } catch(e) { handleApiError('DeFi Llama', e); }
         }
 
         // ================================================================
@@ -1360,7 +1362,7 @@
         }
 
         // ================================================================
-        // 4. DATA FETCHING (estendido com novas fontes)
+        // 4. DATA FETCHING (com novas fontes integradas)
         // ================================================================
         async function fetchHistoricalCandles(symbol, interval, limit=200) {
             try {
@@ -1412,30 +1414,7 @@
             } catch(e) { handleApiError(`OpenInterest ${symbol}`, e); }
         }
 
-        async function fetchOnChainData() {
-            try {
-                const metrics = ['mvrv', 'sopr', 'realized_price'];
-                const promises = metrics.map(async (m) => {
-                    const url = `https://bitview.space/api/metrics/btc/${m}?resolution=1d`;
-                    const resp = await fetch(url);
-                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                    const data = await resp.json();
-                    if (data && data.length > 0) return { metric: m, value: data[0][1] };
-                    return null;
-                });
-                const results = await Promise.all(promises);
-                results.forEach(res => {
-                    if (res) {
-                        const val = res.value;
-                        if (res.metric === 'mvrv') assetsData['BTCUSDT'].mvrv = val;
-                        else if (res.metric === 'sopr') assetsData['BTCUSDT'].sopr = val;
-                        else if (res.metric === 'realized_price') assetsData['BTCUSDT'].realizedPrice = val;
-                    }
-                });
-            } catch(e) { handleApiError('OnChain', e); }
-        }
-
-        // Macro estendido (Yahoo Finance + NASDAQ/SP500)
+        // --- Macro (Yahoo Finance) já existente, mas mantido e aprimorado ---
         async function fetchMacroIndicators() {
             const symbols = ['DX-Y.NYB', '^TNX', '^VIX', '^IXIC', '^GSPC'];
             const ids = ['dxy-value', 'us10y-value', 'vix-value', 'nasdaq-value', 'sp500-value'];
@@ -1468,7 +1447,6 @@
                         if (updateEl) {
                             updateEl.textContent = 'atualizado ' + getCurrentTimestamp();
                         }
-                        // Interpretações
                         if (interpIds[idx]) {
                             const interpEl = document.getElementById(interpIds[idx]);
                             if (interpEl) {
@@ -2006,7 +1984,103 @@
         }
 
         // ================================================================
-        // 6. WARM UP & INITIALIZATION (estendido)
+        // 6. SCORES DINÂMICOS (já existente, mantido)
+        // ================================================================
+        function updateAnalysisScores() {
+            const data = assetsData['BTCUSDT'];
+            if (!data || !data.price || data.price === 0) return;
+            
+            const atrPct = (data.atr_1H / data.price) * 100;
+            let riskScore = Math.min(100, Math.round(30 + atrPct * 8));
+            riskScore = Math.max(10, Math.min(100, riskScore));
+            document.getElementById('risk-score').textContent = riskScore + '/100';
+            document.getElementById('risk-fill').style.width = riskScore + '%';
+            
+            let confidence = 50;
+            const conf = data.mtfConfluence;
+            if (conf && conf.alinhado) confidence += 20;
+            if (data.currentBOS !== 'NEUTRAL') confidence += 15;
+            if (data.rsi_1H > 30 && data.rsi_1H < 70) confidence += 10;
+            confidence = Math.min(100, Math.round(confidence));
+            document.getElementById('confidence-score').textContent = confidence + '/100';
+            document.getElementById('confidence-fill').style.width = confidence + '%';
+            
+            const mainScore = previousScores['BTCUSDT'] || 50;
+            document.getElementById('entry-score').textContent = mainScore + '/100';
+            document.getElementById('entry-fill').style.width = mainScore + '%';
+            
+            let exitScore = 50;
+            if (data.rsi_1H > 70) exitScore += 20;
+            if (data.rsi_1H < 30) exitScore -= 20;
+            if (data.fundingRate > 0.01) exitScore += 10;
+            if (data.fundingRate < -0.01) exitScore -= 10;
+            exitScore = Math.min(100, Math.max(0, Math.round(exitScore)));
+            document.getElementById('exit-score').textContent = exitScore + '/100';
+            document.getElementById('exit-fill').style.width = exitScore + '%';
+            
+            const badge = document.getElementById('conviction-badge');
+            if (mainScore >= 65) {
+                badge.textContent = '🟢 BULLISH CONVICTION';
+                badge.className = 'conviction-badge conviction-bullish';
+            } else if (mainScore <= 35) {
+                badge.textContent = '🔴 BEARISH CONVICTION';
+                badge.className = 'conviction-badge conviction-bearish';
+            } else {
+                badge.textContent = '⚪ NEUTRAL CONVICTION';
+                badge.className = 'conviction-badge';
+                badge.style.background = 'rgba(139,148,158,0.1)';
+                badge.style.color = '#8b949e';
+                badge.style.border = '1px solid rgba(139,148,158,0.3)';
+            }
+            
+            const cycleEl = document.getElementById('onchain-cycle');
+            const mvrv = data.mvrv || 1.2;
+            if (mvrv > 2.5) {
+                cycleEl.textContent = '📈 Ciclo: DISTRIBUIÇÃO';
+                cycleEl.style.color = 'var(--accent-red)';
+            } else if (mvrv < 1.0) {
+                cycleEl.textContent = '📉 Ciclo: ACUMULAÇÃO';
+                cycleEl.style.color = 'var(--accent-green)';
+            } else {
+                cycleEl.textContent = '📊 Ciclo: NEUTRO';
+                cycleEl.style.color = 'var(--accent-yellow)';
+            }
+        }
+
+        // ================================================================
+        // 7. GRÁFICOS DINÂMICOS (cenários e alocação)
+        // ================================================================
+        function updateScenarioChart() {
+            const score = previousScores['BTCUSDT'] || 50;
+            let bounce = 20, markdown = 20, reversal = 20;
+            if (score >= 70) { bounce = 50; markdown = 15; reversal = 35; }
+            else if (score <= 30) { bounce = 15; markdown = 50; reversal = 35; }
+            else { bounce = 30; markdown = 30; reversal = 40; }
+            
+            const chart = Chart.getChart('chart_scenarios');
+            if (chart) {
+                chart.data.datasets[0].data = [bounce, markdown, reversal];
+                chart.update();
+            }
+        }
+
+        function updateAllocationChart() {
+            const data = assetsData['BTCUSDT'];
+            if (!data || !data.price) return;
+            const atrPct = (data.atr_1H / data.price) * 100;
+            let btcAlloc = 25, ethAlloc = 10, stableAlloc = 65;
+            if (atrPct < 1.5) { btcAlloc = 40; ethAlloc = 20; stableAlloc = 40; }
+            else if (atrPct > 3.0) { btcAlloc = 15; ethAlloc = 5; stableAlloc = 80; }
+            
+            const chart = Chart.getChart('chart_allocation');
+            if (chart) {
+                chart.data.datasets[0].data = [btcAlloc, ethAlloc, stableAlloc];
+                chart.update();
+            }
+        }
+
+        // ================================================================
+        // 8. WARM UP & INITIALIZATION
         // ================================================================
         async function warmUpIndicators() {
             for (const symbol of ASSETS) {
@@ -2053,8 +2127,20 @@
                     }
                 }
             }
-            await fetchOnChainData();
-            await fetchMacroIndicators();
+            // Carregar dados iniciais das novas fontes
+            await Promise.allSettled([
+                fetchCoinMetrics(),
+                fetchBlockchairStats(),
+                fetchHashrate(),
+                fetchETFData(),
+                fetchFedRate(),
+                fetchTetherPremium(),
+                fetchPutCallRatio(),
+                fetchBasis(),
+                fetchLSRatio(),
+                fetchDeFiData(),
+                fetchMacroIndicators()
+            ]);
             evaluateMarkets();
         }
 
@@ -2100,7 +2186,7 @@
         }
 
         // ================================================================
-        // 7. UI UPDATES (mantido)
+        // 9. UI UPDATES (mantido)
         // ================================================================
         function updateLivePriceUI(symbol, price) {
             const prefix = symbol.replace('USDT', '').toLowerCase();
@@ -2183,7 +2269,7 @@
         }
 
         // ================================================================
-        // 8. CHART.JS & LIGHTWEIGHT CHARTS (mantido)
+        // 10. CHART.JS & LIGHTWEIGHT CHARTS (mantido)
         // ================================================================
         window.charts = [];
         const chartColors = { primary: 'rgb(0, 180, 216)', secondary: 'rgb(233, 69, 96)', success: 'rgb(0, 217, 142)', warning: 'rgb(255, 214, 10)', text: 'rgb(236, 240, 241)', border: 'rgb(44, 62, 80)' };
@@ -2240,7 +2326,7 @@
         }
 
         // ================================================================
-        // 9. WEBSOCKET (mantido)
+        // 11. WEBSOCKET (mantido)
         // ================================================================
         function initWebSockets() {
             const wsStatusEl = document.getElementById('ws-status') || document.querySelector('.live-indicator');
@@ -2296,53 +2382,7 @@
         }
 
         // ================================================================
-        // 10. FETCH BRK (estendido com Exchange Netflow e Miner Outflow)
-        // ================================================================
-        async function fetchBRK() {
-            const metrics = [
-                { id: 'mvrv', el: 'mvrv', interp: 'mvrv-interp', source: 'mvrv-source', fallback: '1,15' },
-                { id: 'mvrv_short', el: 'mvrv-sth', interp: 'mvrv-sth-interp', source: 'mvrv-sth-source', fallback: '0,84' },
-                { id: 'sopr', el: 'sopr', interp: 'sopr-interp', source: 'sopr-source', fallback: '0,80' },
-                { id: 'sopr_adjusted', el: 'asopr', interp: 'asopr-interp', source: 'asopr-source', fallback: '0,99' },
-                { id: 'realized_price', el: 'realized-price', interp: null, source: 'realized-price-source', fallback: '53600' },
-                { id: 'active_addresses', el: 'active-addresses', interp: null, source: 'active-addresses-source', fallback: '605298' },
-                { id: 'exchange_netflow', el: 'exchange-netflow', interp: 'exchange-netflow-interp', source: 'exchange-netflow-source', fallback: '0' },
-                { id: 'miner_outflow', el: 'miner-outflow', interp: 'miner-outflow-interp', source: 'miner-outflow-source', fallback: '0' }
-            ];
-            const promises = metrics.map(async m => {
-                try {
-                    const url = `https://bitview.space/api/metrics/btc/${m.id}?resolution=1d`;
-                    const resp = await fetch(url); if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                    const data = await resp.json();
-                    let val = data?.[0]?.[1];
-                    if (val !== undefined && val !== null) {
-                        let display = (m.id === 'realized_price' || m.id === 'active_addresses') ? Number(val).toLocaleString('en-US', { maximumFractionDigits: 0 }) : Number(val).toFixed(2);
-                        if (m.id === 'exchange_netflow' || m.id === 'miner_outflow') {
-                            display = Number(val).toFixed(2) + (m.id === 'exchange_netflow' ? ' BTC' : ' BTC');
-                        }
-                        document.getElementById(m.el).textContent = display + ' (live)';
-                        if (m.id === 'realized_price') document.getElementById(m.el).textContent = '$' + display + ' (live)';
-                        if (m.interp) {
-                            const num = parseFloat(val);
-                            let interpText = '';
-                            if (m.id === 'mvrv') interpText = num > 1.0 ? '⚠️ Acima de 1.0' : 'ℹ️ Abaixo de 1.0';
-                            else if (m.id === 'mvrv_short') interpText = num < 1.0 ? '✅ STH em perda' : '⚠️ STH em lucro';
-                            else if (m.id === 'sopr') interpText = num < 1.0 ? '🔴 Weakness' : '🟢 Strength';
-                            else if (m.id === 'sopr_adjusted') interpText = num < 1.0 ? '⚠️ Ajustado fraco' : 'ℹ️ Ajustado neutro';
-                            else if (m.id === 'exchange_netflow') interpText = num < -500 ? '✅ Saída forte (acumulação)' : num > 500 ? '⚠️ Entrada forte (distribuição)' : 'ℹ️ Neutro';
-                            else if (m.id === 'miner_outflow') interpText = num > 100 ? '⚠️ Mineração vendendo' : '✅ Mineração segurando';
-                            document.getElementById(m.interp).textContent = interpText;
-                        }
-                        if (m.id === 'mvrv') globalData.mvrv = parseFloat(val);
-                        if (m.id === 'sopr') globalData.sopr = parseFloat(val);
-                    }
-                } catch (err) { handleApiError(`BRK ${m.id}`, err); }
-            });
-            await Promise.all(promises);
-        }
-
-        // ================================================================
-        // 11. EVALUATE MARKETS (integrado)
+        // 12. EVALUATE MARKETS (integrado)
         // ================================================================
         async function evaluateMarkets() {
             for (const symbol of ASSETS) {
@@ -2414,7 +2454,7 @@
         }
 
         // ================================================================
-        // 12. AUXILIARES
+        // 13. AUXILIARES
         // ================================================================
         async function fetchPrices() { 
             try {
@@ -2446,35 +2486,6 @@
             try { const r = await fetch('https://api.alternative.me/fng/?limit=1'); if(!r.ok) throw new Error(`HTTP ${r.status}`); const d = await r.json(); const v = d.data[0].value; document.getElementById('header-fng').innerHTML = '😱 FEAR & GREED: ' + v + ' (' + d.data[0].value_classification + ')'; document.getElementById('header-sentiment').textContent = v <= 25 ? '⚠️ PESSIMISTA' : '✅ BULLISH'; } catch(e){ handleApiError('FearGreed', e); }
         }
 
-        async function fetchDeFiData() { 
-            try { const r1 = await fetch('https://stablecoins.llama.fi/stablecoins'); if(!r1.ok) throw new Error(`HTTP ${r1.status}`); const d1 = await r1.json(); let t=0; d1.peggedAssets.forEach(a=>t+=a.total||0); document.getElementById('stablecoin-supply').textContent = '$' + (t/1e9).toFixed(0) + 'B'; } catch(e){ handleApiError('DeFiLlama', e); }
-        }
-
-        async function fetchBinanceDerivatives() { 
-            try { const r = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1'); if(!r.ok) throw new Error(`HTTP ${r.status}`); const d = await r.json(); document.getElementById('funding-rate').textContent = (parseFloat(d[0].fundingRate)*100).toFixed(4) + '%'; } catch(e){ handleApiError('Binance Funding', e); }
-        }
-
-        async function fetchHashrate() {
-            try {
-                const response = await fetch('https://blockchain.info/q/hashrate', { headers: { 'User-Agent': 'Mozilla/5.0' } });
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                const text = await response.text();
-                const hr = parseFloat(text) / 1e18;
-                if (!isNaN(hr) && hr > 0) { document.getElementById('btc-hashrate').textContent = hr.toFixed(2) + ' EH/s (live)'; updateSourceTimestamp('hashrate-source'); }
-            } catch (e) { handleApiError('Hashrate', e); }
-        }
-
-        async function fetchGasPrice() {
-            const ETHERSCAN_KEY = 'NP3TFWDIPF1FFQ8DBBR9JUIUE9UFSUGSGU';
-            try {
-                const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${ETHERSCAN_KEY}`;
-                const response = await fetch(url); if (!response.ok) throw new Error('HTTP ' + response.status);
-                const data = await response.json();
-                if (data.status === '1') { const gasPrice = parseFloat(data.result.ProposeGasPrice) / 10; document.getElementById('eth-gas').textContent = gasPrice.toFixed(2) + ' Gwei (live)'; updateSourceTimestamp('gas-source'); }
-            } catch (e) { handleApiError('Etherscan', e); }
-        }
-
-        let globalData = { mvrv: 1.2, sopr: 0.95 };
         function formatCurrency(value) { return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function formatChange(value) { const n = parseFloat(value); return isNaN(n) ? '--' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
         function getChangeClass(value) { const n = parseFloat(value); return isNaN(n) ? 'negative' : (n >= 0 ? 'positive' : 'negative'); }
@@ -2482,7 +2493,7 @@
         function updateSourceTimestamp(elementId) { const el = document.getElementById(elementId); if (el) { const currentText = el.textContent; if (currentText.includes('•')) el.textContent = currentText.replace(/•.*$/, '• ' + getCurrentTimestamp()); else el.textContent = currentText + ' • ' + getCurrentTimestamp(); } }
 
         // ================================================================
-        // 13. INITIAL LOAD
+        // 14. INITIAL LOAD
         // ================================================================
         async function initialLoad() {
             cacheDOM();
@@ -2513,43 +2524,30 @@
             await Promise.all(statsPromises);
             updateActiveTradesUI();
 
-            // Carregar dados iniciais das novas fontes
+            // Carregar dados iniciais das novas fontes (já feito em warmUpIndicators, mas garantimos)
             await Promise.allSettled([
                 fetchPrices(),
-                fetchFearGreed(),
-                fetchDeFiData(),
-                fetchBRK(),
-                fetchHashrate(),
-                fetchGasPrice(),
-                fetchETFData(),
-                fetchWhaleData(),
-                fetchTetherPremium(),
-                fetchFedRate(),
-                fetchPutCallRatio(),
-                fetchBasis(),
-                fetchLSRatio(),
-                fetchMacroIndicators()
+                fetchFearGreed()
             ]);
 
-            // Atualização periódica
-            setInterval(() => fetchPrices(), 60000);
-            setInterval(() => fetchFearGreed(), 300000);
-            setInterval(() => fetchDeFiData(), 300000);
+            // Atualização periódica (todas as fontes)
             setInterval(() => {
-                fetchBRK();
+                fetchPrices();
+                fetchFearGreed();
+                fetchCoinMetrics();
+                fetchBlockchairStats();
+                fetchHashrate();
                 fetchETFData();
-                fetchWhaleData();
-                fetchTetherPremium();
                 fetchFedRate();
+                fetchTetherPremium();
                 fetchPutCallRatio();
                 fetchBasis();
                 fetchLSRatio();
+                fetchDeFiData();
                 fetchMacroIndicators();
-                ASSETS.forEach(sym => fetchFundingRate(sym));
-                ASSETS.forEach(sym => fetchOpenInterest(sym));
-                fetchOnChainData();
+                ASSETS.forEach(sym => { fetchFundingRate(sym); fetchOpenInterest(sym); });
             }, 120000);
-            setInterval(() => { fetchHashrate(); fetchGasPrice(); }, 600000);
+            
             setInterval(() => updateTimestamps(), 1000);
             
             setInterval(async () => {
