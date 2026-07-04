@@ -355,7 +355,11 @@
                 currentVolume: 0,
                 fundingRate: 0,
                 trend4H: 'NEUTRAL',
-                trend1D: 'NEUTRAL'
+                trend1D: 'NEUTRAL',
+                // On-chain (BTC only)
+                mvrv: 1.2,
+                sopr: 0.95,
+                realizedPrice: 53600
             };
         });
 
@@ -367,6 +371,8 @@
 
         // Orderflow Liquidation Map
         let liqMap = { 'BTCUSDT': { longs: 0, shorts: 0 }, 'ETHUSDT': { longs: 0, shorts: 0 }, 'SOLUSDT': { longs: 0, shorts: 0 } };
+        // Histórico de liquidações para confluência
+        let liquidationLevels = { 'BTCUSDT': [], 'ETHUSDT': [], 'SOLUSDT': [] };
 
         let scoreHistory = []; 
         let previousScores = { 'BTCUSDT': 50, 'ETHUSDT': 50, 'SOLUSDT': 50 };
@@ -434,7 +440,7 @@
             return { avgGain, avgLoss, rsi };
         }
 
-        // SMC: Swing Points & BOS com confirmação de volume (já existente) + BOS por fechamento (Melhoria 2)
+        // SMC: Swing Points & BOS com confirmação de volume + fechamento
         function updateSwingPoints(data) {
             const c1H = data.candles1H;
             if (c1H.length < 10) return;
@@ -450,7 +456,7 @@
             data.swingHighs = recentHighs.slice(-3);
             data.swingLows = recentLows.slice(-3);
 
-            // BOS baseado no fechamento do último candle (Melhoria 2)
+            // BOS baseado no fechamento do último candle
             const lastCandle = c1H.at(-1);
             if (!lastCandle) return;
             const lastHigh = data.swingHighs.length > 0 ? data.swingHighs.at(-1) : 0;
@@ -461,14 +467,14 @@
             else data.currentBOS = 'NEUTRAL';
         }
 
-        // SMC Setup com liquidity sweep (Melhoria 5)
+        // SMC Setup com liquidity sweep
         function findSMCSetup(data, direction) {
             const last = data.candles1H.at(-1);
             if (!last || data.swingLows.length === 0 || data.swingHighs.length === 0) return false;
 
             if (direction === 'LONG' && data.currentBOS === 'BULLISH') {
                 const swingLow = Math.min(...data.swingLows);
-                const sweep = last.low < swingLow && last.close > swingLow; // varreu e fechou acima
+                const sweep = last.low < swingLow && last.close > swingLow;
                 return sweep && data.price < data.ema50_1H;
             }
             if (direction === 'SHORT' && data.currentBOS === 'BEARISH') {
@@ -480,107 +486,122 @@
         }
 
         // ================================================================
-        // 3. FILTROS (Melhorias 1, 3, 4, 5 já integradas)
+        // 3. NOVOS FILTROS (Melhorias 4, 5, 6)
         // ================================================================
 
-        // Melhoria 1: Filtro de Mercado Lateral (ATR + Bollinger)
-        function checkLateralMarket(data, currentPrice) {
-            const atr = data.atr_1H || 0;
-            const minATR = currentPrice * 0.015;
-            const bbWidth = data.bbWidth || 0.1;
-            const maxBBWidth = 0.08;
-            
-            if (atr < minATR || bbWidth < maxBBWidth) {
-                return { blocked: true, reason: `Lateral: ATR ${(atr/currentPrice*100).toFixed(2)}% < 1.5% ou BB ${(bbWidth*100).toFixed(1)}% < 8%` };
-            }
-            return { blocked: false };
-        }
-
-        // Melhoria 2: Confirmação MTF (já existente, mas agora atualizada no ciclo)
-        function checkMTFAlignment(data, direction) {
-            let aligned = 0;
-            const trend4H = data.trend4H || 'NEUTRAL';
-            const trend1D = data.trend1D || 'NEUTRAL';
-            
-            if (direction === 'LONG') {
-                if (trend4H === 'LONG') aligned++;
-                if (trend1D === 'LONG') aligned++;
-            } else if (direction === 'SHORT') {
-                if (trend4H === 'SHORT') aligned++;
-                if (trend1D === 'SHORT') aligned++;
-            }
-            
-            if (aligned === 0) {
-                return { passed: false, reason: `Sem confirmação MTF (4H: ${trend4H}, 1D: ${trend1D})` };
-            }
-            return { passed: true, alignedCount: aligned };
-        }
-
-        // Melhoria 3: Filtro de Volume (já existente)
-        function checkVolumeConfirmation(data, direction) {
-            const currentVol = data.currentVolume || 0;
-            const avgVol = data.volumeAvg || 1;
-            if (avgVol === 0) return { passed: true };
-            const ratio = currentVol / avgVol;
-            const minRatio = 1.5;
-            
-            if (ratio < minRatio) {
-                return { passed: false, reason: `Volume insuficiente: ${ratio.toFixed(2)}x média` };
-            }
-            const candles = data.candles1H;
-            if (candles.length > 1) {
-                const lastClose = candles.at(-1).close;
-                const prevClose = candles.at(-2).close;
-                const priceMove = lastClose - prevClose;
-                if (direction === 'LONG' && priceMove < 0) {
-                    return { passed: false, reason: 'Volume alto mas preço caindo (divergência)' };
-                }
-                if (direction === 'SHORT' && priceMove > 0) {
-                    return { passed: false, reason: 'Volume alto mas preço subindo (divergência)' };
-                }
-            }
-            const bonus = ratio > 2.0 ? 5 : 0;
-            return { passed: true, bonus: bonus };
-        }
-
-        // Melhoria 4: Filtro de Funding Rate (já existente)
-        function checkFundingRateFilter(data, direction) {
+        // Melhoria 4: Filtro de Funding Rate e OI (já existente, aprimorado)
+        function checkDerivativesFilter(data, direction) {
             const fr = data.fundingRate || 0;
-            const threshold = 0.01;
-            if (Math.abs(fr) > threshold) {
-                if ((direction === 'LONG' && fr > 0) || (direction === 'SHORT' && fr < 0)) {
-                    return { passed: false, reason: `Funding extremo: ${(fr*100).toFixed(3)}%` };
-                }
-                return { passed: true, bonus: 8 };
+            const oiDelta = data.oiDelta || 0;
+            const frThreshold = 0.0001; // 0.01%
+            const oiThreshold = 0.05; // 5%
+            
+            // Filtro 1: Funding muito positivo + OI aumentando = evitar compra
+            if (fr > frThreshold && oiDelta > oiThreshold) {
+                return { allow: false, reason: `Funding alto (${(fr*100).toFixed(3)}%) e OI subindo (${oiDelta.toFixed(1)}%) - superaquecido` };
             }
-            return { passed: true, bonus: 0 };
+            // Filtro 2: Funding muito negativo + OI diminuindo = evitar venda
+            if (fr < -frThreshold && oiDelta < -oiThreshold) {
+                return { allow: false, reason: `Funding negativo (${(fr*100).toFixed(3)}%) e OI caindo (${oiDelta.toFixed(1)}%) - sobrevendido` };
+            }
+            // Confirmação: funding neutro + OI aumentando = sinal de compra mais forte
+            if (Math.abs(fr) < 0.00005 && oiDelta > 0.02) {
+                return { allow: true, bonus: 8, reason: 'Funding neutro e OI subindo - tendência saudável' };
+            }
+            // Confirmação: funding positivo + OI diminuindo = sinal de venda mais forte
+            if (fr > 0.00005 && oiDelta < -0.02) {
+                return { allow: true, bonus: 8, reason: 'Funding positivo e OI caindo - correção provável' };
+            }
+            return { allow: true, bonus: 0 };
         }
 
-        // Melhoria 6: Cap de exposição correlacionada
-        function checkPortfolioExposure(direction) {
-            const sameDir = Object.values(activePositions).filter(p => p.type === direction).length;
-            if (sameDir >= 1) {
-                return { blocked: true, reason: `Exposição correlacionada: já há ${sameDir} posição(ões) ${direction}` };
+        // Melhoria 5: Filtro On-Chain (MVRV/SOPR) para BTC
+        function checkOnChainFilter(data, symbol) {
+            if (symbol !== 'BTCUSDT') return { allow: true, bonus: 0 };
+            const mvrv = data.mvrv || 1.2;
+            const sopr = data.sopr || 0.95;
+            const realizedPrice = data.realizedPrice || 53600;
+            const currentPrice = data.price || 0;
+            
+            // Filtro 1: MVRV > 1.2 + SOPR < 1 = evitar compra (possível topo)
+            if (mvrv > 1.2 && sopr < 1) {
+                return { allow: false, reason: `MVRV alto (${mvrv.toFixed(2)}) e SOPR < 1 (${sopr.toFixed(2)}) - possível topo` };
             }
-            return { blocked: false };
+            // Filtro 2: MVRV < 0.8 + SOPR > 1 = evitar venda (possível fundo)
+            if (mvrv < 0.8 && sopr > 1) {
+                return { allow: false, reason: `MVRV baixo (${mvrv.toFixed(2)}) e SOPR > 1 (${sopr.toFixed(2)}) - possível fundo` };
+            }
+            // Confirmação: MVRV < 1.0 e SOPR < 1 = sinal de compra forte (capitulação)
+            if (mvrv < 1.0 && sopr < 1) {
+                return { allow: true, bonus: 10, reason: 'MVRV < 1 e SOPR < 1 - capitulação' };
+            }
+            // Confirmação: Preço abaixo do Realized Price = acumulação forte
+            if (currentPrice < realizedPrice) {
+                return { allow: true, bonus: 8, reason: 'Preço abaixo do valor realizado - zona de acumulação' };
+            }
+            return { allow: true, bonus: 0 };
+        }
+
+        // Melhoria 6: Alertas de Confluência com Liquidações
+        function checkLiquidationConfluence(symbol, data) {
+            const levels = liquidationLevels[symbol] || [];
+            if (levels.length === 0) return { alert: false };
+            const currentPrice = data.price;
+            const smcZones = getSMCZones(data); // função auxiliar
+            
+            for (const level of levels) {
+                if (Math.abs(currentPrice - level) / currentPrice < 0.01) {
+                    // Verificar confluência com zonas SMC (simplificado: swing highs/lows)
+                    for (const zone of smcZones) {
+                        if (zone.type === 'support' && level > zone.level - 0.005*currentPrice && level < zone.level + 0.005*currentPrice) {
+                            return { 
+                                alert: true, 
+                                level: level, 
+                                action: 'COMPRA',
+                                message: `🔔 Confluência de liquidação em $${level.toFixed(2)} com zona de suporte SMC`
+                            };
+                        }
+                        if (zone.type === 'resistance' && level > zone.level - 0.005*currentPrice && level < zone.level + 0.005*currentPrice) {
+                            return { 
+                                alert: true, 
+                                level: level, 
+                                action: 'VENDA',
+                                message: `🔔 Confluência de liquidação em $${level.toFixed(2)} com zona de resistência SMC`
+                            };
+                        }
+                    }
+                }
+            }
+            return { alert: false };
+        }
+
+        // Função auxiliar para obter zonas SMC (swing points)
+        function getSMCZones(data) {
+            const zones = [];
+            if (data.swingHighs.length > 0) {
+                zones.push({ type: 'resistance', level: Math.max(...data.swingHighs) });
+            }
+            if (data.swingLows.length > 0) {
+                zones.push({ type: 'support', level: Math.min(...data.swingLows) });
+            }
+            return zones;
         }
 
         // ================================================================
-        // 4. SCORE DINÂMICO (com confluência)
+        // 4. SCORE DINÂMICO (com todos os filtros)
         // ================================================================
         function computeScore(symbol) {
             const data = assetsData[symbol];
             if (!data || data.price === 0) return { score: 50, components: {}, blockReason: null };
 
             let score = 50;
-            let factors = 0;
             let blockReason = null;
             let scoreBonus = 0;
 
             // 1. SMC Structure
             let smcScore = 50;
-            if (data.currentBOS === 'BULLISH') { smcScore = 80; factors++; }
-            else if (data.currentBOS === 'BEARISH') { smcScore = 20; factors++; }
+            if (data.currentBOS === 'BULLISH') smcScore = 80;
+            else if (data.currentBOS === 'BEARISH') smcScore = 20;
 
             // 2. MTF Alignment (obrigatório)
             const primaryDirection = data.currentBOS === 'BULLISH' ? 'LONG' : (data.currentBOS === 'BEARISH' ? 'SHORT' : null);
@@ -594,7 +615,6 @@
                     blockReason = mtfCheck.reason;
                 } else {
                     scoreBonus += mtfAlignedCount * 5;
-                    factors++;
                 }
             }
 
@@ -614,13 +634,15 @@
             // 5. Macro
             const macroSafe = isSafeToTrade() ? 100 : 0;
 
-            // 6. OI Delta
+            // 6. OI Delta (já atualizado)
             let oiScore = clamp(50 + (data.oiDelta * 2), 0, 100);
 
-            // Novos filtros
+            // --- Novos filtros ---
+            // Lateral
             const lateralCheck = checkLateralMarket(data, data.price);
             if (lateralCheck.blocked) blockReason = lateralCheck.reason;
 
+            // Volume
             let volumeBonus = 0;
             if (primaryDirection) {
                 const volCheck = checkVolumeConfirmation(data, primaryDirection);
@@ -631,13 +653,36 @@
                 }
             }
 
-            let fundingBonus = 0;
+            // Funding Rate e OI (Melhoria 4)
+            let derivBonus = 0;
             if (primaryDirection) {
-                const frCheck = checkFundingRateFilter(data, primaryDirection);
-                if (!frCheck.passed) blockReason = frCheck.reason;
+                const derivCheck = checkDerivativesFilter(data, primaryDirection);
+                if (!derivCheck.allow) blockReason = derivCheck.reason;
                 else {
-                    fundingBonus = frCheck.bonus || 0;
-                    if (fundingBonus > 0) scoreBonus += fundingBonus;
+                    derivBonus = derivCheck.bonus || 0;
+                    if (derivBonus > 0) scoreBonus += derivBonus;
+                }
+            }
+
+            // On-Chain (Melhoria 5) - apenas BTC
+            let onChainBonus = 0;
+            if (symbol === 'BTCUSDT' && primaryDirection) {
+                const ocCheck = checkOnChainFilter(data, symbol);
+                if (!ocCheck.allow) blockReason = ocCheck.reason;
+                else {
+                    onChainBonus = ocCheck.bonus || 0;
+                    if (onChainBonus > 0) scoreBonus += onChainBonus;
+                }
+            }
+
+            // Confluência com liquidações (Melhoria 6) - gera alerta e bônus
+            const liqConfluence = checkLiquidationConfluence(symbol, data);
+            if (liqConfluence.alert) {
+                scoreBonus += 20;
+                sendTelegramAlert(liqConfluence.message);
+                // Se ação for COMPRA/VENDA, podemos forçar direção
+                if (liqConfluence.action === 'COMPRA' && primaryDirection !== 'LONG') {
+                    // não força, mas dá bônus
                 }
             }
 
@@ -650,7 +695,7 @@
             let rawScore = (smcScore * 0.25) + (momScore * 0.15) + (ofScore * 0.10) + (macroSafe * 0.10) + (oiScore * 0.05);
             if (mtfPassed && primaryDirection) rawScore += 10;
 
-            // Choppiness (já existente)
+            // Choppiness
             const chop = computeChoppiness(data);
             data.chopIndex = chop;
             if (chop > 61) rawScore = 50 + (rawScore - 50) * 0.3;
@@ -676,7 +721,7 @@
         }
 
         // ================================================================
-        // 5. POSITION MANAGEMENT & TRAILING (já existente com TP parcial)
+        // 5. POSITION MANAGEMENT & TRAILING (Gestão de Saída - Melhoria 1)
         // ================================================================
         function checkPositionManagement(symbol, currentPrice) {
             const pos = activePositions[symbol];
@@ -686,6 +731,7 @@
             let updateUI = false;
 
             if (pos.type === 'LONG') {
+                // Trailing stop estrutural (swing low)
                 if (data.swingLows.length > 0) {
                     const lastSwingLow = Math.min(...data.swingLows);
                     const newTrail = lastSwingLow - (data.atr_1H * 0.2);
@@ -695,15 +741,17 @@
                     }
                 }
                 
+                // TP1: 50% em 1R
                 if (currentPrice >= pos.tp1 && !pos.partialTaken) {
                     pos.partialTaken = true;
                     pos.sizeRemaining = 0.5;
                     pos.realizedPNL = (pos.tp1 - pos.entryPrice) * 0.5;
-                    pos.trailingStop = pos.entryPrice + (data.atr_1H * 0.1);
+                    pos.trailingStop = pos.entryPrice + (data.atr_1H * 0.1); // BE + buffer
                     pos.movedToBE = true;
                     sendTelegramAlert(`🎯 <b>TP1 PARCIAL (${symbol})</b>\n50% realizado em $${pos.tp1.toFixed(2)}\nRestante com trailing ativo (BE+${(data.atr_1H*0.1).toFixed(2)})`);
                     updateUI = true;
                 }
+                // TP2: finaliza 30% em 2R (ou trailing)
                 if (currentPrice >= pos.tp2) {
                     closePosition(symbol, 'TP2 ATINGIDO', true);
                     updateUI = true;
@@ -713,6 +761,7 @@
                     updateUI = true;
                 }
             } else if (pos.type === 'SHORT') {
+                // Trailing stop estrutural (swing high)
                 if (data.swingHighs.length > 0) {
                     const lastSwingHigh = Math.max(...data.swingHighs);
                     const newTrail = lastSwingHigh + (data.atr_1H * 0.2);
@@ -774,7 +823,7 @@
 
                 const prevScore = previousScores[symbol] || 50;
                 
-                // Signal Logic com os novos filtros
+                // Signal Logic
                 if (!activePositions[symbol] && !blockReason && isSafeToTrade()) {
                     const now = Date.now();
                     const cooldown = alertCooldowns[symbol] || 0;
@@ -783,14 +832,11 @@
                         const primaryDirection = (score >= 70) ? 'LONG' : (score <= 30 ? 'SHORT' : null);
                         
                         if (primaryDirection) {
-                            // Melhoria 6: Cap de exposição
+                            // Cap de exposição
                             const expCheck = checkPortfolioExposure(primaryDirection);
-                            if (expCheck.blocked) {
-                                // Não envia alerta, apenas bloqueia
-                                return;
-                            }
+                            if (expCheck.blocked) return;
 
-                            // Melhoria 3: Stop estrutural
+                            // Stop estrutural
                             let stop, tp1, tp2;
                             let structLevel;
                             if (primaryDirection === 'LONG') {
@@ -806,9 +852,9 @@
                             }
                             const rr1 = primaryDirection === 'LONG' ? (tp1 - data.price) / (data.price - stop) : (data.price - tp1) / (stop - data.price);
                             
-                            // Melhoria 4: Filtro de R:R mínimo
+                            // R:R mínimo
                             const MIN_RR = 1.5;
-                            if (rr1 < MIN_RR) return; // aborta
+                            if (rr1 < MIN_RR) return;
 
                             if (primaryDirection === 'LONG' && findSMCSetup(data, 'LONG')) {
                                 const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
@@ -886,6 +932,32 @@
             } catch(e) {}
         }
 
+        // Atualizar dados on-chain
+        async function fetchOnChainData() {
+            try {
+                const metrics = ['mvrv', 'sopr', 'realized_price'];
+                const promises = metrics.map(async (m) => {
+                    const url = `https://bitview.space/api/metrics/btc/${m}?resolution=1d`;
+                    const resp = await fetch(url);
+                    if (!resp.ok) return null;
+                    const data = await resp.json();
+                    if (data && data.length > 0) {
+                        return { metric: m, value: data[0][1] };
+                    }
+                    return null;
+                });
+                const results = await Promise.all(promises);
+                results.forEach(res => {
+                    if (res) {
+                        const val = res.value;
+                        if (res.metric === 'mvrv') assetsData['BTCUSDT'].mvrv = val;
+                        else if (res.metric === 'sopr') assetsData['BTCUSDT'].sopr = val;
+                        else if (res.metric === 'realized_price') assetsData['BTCUSDT'].realizedPrice = val;
+                    }
+                });
+            } catch(e) {}
+        }
+
         function calculateBB(data, period=20, multiplier=2) {
             const candles = data.candles1H;
             if (candles.length < period) return { bbWidth: 0.1 };
@@ -942,7 +1014,7 @@
                     assetsData[symbol].volumeAvg = vols.slice(-20).reduce((a,b)=>a+b,0)/20;
                     assetsData[symbol].currentVolume = vols.at(-1) || 0;
 
-                    // MTF trends (inicial)
+                    // MTF trends
                     if (c4H.length > 0) {
                         const closes4H = c4H.map(c => c.close);
                         const ema200_4H = closes4H.slice(-200).reduce((a,b)=>a+b,0)/200;
@@ -955,6 +1027,7 @@
                     }
                 }
             }
+            await fetchOnChainData(); // inicializar on-chain
             evaluateMarkets();
         }
 
@@ -1186,7 +1259,8 @@
                 fetchFundingRate('SOLUSDT'),
                 fetchOpenInterest('BTCUSDT'),
                 fetchOpenInterest('ETHUSDT'),
-                fetchOpenInterest('SOLUSDT')
+                fetchOpenInterest('SOLUSDT'),
+                fetchOnChainData()
             ]);
 
             // Test Telegram Button
@@ -1207,11 +1281,12 @@
                 fetchBinanceDerivatives();
                 ASSETS.forEach(sym => fetchFundingRate(sym));
                 ASSETS.forEach(sym => fetchOpenInterest(sym));
+                fetchOnChainData();
             }, 120000);
             setInterval(() => { fetchBRK(); fetchHashrate(); fetchGasPrice(); }, 600000);
             setInterval(() => updateTimestamps(), 1000);
             
-            // Evaluation Cycle (a cada 5 min) com atualização de dados MTF (Melhoria 1)
+            // Evaluation Cycle (a cada 5 min)
             setInterval(async () => {
                 for (const symbol of ASSETS) {
                     // Atualiza candles 1H
@@ -1237,7 +1312,7 @@
                         assetsData[symbol].bbWidth = bb.bbWidth;
                     }
 
-                    // Melhoria 1: Recalcula tendências 4H e 1D
+                    // Recalcula tendências 4H e 1D
                     const [c4H, c1D] = await Promise.all([
                         fetchHistoricalCandles(symbol, '4h', 210),
                         fetchHistoricalCandles(symbol, '1d', 210)
@@ -1364,6 +1439,7 @@
             };
             ws.onclose = () => setTimeout(initWebSockets, 3000);
 
+            // Liquidações WebSocket para confluência
             const wsLiq = new WebSocket('wss://fstream.binance.com/ws/!forceOrder@arr');
             wsLiq.onmessage = (event) => {
                 const orders = JSON.parse(event.data);
@@ -1371,9 +1447,14 @@
                     const symbol = o.order.symbol;
                     if (liqMap[symbol]) {
                         const side = o.order.side;
-                        const qty = parseFloat(o.order.origQty) * parseFloat(o.order.price);
+                        const price = parseFloat(o.order.price);
+                        const qty = parseFloat(o.order.origQty) * price;
                         if (side === 'BUY') liqMap[symbol].longs += qty; 
                         else liqMap[symbol].shorts += qty;
+                        // Armazenar nível de liquidação para confluência
+                        if (!liquidationLevels[symbol]) liquidationLevels[symbol] = [];
+                        liquidationLevels[symbol].push(price);
+                        if (liquidationLevels[symbol].length > 100) liquidationLevels[symbol].shift();
                     }
                 });
             };
