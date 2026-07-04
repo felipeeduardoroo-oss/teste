@@ -834,7 +834,9 @@ let tradeStats = JSON.parse(localStorage.getItem('tradeStats') || '{ "wins": 0, 
 
 let liqMap = { 'BTCUSDT': { longs: 0, shorts: 0 }, 'ETHUSDT': { longs: 0, shorts: 0 }, 'SOLUSDT': { longs: 0, shorts: 0 } };
 let liquidationLevels = { 'BTCUSDT': [], 'ETHUSDT': [], 'SOLUSDT': [] };
-
+// ---- CACHE PARA GRÁFICOS DE CANDLESTICK ----
+let candleDataCache = { btc: [], eth: [], sol: [] };
+let chartInstances = {};
 const dataCache = {
     onChain: { mvrv: 1.2, sopr: 0.95, realizedPrice: 53600, activeAddresses: 605298, timestamp: 0 },
     macro: { dxy: 101.37, us10y: 4.28, vix: 18.41, timestamp: 0 },
@@ -949,7 +951,14 @@ function getCurrentTimestamp() {
 }
 function formatCurrency(value) { return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function formatChange(value) { const n = parseFloat(value); return isNaN(n) ? '--' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
-
+    
+function setTimestamp(elId) {
+    const el = document.getElementById(elId);
+    if (el) {
+        const now = new Date();
+        el.textContent = 'Atualizado: ' + now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    }
+}
 // ================================================================
 // 3. INDICADORES & SMC ENGINE
 // ================================================================
@@ -2160,6 +2169,57 @@ function initWebSockets() {
             }
         } catch(e) {}
     };
+
+    function initCandleWebSocket() {
+    const wsCandle = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1m/ethusdt@kline_1m/solusdt@kline_1m');
+    wsCandle.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.k) {
+                const symbol = data.s;
+                const k = data.k;
+                const prefix = symbol.replace('USDT', '').toLowerCase();
+                const newCandle = {
+                    time: Math.floor(k.t / 1000),
+                    open: parseFloat(k.o),
+                    high: parseFloat(k.h),
+                    low: parseFloat(k.l),
+                    close: parseFloat(k.c),
+                    volume: parseFloat(k.v)
+                };
+                // Atualiza o cache de velas
+                if (candleDataCache[prefix]) {
+                    const last = candleDataCache[prefix][candleDataCache[prefix].length - 1];
+                    if (last && last.time === newCandle.time) {
+                        // Substitui a última vela (ainda em aberto)
+                        candleDataCache[prefix][candleDataCache[prefix].length - 1] = newCandle;
+                    } else {
+                        candleDataCache[prefix].push(newCandle);
+                        if (candleDataCache[prefix].length > 200) candleDataCache[prefix].shift();
+                    }
+                }
+                // Atualiza o gráfico
+                const inst = chartInstances[prefix];
+                if (inst) {
+                    inst.candlestickSeries.setData(candleDataCache[prefix]);
+                    inst.chart.timeScale().fitContent();
+                }
+                // Atualiza as estatísticas (1D, 1S, 1M)
+                const first = candleDataCache[prefix]?.[0];
+                const price = newCandle.close;
+                const change1d = first ? ((price - first.close) / first.close * 100) : 0;
+                // 1S e 1M não são calculados – mantém como '--'
+                const stat1d = document.getElementById(prefix + '-stat-1d');
+                if (stat1d) stat1d.innerHTML = `<span class="label">1D</span> ${formatChange(change1d)}`;
+                // Atualiza também o preço no resumo executivo (já atualizado pelo WS de trades)
+            }
+        } catch (e) { /* ignora */ }
+    };
+    wsCandle.onclose = function() {
+        console.log('Candle WebSocket fechado, reconectando em 5s...');
+        setTimeout(initCandleWebSocket, 5000);
+    };
+}
     wsInstance.onclose = () => {
         if(wsStatusEl) { wsStatusEl.textContent = '🔄 RECONECTANDO...'; wsStatusEl.style.color = 'var(--accent-yellow)'; }
         setTimeout(initWebSockets, 5000);
@@ -2257,7 +2317,120 @@ function updateLivePriceUI(symbol, price) {
         }
     }
 }
-
+function initCandleChart(containerId, data) {
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+    const chart = LightweightCharts.createChart(container, {
+        width: container.clientWidth || 300,
+        height: 200,
+        layout: { background: { color: '#0f1117' }, textColor: '#6b7280' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.05)' } },
+        timeScale: { borderColor: 'rgba(255,255,255,0.06)' },
+        rightPriceScale: { borderColor: 'rgba(255,255,255,0.06)' }
+    });
+    const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#00e896',
+        downColor: '#ff4d6d',
+        borderVisible: false,
+        wickUpColor: '#00e896',
+        wickDownColor: '#ff4d6d'
+    });
+    candlestickSeries.setData(data);
+    chart.timeScale().fitContent();
+    return { chart, candlestickSeries };
+}
+    function updateCandleStats(prefix, price, change1d) {
+    if (!price || isNaN(price)) {
+        document.getElementById(prefix + '-stat-1d').innerHTML = '<span class="label">1D</span> --';
+        document.getElementById(prefix + '-stat-1s').innerHTML = '<span class="label">1S</span> --';
+        document.getElementById(prefix + '-stat-1m').innerHTML = '<span class="label">1M</span> --';
+        return;
+    }
+    document.getElementById(prefix + '-stat-1d').innerHTML = `<span class="label">1D</span> ${formatChange(change1d)}`;
+    // 1S e 1M ficam como '--' (não temos dados)
+    document.getElementById(prefix + '-stat-1s').innerHTML = '<span class="label">1S</span> --';
+    document.getElementById(prefix + '-stat-1m').innerHTML = '<span class="label">1M</span> --';
+}
+    async function initAllCandles() {
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+    const prefixes = ['btc', 'eth', 'sol'];
+    for (let i = 0; i < symbols.length; i++) {
+        try {
+            const url = `https://api.binance.com/api/v3/klines?symbol=${symbols[i]}&interval=1m&limit=200`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('Binance kline error');
+            const data = await resp.json();
+            const formatted = data.map(k => ({
+                time: Math.floor(k[0] / 1000),
+                open: parseFloat(k[1]),
+                high: parseFloat(k[2]),
+                low: parseFloat(k[3]),
+                close: parseFloat(k[4])
+            }));
+            candleDataCache[prefixes[i]] = formatted;
+            const containerId = 'candle-' + prefixes[i];
+            chartInstances[prefixes[i]] = initCandleChart(containerId, formatted);
+            const last = formatted[formatted.length-1];
+            const first = formatted[0];
+            const change1d = ((last.close - first.close) / first.close * 100);
+            updateCandleStats(prefixes[i], last.close, change1d);
+        } catch (e) {
+            console.warn(`Candle ${symbols[i]} fetch failed:`, e);
+            // Marca como indisponível
+            const containerId = 'candle-' + prefixes[i];
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">Indisponível</div>';
+            }
+            document.getElementById(prefixes[i] + '-stat-1d').innerHTML = '<span class="label">1D</span> --';
+        }
+    }
+    setTimestamp('candleTimestamp');
+}
+    function initCandleWebSocket() {
+    const wsCandle = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1m/ethusdt@kline_1m/solusdt@kline_1m');
+    wsCandle.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.k) {
+                const symbol = data.s;
+                const k = data.k;
+                const prefix = symbol.replace('USDT', '').toLowerCase();
+                const newCandle = {
+                    time: Math.floor(k.t / 1000),
+                    open: parseFloat(k.o),
+                    high: parseFloat(k.h),
+                    low: parseFloat(k.l),
+                    close: parseFloat(k.c),
+                    volume: parseFloat(k.v)
+                };
+                if (candleDataCache[prefix]) {
+                    const last = candleDataCache[prefix][candleDataCache[prefix].length - 1];
+                    if (last && last.time === newCandle.time) {
+                        candleDataCache[prefix][candleDataCache[prefix].length - 1] = newCandle;
+                    } else {
+                        candleDataCache[prefix].push(newCandle);
+                        if (candleDataCache[prefix].length > 200) candleDataCache[prefix].shift();
+                    }
+                }
+                const inst = chartInstances[prefix];
+                if (inst) {
+                    inst.candlestickSeries.setData(candleDataCache[prefix]);
+                    inst.chart.timeScale().fitContent();
+                }
+                const first = candleDataCache[prefix]?.[0];
+                const price = newCandle.close;
+                const change1d = first ? ((price - first.close) / first.close * 100) : 0;
+                const stat1d = document.getElementById(prefix + '-stat-1d');
+                if (stat1d) stat1d.innerHTML = `<span class="label">1D</span> ${formatChange(change1d)}`;
+            }
+        } catch (e) { /* ignora */ }
+    };
+    wsCandle.onclose = function() {
+        console.log('Candle WebSocket fechado, reconectando em 5s...');
+        setTimeout(initCandleWebSocket, 5000);
+    };
+}
 // ================================================================
 // 9. INICIALIZAÇÃO
 // ================================================================
@@ -2318,8 +2491,14 @@ async function warmUpIndicators() {
 }
 
 function init() {
+    // Inicializa os gráficos de candlestick com dados históricos
+    initAllCandles();
+
     warmUpIndicators();
     initWebSockets();
+
+    // Inicia um WebSocket separado para klines (candles em tempo real)
+    initCandleWebSocket();
 
     // Botão Telegram
     const btn = document.getElementById('test-telegram-btn');
@@ -2351,7 +2530,6 @@ function init() {
         document.getElementById('globalUpdate').textContent = 'Última atualização geral: ' + str;
     }, 1000);
 }
-
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
