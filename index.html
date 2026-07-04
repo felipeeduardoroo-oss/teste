@@ -481,14 +481,14 @@
                     <span id="fgDisplay" style="font-weight:700;text-align:right;">--</span>
                     <span style="color:#8b949e;">Order Book Imbalance</span>
                     <span id="obDisplay" style="font-weight:700;text-align:right;">--</span>
-                    <span style="color:#8b949e;">Volume (1m)</span>
+                    <span style="color:#8b949e;">Volume (1m) Z-Score</span>
                     <span id="volumeDisplay" style="font-weight:700;text-align:right;">--</span>
                 </div>
                 <div id="miniOrderBook" style="margin-top:8px;padding-top:8px;border-top:1px solid #21262d;font-size:10px;font-family:var(--font-mono);"></div>
             </div>
         </section>
 
-        <!-- MATRIZ DE CENÁRIOS (NOVO) -->
+        <!-- MATRIZ DE CENÁRIOS -->
         <section>
             <h2 class="section-title">🎲 MATRIZ DE CENÁRIOS COM PROBABILIDADES</h2>
             <div class="scenario-matrix" id="scenarioMatrix">
@@ -506,7 +506,7 @@
                 </div>
             </div>
             <div style="font-size:0.85rem;color:var(--text-muted);text-align:center;margin-bottom:16px;">
-                Baseado em fatores técnicos, on-chain e macro
+                Baseado em fatores técnicos, on-chain, macro e desempenho histórico
             </div>
         </section>
 
@@ -665,8 +665,7 @@
             <div class="chart-wrapper"><canvas id="chart_scenarios"></canvas></div>
             <div class="chart-wrapper"><canvas id="chart_allocation"></canvas></div>
         </section>
-
-            <footer>
+                <footer>
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>📋 Metodologia V2</h4>
@@ -710,7 +709,10 @@
                 realizedPrice: 53600,
                 htfStructure: { bias: 'NEUTRAL', lastSwingHigh: 0, lastSwingLow: Infinity },
                 rsiHistory: [],
-                priceHistory: []
+                priceHistory: [],
+                // NOVO: ADX
+                adx_4H: 0,
+                adx_1H: 0
             };
         });
 
@@ -731,7 +733,8 @@
             gas: { value: 5.68, timestamp: 0 },
             orderBook: null,
             fearGreed: null,
-            volume: { value: 0, timestamp: 0, avg: 0 }
+            volume: { value: 0, timestamp: 0, avg: 0, history: [], zScore: 0 },
+            etfFlows: { btc: -445, eth: -12.85, timestamp: 0 }
         };
         const CACHE_TTL = 300000; // 5 min
 
@@ -805,17 +808,38 @@
         }
 
         // ================================================================
-        // 1. TELEGRAM & ALERTS
+        // 1. TELEGRAM & ALERTS (com verificação e reconexão)
         // ================================================================
+        let telegramReconnectAttempts = 0;
+        const MAX_TELEGRAM_RETRIES = 3;
+
         async function sendTelegramAlert(message) {
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-                const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' }) });
-                telegramStatus = resp.ok ? 'online' : 'offline';
+                const resp = await fetch(url, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' }) 
+                });
+                if (resp.ok) {
+                    telegramStatus = 'online';
+                    telegramReconnectAttempts = 0;
+                } else {
+                    telegramStatus = 'offline';
+                    // Tentar reconectar se falhar
+                    if (telegramReconnectAttempts < MAX_TELEGRAM_RETRIES) {
+                        telegramReconnectAttempts++;
+                        setTimeout(() => { sendTelegramAlert('🔄 Reconectando Telegram...'); }, 5000 * telegramReconnectAttempts);
+                    }
+                }
                 updateTelegramUI();
                 return resp.ok;
             } catch (e) { 
-                telegramStatus = 'offline'; 
+                telegramStatus = 'offline';
+                if (telegramReconnectAttempts < MAX_TELEGRAM_RETRIES) {
+                    telegramReconnectAttempts++;
+                    setTimeout(() => { sendTelegramAlert('🔄 Reconectando Telegram...'); }, 5000 * telegramReconnectAttempts);
+                }
                 updateTelegramUI(); 
                 handleApiError('Telegram', e);
                 return false; 
@@ -896,7 +920,45 @@
         // 3. FILTROS E INDICADORES AVANÇADOS (MELHORIAS)
         // ================================================================
 
-        // --- 3.1 DETECTAR ESTRUTURA DE MERCADO (HH/HL, LH/LL) ---
+        // --- 3.1 ADX (Average Directional Index) ---
+        function calculateADX(candles, period = 14) {
+            if (!candles || candles.length < period + 1) return 0;
+            const high = candles.map(c => c.high);
+            const low = candles.map(c => c.low);
+            const close = candles.map(c => c.close);
+            
+            let tr = [], plusDM = [], minusDM = [];
+            for (let i = 1; i < candles.length; i++) {
+                tr.push(Math.max(high[i] - low[i], Math.abs(high[i] - close[i-1]), Math.abs(low[i] - close[i-1])));
+                const upMove = high[i] - high[i-1];
+                const downMove = low[i-1] - low[i];
+                plusDM.push(upMove > downMove && upMove > 0 ? upMove : 0);
+                minusDM.push(downMove > upMove && downMove > 0 ? downMove : 0);
+            }
+            // Smooth com Wilder's smoothing (EMA de período)
+            let atr = 0, plusDI = 0, minusDI = 0;
+            const len = Math.min(period, tr.length);
+            for (let i = 0; i < len; i++) {
+                atr += tr[i] || 0;
+                plusDI += plusDM[i] || 0;
+                minusDI += minusDM[i] || 0;
+            }
+            atr = atr / len || 1;
+            plusDI = plusDI / len || 0;
+            minusDI = minusDI / len || 0;
+            for (let i = len; i < tr.length; i++) {
+                atr = ((atr * (period - 1)) + (tr[i] || 0)) / period;
+                plusDI = ((plusDI * (period - 1)) + (plusDM[i] || 0)) / period;
+                minusDI = ((minusDI * (period - 1)) + (minusDM[i] || 0)) / period;
+            }
+            const plusDI_norm = (plusDI / atr) * 100;
+            const minusDI_norm = (minusDI / atr) * 100;
+            const sum = plusDI_norm + minusDI_norm;
+            const dx = sum > 0 ? (Math.abs(plusDI_norm - minusDI_norm) / sum) * 100 : 0;
+            return dx; // ADX
+        }
+
+        // --- 3.2 DETECTAR ESTRUTURA DE MERCADO (HH/HL, LH/LL) ---
         function detectMarketStructure(candles, lookback = 20) {
             if (!candles || candles.length < lookback) return { structure: 'NEUTRO' };
             const recent = candles.slice(-lookback);
@@ -916,18 +978,16 @@
             const prevHigh = highs[highs.length-2];
             const lastLow = lows[lows.length-1];
             const prevLow = lows[lows.length-2];
-            // Bullish: HH + HL
             if (lastHigh.price > prevHigh.price && lastLow.price > prevLow.price) {
                 return { structure: 'BULLISH', type: 'HH_HL' };
             }
-            // Bearish: LH + LL
             if (lastHigh.price < prevHigh.price && lastLow.price < prevLow.price) {
                 return { structure: 'BEARISH', type: 'LH_LL' };
             }
             return { structure: 'NEUTRO' };
         }
 
-        // --- 3.2 DETECTOR DE MERCADO LATERAL (RANGE) ---
+        // --- 3.3 DETECTOR DE MERCADO LATERAL (RANGE) ---
         function detectSidewaysMarket(candles, period = 20) {
             if (!candles || candles.length < period) return { isSideways: false, rangeHigh: 0, rangeLow: 0, rangeSize: 0 };
             const slice = candles.slice(-period);
@@ -941,7 +1001,7 @@
             return { isSideways, rangeHigh, rangeLow, rangeSize, confidence: isSideways ? 0.9 : 0.1 };
         }
 
-        // --- 3.3 VOLATILIDADE ADAPTATIVA ---
+        // --- 3.4 VOLATILIDADE ADAPTATIVA ---
         function calculateAdaptiveVolatility() {
             const data = assetsData['BTCUSDT'];
             if (!data || !data.atrHistory || data.atrHistory.length < 30) {
@@ -961,7 +1021,7 @@
             return { signalThreshold, stopMultiplier, tpMultiplier, volatilityRatio: ratio, regime };
         }
 
-        // --- 3.4 ENCONTRAR SWING POINTS PARA TRAILING STOP ---
+        // --- 3.5 ENCONTRAR SWING POINTS PARA TRAILING STOP ---
         function findSwingPoints(candles, lookback = 10) {
             if (!candles || candles.length < lookback) return { highs: [], lows: [] };
             const recent = candles.slice(-lookback);
@@ -975,6 +1035,19 @@
                 }
             }
             return { highs, lows };
+        }
+
+        // --- 3.6 CUMULATIVE VOLUME DELTA (CVD) ---
+        function calculateCVD(candles, period = 20) {
+            if (!candles || candles.length < period) return 0;
+            const slice = candles.slice(-period);
+            let cvd = 0;
+            for (const c of slice) {
+                const buyVol = c.takerBuyVol || 0;
+                const sellVol = (c.volume || 0) - buyVol;
+                cvd += (buyVol - sellVol);
+            }
+            return cvd;
         }
 
         // ================================================================
@@ -995,7 +1068,6 @@
             let aligned = 1;
             if (trend1D === direction) aligned++;
             if (trend1H === direction) aligned++;
-            // Estrutura de mercado (HH/HL ou LH/LL)
             const struct = detectMarketStructure(data.candles1D, 20);
             if (struct.structure === 'BULLISH' && direction === 'LONG') aligned += 1;
             else if (struct.structure === 'BEARISH' && direction === 'SHORT') aligned += 1;
@@ -1003,21 +1075,71 @@
             return { passed: true, alignedCount: aligned };
         }
 
-        function checkVolumeFilter() {
-            const vol = dataCache.volume;
-            const avg = vol.avg || 1;
-            const ratio = avg > 0 ? vol.value / avg : 1;
-            if (ratio > 1.5) return { pass: true, bonus: 10, ratio };
-            if (ratio < 0.5) return { pass: false, reason: 'Volume abaixo da média', ratio };
-            return { pass: true, bonus: 0, ratio };
+        // --- 4.1 FILTRO DE VOLUME COM Z-SCORE (MELHORIA #5) ---
+        function checkVolumeFilter(data) {
+            const candles = data.candles1H;
+            if (!candles || candles.length < 50) return { pass: true, bonus: 0, zScore: 0 };
+            const vols = candles.slice(-50).map(c => c.volume);
+            const currentVol = vols.at(-1) || 0;
+            const avg = vols.reduce((a,b) => a+b, 0) / vols.length;
+            const std = Math.sqrt(vols.reduce((a,b) => a + Math.pow(b - avg, 2), 0) / vols.length);
+            const zScore = std > 0 ? (currentVol - avg) / std : 0;
+            
+            // Armazenar no cache para exibição
+            dataCache.volume.zScore = zScore;
+            dataCache.volume.value = currentVol;
+            dataCache.volume.avg = avg;
+            
+            // Volume anômalo (z-score > 1.5) é bom para confirmação
+            if (zScore > 1.5) return { pass: true, bonus: 12, zScore };
+            if (zScore > 0.8) return { pass: true, bonus: 5, zScore };
+            if (zScore < -0.5) return { pass: false, reason: 'Volume abaixo da média', zScore };
+            return { pass: true, bonus: 0, zScore };
         }
 
+        // --- 4.2 FILTRO DE RANGE ---
         function checkRangeFilter(data) {
             const range = detectSidewaysMarket(data.candles1H, 20);
             if (range.isSideways) {
                 return { blocked: true, reason: `Mercado lateral (range ${(range.rangeSize/data.price*100).toFixed(2)}%)` };
             }
             return { blocked: false };
+        }
+
+        // --- 4.3 FILTRO DE CVD (MELHORIA #3) ---
+        function checkCVDFilter(data, direction) {
+            const cvd = calculateCVD(data.candles1H, 20);
+            const priceChange = data.candles1H.length > 20 ? 
+                (data.price - data.candles1H.slice(-20)[0].close) / data.candles1H.slice(-20)[0].close : 0;
+            
+            // Divergência: preço sobe, CVD cai → fraqueza (bloquear LONG)
+            if (priceChange > 0.01 && cvd < 0 && direction === 'LONG') {
+                return { pass: false, reason: 'Divergência CVD: preço sobe, fluxo cai' };
+            }
+            // Divergência: preço cai, CVD sobe → absorção (bloquear SHORT)
+            if (priceChange < -0.01 && cvd > 0 && direction === 'SHORT') {
+                return { pass: false, reason: 'Divergência CVD: preço cai, fluxo sobe' };
+            }
+            // Confirmação
+            if (priceChange > 0.01 && cvd > 0 && direction === 'LONG') return { pass: true, bonus: 10 };
+            if (priceChange < -0.01 && cvd < 0 && direction === 'SHORT') return { pass: true, bonus: 10 };
+            return { pass: true, bonus: 0 };
+        }
+
+        // --- 4.4 FILTRO DE FUNDING RATE (MELHORIA #8) ---
+        function checkFundingFilter(data, direction) {
+            const fr = data.fundingRate || 0;
+            // Funding muito positivo (> 0.01% = 0.0001) → mercado overleveraged long
+            if (fr > 0.0001 && direction === 'LONG') {
+                return { pass: false, reason: `Funding extremo positivo (${(fr*100).toFixed(3)}%) - evitar LONG` };
+            }
+            if (fr < -0.0001 && direction === 'SHORT') {
+                return { pass: false, reason: `Funding extremo negativo (${(fr*100).toFixed(3)}%) - evitar SHORT` };
+            }
+            // Funding extremo na direção contrária → bônus
+            if (fr > 0.0001 && direction === 'SHORT') return { pass: true, bonus: 10 };
+            if (fr < -0.0001 && direction === 'LONG') return { pass: true, bonus: 10 };
+            return { pass: true, bonus: 0 };
         }
 
         // ================================================================
@@ -1077,16 +1199,41 @@
             const macroSafe = isSafeToTrade() ? 100 : 0;
             let oiScore = clamp(50 + (data.oiDelta * 2), 0, 100);
 
+            // --- ADX como filtro (MELHORIA #1) ---
+            const adx = data.adx_4H || 0;
+            if (adx < 25) {
+                blockReason = `ADX ${adx.toFixed(1)} < 25 - mercado lateral`;
+            } else if (adx < 30 && primaryDirection) {
+                // Tendência fraca - reduzir bônus
+                scoreBonus += 5;
+            } else if (adx > 40 && primaryDirection) {
+                scoreBonus += 15;
+            }
+
             // Mercado lateral (range)
             const rangeCheck = checkRangeFilter(data);
             if (rangeCheck.blocked) blockReason = rangeCheck.reason;
 
-            // Volume
-            const volCheck = checkVolumeFilter();
+            // Volume com Z-Score
+            const volCheck = checkVolumeFilter(data);
             if (!volCheck.pass && primaryDirection) {
                 blockReason = volCheck.reason;
             } else {
                 scoreBonus += volCheck.bonus || 0;
+            }
+
+            // CVD (Order Flow)
+            if (primaryDirection) {
+                const cvdCheck = checkCVDFilter(data, primaryDirection);
+                if (!cvdCheck.pass) blockReason = cvdCheck.reason;
+                else scoreBonus += cvdCheck.bonus || 0;
+            }
+
+            // Funding Rate
+            if (primaryDirection) {
+                const fundCheck = checkFundingFilter(data, primaryDirection);
+                if (!fundCheck.pass) blockReason = fundCheck.reason;
+                else scoreBonus += fundCheck.bonus || 0;
             }
 
             // On-chain
@@ -1094,13 +1241,6 @@
                 const ocCheck = checkOnChainFilter(data, symbol);
                 if (!ocCheck.allow) blockReason = ocCheck.reason;
                 else scoreBonus += ocCheck.bonus || 0;
-            }
-
-            // Funding Rate
-            if (primaryDirection) {
-                const derivCheck = checkDerivativesFilter(data, primaryDirection);
-                if (!derivCheck.allow) blockReason = derivCheck.reason;
-                else scoreBonus += derivCheck.bonus || 0;
             }
 
             // Liquidações
@@ -1164,7 +1304,7 @@
         }
 
         // ================================================================
-        // 6. GESTÃO DE POSIÇÕES (TRAILING + TP PARCIAL + LIQUIDEZ)
+        // 6. GESTÃO DE POSIÇÕES (TRAILING + TP PARCIAL + ESTRUTURA)
         // ================================================================
         function checkPositionManagement(symbol, currentPrice) {
             const pos = activePositions[symbol];
@@ -1172,12 +1312,18 @@
             const data = assetsData[symbol];
             let updateUI = false;
 
+            // Volatilidade adaptativa para trailing stop (MELHORIA #6)
+            const volParams = calculateAdaptiveVolatility();
+            let atrMultiplier = 0.2;
+            if (volParams.regime === 'HIGH') atrMultiplier = 0.5;
+            else if (volParams.regime === 'LOW') atrMultiplier = 0.1;
+
             if (pos.type === 'LONG') {
-                // Trailing stop baseado em swing points + ATR
+                // Trailing stop baseado em swing points + ATR adaptativo
                 const swing = findSwingPoints(data.candles1H, 10);
                 if (swing.lows.length > 0) {
                     const lastSwingLow = Math.min(...swing.lows);
-                    let newTrail = lastSwingLow - (data.atr_1H * 0.2);
+                    let newTrail = lastSwingLow - (data.atr_1H * atrMultiplier);
                     if (data.atrHistory && data.atrHistory.length > 20) {
                         const avgATR = data.atrHistory.slice(-20).reduce((a,b)=>a+b,0)/20;
                         if (data.atr_1H > avgATR * 1.5) newTrail -= data.atr_1H * 0.1;
@@ -1185,7 +1331,7 @@
                     }
                     if (newTrail > pos.trailingStop) {
                         pos.trailingStop = newTrail;
-                        sendTelegramAlert(`📈 <b>TRAILING STOP AJUSTADO (${symbol})</b>\nNovo Stop: $${newTrail.toFixed(2)} (Swing Low + ATR)`);
+                        sendTelegramAlert(`📈 <b>TRAILING STOP AJUSTADO (${symbol})</b>\nNovo Stop: $${newTrail.toFixed(2)} (Swing Low + ATR Adaptativo)`);
                     }
                 }
                 // TP parcial (30% em TP1, 30% em TP2, 40% em TP3)
@@ -1217,7 +1363,7 @@
                 const swing = findSwingPoints(data.candles1H, 10);
                 if (swing.highs.length > 0) {
                     const lastSwingHigh = Math.max(...swing.highs);
-                    let newTrail = lastSwingHigh + (data.atr_1H * 0.2);
+                    let newTrail = lastSwingHigh + (data.atr_1H * atrMultiplier);
                     if (data.atrHistory && data.atrHistory.length > 20) {
                         const avgATR = data.atrHistory.slice(-20).reduce((a,b)=>a+b,0)/20;
                         if (data.atr_1H > avgATR * 1.5) newTrail += data.atr_1H * 0.1;
@@ -1269,6 +1415,17 @@
         // 7. MAIN LOOP & MATRIZ DE CENÁRIOS
         // ================================================================
         function evaluateMarkets() {
+            // Atualizar ADX para todos os ativos (MELHORIA #1)
+            ASSETS.forEach(symbol => {
+                const data = assetsData[symbol];
+                if (data && data.candles4H && data.candles4H.length > 14) {
+                    data.adx_4H = calculateADX(data.candles4H, 14);
+                }
+                if (data && data.candles1H && data.candles1H.length > 14) {
+                    data.adx_1H = calculateADX(data.candles1H, 14);
+                }
+            });
+
             ASSETS.forEach(symbol => {
                 const data = assetsData[symbol];
                 if (!data || !data.candles1H || data.candles1H.length === 0) return;
@@ -1301,20 +1458,27 @@
                             let stop, tp1, tp2, tp3, structLevel, riskDist;
                             const stopMult = volParams.stopMultiplier || 2;
                             const tpMult = volParams.tpMultiplier || 3;
+                            
+                            // --- TAKE PROFIT POR ESTRUTURA (MELHORIA #7) ---
                             if (primaryDirection === 'LONG') {
                                 structLevel = Math.min(...data.swingLows) - (atr * 0.3);
                                 stop = Math.min(structLevel, data.price - atr * stopMult);
                                 riskDist = data.price - stop;
-                                tp1 = data.price + (riskDist * 1.0);  // 1R
-                                tp2 = data.price + (riskDist * 2.0);  // 2R
-                                tp3 = data.price + (riskDist * tpMult); // 3R+
+                                // Usar swing highs como resistência para TPs
+                                const swingHighs = data.swingHighs || [];
+                                const nextResistance = swingHighs.length > 0 ? Math.max(...swingHighs) : data.price + (riskDist * 3);
+                                tp1 = data.price + (nextResistance - data.price) * 0.5;
+                                tp2 = nextResistance;
+                                tp3 = nextResistance + riskDist;
                             } else {
                                 structLevel = Math.max(...data.swingHighs) + (atr * 0.3);
                                 stop = Math.max(structLevel, data.price + atr * stopMult);
                                 riskDist = stop - data.price;
-                                tp1 = data.price - (riskDist * 1.0);
-                                tp2 = data.price - (riskDist * 2.0);
-                                tp3 = data.price - (riskDist * tpMult);
+                                const swingLows = data.swingLows || [];
+                                const nextSupport = swingLows.length > 0 ? Math.min(...swingLows) : data.price - (riskDist * 3);
+                                tp1 = data.price - (data.price - nextSupport) * 0.5;
+                                tp2 = nextSupport;
+                                tp3 = nextSupport - riskDist;
                             }
                             if (riskDist <= 0 || riskDist / data.price > 0.15) return;
                             const rr1 = primaryDirection === 'LONG' ? (tp1 - data.price) / riskDist : (data.price - tp1) / riskDist;
@@ -1346,21 +1510,26 @@
             updateMTFSyncPanel('BTCUSDT');
         }
 
-        // --- MATRIZ DE CENÁRIOS ---
+        // --- MATRIZ DE CENÁRIOS COM BAYES (MELHORIA #10) ---
         function calculateScenarioProbabilities() {
             const data = assetsData['BTCUSDT'];
             if (!data) return { bullish: 0.33, bearish: 0.33, neutral: 0.34, dominant: 'NEUTRAL' };
+            
             // Fatores técnicos
             const rsi = data.rsi_1H || 50;
             const chop = data.chopIndex || 50;
             const atr = data.atr_1H || 0;
             const price = data.price || 0;
+            const adx = data.adx_4H || 0;
+            
             // Fatores on-chain
             const mvrv = data.mvrv || 1.2;
             const sopr = data.sopr || 0.95;
+            
             // Fatores macro
             const dxy = dataCache.macro.dxy || 101.37;
             const vix = dataCache.macro.vix || 18.41;
+            
             // Fatores de sentimento
             const fg = dataCache.fearGreed?.value || 50;
 
@@ -1369,6 +1538,8 @@
             else if (rsi < 40) techScore -= 20;
             if (chop < 40) techScore += 15;
             else if (chop > 60) techScore -= 15;
+            if (adx > 40) techScore += 20;
+            else if (adx < 25) techScore -= 20;
             if (atr > 0 && price > 0) {
                 const volPct = atr / price * 100;
                 if (volPct > 3) techScore += 10;
@@ -1386,12 +1557,17 @@
             else if (dxy > 103) macroScore -= 15;
             if (vix > 25) macroScore -= 10;
             else if (vix < 15) macroScore += 10;
-
             if (fg < 30) macroScore += 10;
             else if (fg > 70) macroScore -= 10;
 
             const total = techScore + onChainScore + macroScore;
-            const bullishProb = clamp(0.5 + (total / 200), 0.1, 0.9);
+            
+            // Fator de desempenho histórico (Bayes)
+            const totalTrades = tradeStats.wins + tradeStats.losses;
+            const historicalWinRate = totalTrades > 0 ? tradeStats.wins / totalTrades : 0.5;
+            const bayesianFactor = (historicalWinRate - 0.5) * 0.3;
+            
+            let bullishProb = clamp(0.5 + (total / 200) + bayesianFactor, 0.1, 0.9);
             const bearishProb = 1 - bullishProb;
             const neutralProb = Math.max(0, 1 - bullishProb - bearishProb);
             const dominant = bullishProb > 0.6 ? 'BULLISH' : bearishProb > 0.6 ? 'BEARISH' : 'NEUTRAL';
@@ -1411,7 +1587,7 @@
             else document.getElementById('neutral-card').classList.add('dominant');
         }
 
-        // --- PAINEL DE FORÇA ---
+        // --- PAINEL DE FORÇA (com ADX e Z-Score) ---
         function updateStrengthPanel(scoreData) {
             const labelEl = document.getElementById('scoreLabel');
             const barEl = document.getElementById('scoreBar');
@@ -1469,9 +1645,21 @@
             fundingEl.textContent = (fr * 100).toFixed(4) + '%';
             fundingEl.style.color = fr > 0.01 ? '#ff4d6d' : fr < -0.01 ? '#00e896' : '#ffc107';
 
+            // --- ADX no Painel de Força (MELHORIA #4) ---
+            const adx = data?.adx_4H || 0;
+            if (adxEl) {
+                let labelAdx = adx > 40 ? 'Tendência Forte' : adx > 25 ? 'Tendência Moderada' : 'Lateral';
+                let colorAdx = adx > 40 ? '#00e896' : adx > 25 ? '#ffc107' : '#ff4d6d';
+                adxEl.textContent = adx.toFixed(1) + ' (' + labelAdx + ')';
+                adxEl.style.color = colorAdx;
+            }
+
             const chop = data?.chopIndex || 50;
-            adxEl.textContent = chop.toFixed(1) + (chop > 61.8 ? ' (Lateral)' : ' (Tendência)');
-            adxEl.style.color = chop > 61.8 ? '#ff4d6d' : '#00e896';
+            // Fallback: se ADX não estiver disponível, usar Choppiness
+            if (adx === 0 && adxEl) {
+                adxEl.textContent = chop.toFixed(1) + (chop > 61.8 ? ' (Lateral)' : ' (Tendência)');
+                adxEl.style.color = chop > 61.8 ? '#ff4d6d' : '#00e896';
+            }
 
             if (dataCache.fearGreed) {
                 const fg = dataCache.fearGreed;
@@ -1498,13 +1686,17 @@
                 obMini.innerHTML = html;
             } else { obEl.textContent = '--'; obMini.innerHTML = ''; }
 
-            // Volume
-            const vol = dataCache.volume;
-            if (vol && vol.value > 0) {
-                const ratio = vol.avg > 0 ? (vol.value / vol.avg) : 1;
-                volumeEl.textContent = (vol.value / 1000).toFixed(1) + 'K' + (ratio > 1.5 ? ' 🔥' : '');
-                volumeEl.style.color = ratio > 1.5 ? '#00e896' : ratio < 0.5 ? '#ff4d6d' : '#ffc107';
-            } else volumeEl.textContent = '--';
+            // Volume Z-Score
+            const zScore = dataCache.volume.zScore || 0;
+            if (volumeEl) {
+                if (Math.abs(zScore) > 0.1) {
+                    const volLabel = zScore > 1.5 ? ' 🔥 Alto' : zScore > 0.8 ? ' 📈 Moderado' : zScore < -0.5 ? ' 📉 Baixo' : '';
+                    volumeEl.textContent = zScore.toFixed(2) + volLabel;
+                    volumeEl.style.color = zScore > 1.5 ? '#00e896' : zScore < -0.5 ? '#ff4d6d' : '#ffc107';
+                } else {
+                    volumeEl.textContent = '--';
+                }
+            }
         }
 
         // --- MTF Sync Panel ---
@@ -1576,8 +1768,7 @@
         // ================================================================
         // 8. DATA FETCHING (APIs)
         // ================================================================
-        // (Funções fetchHistoricalCandles, fetchFundingRate, fetchOpenInterest, fetchOrderBook, fetchFearGreed, fetchOnChainData, fetchMacroIndicators, etc. — mantidas da versão anterior, com adição do WebSocket de volume)
-                async function fetchHistoricalCandles(symbol, interval, limit=200) {
+        async function fetchHistoricalCandles(symbol, interval, limit=200) {
             try {
                 const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
                 const resp = await fetch(url);
@@ -1666,6 +1857,36 @@
                 document.getElementById('header-sentiment').textContent = v <= 25 ? '⚠️ PESSIMISTA' : '✅ BULLISH';
                 return fg;
             } catch(e) { handleApiError('FearGreed', e); return null; }
+        }
+
+        // --- 8.1 ETF FLOWS DINÂMICO (MELHORIA #9) ---
+        async function fetchETFData() {
+            try {
+                // Usar Farside API via proxy CORS ou fallback
+                const url = 'https://api.farside.co.uk/etf/flows/latest';
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                if (data && data.btc && data.eth) {
+                    const btcFlow = data.btc.net_flow || 0;
+                    const ethFlow = data.eth.net_flow || 0;
+                    dataCache.etfFlows.btc = btcFlow;
+                    dataCache.etfFlows.eth = ethFlow;
+                    dataCache.etfFlows.timestamp = Date.now();
+                    
+                    document.getElementById('etf-btc-live').innerHTML = '<strong>' + 
+                        (btcFlow >= 0 ? '+' : '') + btcFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
+                    document.getElementById('etf-eth-live').innerHTML = '<strong>' + 
+                        (ethFlow >= 0 ? '+' : '') + ethFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
+                    document.getElementById('etf-btc-update').textContent = 'live ' + getCurrentTimestamp();
+                    document.getElementById('etf-eth-update').textContent = 'live ' + getCurrentTimestamp();
+                }
+            } catch(e) {
+                console.warn('ETF API fallback para dados estáticos:', e);
+                // Fallback: manter dados estáticos
+                document.getElementById('etf-btc-update').textContent = 'fallback ' + getCurrentTimestamp();
+                document.getElementById('etf-eth-update').textContent = 'fallback ' + getCurrentTimestamp();
+            }
         }
 
         async function fetchOnChainData() {
@@ -1853,6 +2074,8 @@
                         const ema200_4H = closes4H.slice(-200).reduce((a,b)=>a+b,0)/200;
                         assetsData[symbol].trend4H = closes4H.at(-1) > ema200_4H ? 'LONG' : 'SHORT';
                         assetsData[symbol].htfStructure = detectHTFStructure(assetsData[symbol], c4H);
+                        // ADX inicial
+                        assetsData[symbol].adx_4H = calculateADX(c4H, 14);
                     }
                     if (c1D && c1D.length > 0) {
                         const closes1D = c1D.map(c => c.close);
@@ -1865,6 +2088,7 @@
             await fetchMacroIndicators();
             await fetchOrderBook();
             await fetchFearGreed();
+            await fetchETFData(); // ETF Flows dinâmico
             evaluateMarkets();
         }
 
@@ -1877,14 +2101,27 @@
             return trs.slice(-period).reduce((a,b)=>a+b,0)/period;
         }
 
+        // --- IS SAFE TO TRADE com filtro de sessão (MELHORIA #2) ---
         function isSafeToTrade() {
             const now = new Date();
             const hourUTC = now.getUTCHours();
             const minUTC = now.getUTCMinutes();
             const weekday = now.getUTCDay();
-            const isWeekday = weekday >= 1 && weekday <= 5;
-            if (isWeekday && hourUTC === 12 && minUTC >= 20) return false;
-            if (isWeekday && hourUTC === 13 && minUTC <= 40) return false;
+            
+            // Fim de semana: bloquear (menor liquidez)
+            if (weekday === 0 || weekday === 6) return false;
+            
+            // Sessão de maior liquidez: 12:00-20:00 UTC (Londres + NY)
+            // 12:00 UTC = 9:00 BRT, 20:00 UTC = 17:00 BRT
+            const isLiquidSession = (hourUTC >= 12 && hourUTC < 20) || 
+                                   (hourUTC === 20 && minUTC === 0);
+            if (!isLiquidSession) return false;
+
+            // Blackout de dados macro (NFP/CPI/PCE) em dias úteis
+            if (weekday >= 1 && weekday <= 5 && hourUTC === 12 && minUTC >= 20) return false;
+            if (weekday >= 1 && weekday <= 5 && hourUTC === 13 && minUTC <= 40) return false;
+
+            // Spike de ATR extremo
             const data = assetsData['BTCUSDT'];
             if (data && data.atrHistory && data.atrHistory.length > 20) {
                 const avgATR = data.atrHistory.slice(-20).reduce((a,b)=>a+b,0)/20;
@@ -2161,20 +2398,28 @@
                     const data = JSON.parse(event.data);
                     if (data.k) {
                         const volume = parseFloat(data.k.v);
-                        const close = parseFloat(data.k.c);
                         dataCache.volume.value = volume;
                         dataCache.volume.timestamp = Date.now();
-                        // Média móvel simples dos últimos 20 volumes (usamos cache)
                         if (!dataCache.volume.history) dataCache.volume.history = [];
                         dataCache.volume.history.push(volume);
-                        if (dataCache.volume.history.length > 20) dataCache.volume.history.shift();
-                        dataCache.volume.avg = dataCache.volume.history.reduce((a,b) => a+b, 0) / dataCache.volume.history.length;
-                        // Atualizar UI se necessário
+                        if (dataCache.volume.history.length > 50) dataCache.volume.history.shift();
+                        // Calcular z-score
+                        const vols = dataCache.volume.history;
+                        const avg = vols.reduce((a,b) => a+b, 0) / vols.length;
+                        const std = Math.sqrt(vols.reduce((a,b) => a + Math.pow(b - avg, 2), 0) / vols.length);
+                        dataCache.volume.zScore = std > 0 ? (volume - avg) / std : 0;
+                        dataCache.volume.avg = avg;
+                        // Atualizar UI
                         const volEl = document.getElementById('volumeDisplay');
                         if (volEl) {
-                            const ratio = dataCache.volume.avg > 0 ? volume / dataCache.volume.avg : 1;
-                            volEl.textContent = (volume / 1000).toFixed(1) + 'K' + (ratio > 1.5 ? ' 🔥' : '');
-                            volEl.style.color = ratio > 1.5 ? '#00e896' : ratio < 0.5 ? '#ff4d6d' : '#ffc107';
+                            const z = dataCache.volume.zScore;
+                            if (Math.abs(z) > 0.1) {
+                                const label = z > 1.5 ? ' 🔥 Alto' : z > 0.8 ? ' 📈 Moderado' : z < -0.5 ? ' 📉 Baixo' : '';
+                                volEl.textContent = z.toFixed(2) + label;
+                                volEl.style.color = z > 1.5 ? '#00e896' : z < -0.5 ? '#ff4d6d' : '#ffc107';
+                            } else {
+                                volEl.textContent = '--';
+                            }
                         }
                     }
                 } catch(e) {}
@@ -2196,7 +2441,6 @@
                         const fr = parseFloat(data.r);
                         if (assetsData['BTCUSDT']) assetsData['BTCUSDT'].fundingRate = fr;
                         document.getElementById('funding-rate').textContent = (fr * 100).toFixed(4) + '%';
-                        // Atualizar display no painel de força
                         const fundingEl = document.getElementById('fundingDisplay');
                         if (fundingEl) {
                             fundingEl.textContent = (fr * 100).toFixed(4) + '%';
@@ -2263,12 +2507,14 @@
                 fetchOpenInterest('SOLUSDT'),
                 fetchOnChainData(),
                 fetchOrderBook(),
+                fetchETFData(), // ETF Flows dinâmico
             ]);
 
             await fetchMacroIndicators();
             setInterval(fetchMacroIndicators, 300000);
             setInterval(fetchOrderBook, 60000);
             setInterval(fetchFearGreed, 300000);
+            setInterval(fetchETFData, 21600000); // a cada 6 horas
 
             const btn = document.getElementById('test-telegram-btn');
             btn.addEventListener('click', async () => {
@@ -2320,6 +2566,8 @@
                         const ema200_4H = closes4H.slice(-200).reduce((a,b)=>a+b,0)/200;
                         assetsData[symbol].trend4H = closes4H.at(-1) > ema200_4H ? 'LONG' : 'SHORT';
                         assetsData[symbol].htfStructure = detectHTFStructure(assetsData[symbol], c4H);
+                        // Atualizar ADX 4H
+                        assetsData[symbol].adx_4H = calculateADX(c4H, 14);
                     }
                     if (c1D && c1D.length > 0) {
                         const closes1D = c1D.map(c => c.close);
