@@ -350,8 +350,7 @@
                 atrHistory: [],
                 swingHighs: [], swingLows: [], currentBOS: 'NEUTRAL', mtfTrend: 'NEUTRAL',
                 oiDelta: 0, volumeRel: 1.0, rsiState: { avgGain: 0, avgLoss: 0, rsi: 50 },
-                // Novos campos para filtros
-                bbWidth: 0.1, // largura das bandas
+                bbWidth: 0.1,
                 volumeAvg: 0,
                 currentVolume: 0,
                 fundingRate: 0,
@@ -435,7 +434,7 @@
             return { avgGain, avgLoss, rsi };
         }
 
-        // SMC: Swing Points & BOS with volume confirmation (#6)
+        // SMC: Swing Points & BOS com confirmação de volume (já existente) + BOS por fechamento (Melhoria 2)
         function updateSwingPoints(data) {
             const c1H = data.candles1H;
             if (c1H.length < 10) return;
@@ -451,38 +450,45 @@
             data.swingHighs = recentHighs.slice(-3);
             data.swingLows = recentLows.slice(-3);
 
-            const lastHigh = data.swingHighs.length > 0 ? data.swingHighs[data.swingHighs.length-1] : 0;
-            const lastLow = data.swingLows.length > 0 ? data.swingLows[data.swingLows.length-1] : Infinity;
-            const currentPrice = data.price;
-
-            if (currentPrice > lastHigh) data.currentBOS = 'BULLISH';
-            else if (currentPrice < lastLow) data.currentBOS = 'BEARISH';
+            // BOS baseado no fechamento do último candle (Melhoria 2)
+            const lastCandle = c1H.at(-1);
+            if (!lastCandle) return;
+            const lastHigh = data.swingHighs.length > 0 ? data.swingHighs.at(-1) : 0;
+            const lastLow = data.swingLows.length > 0 ? data.swingLows.at(-1) : Infinity;
+            
+            if (lastCandle.close > lastHigh) data.currentBOS = 'BULLISH';
+            else if (lastCandle.close < lastLow) data.currentBOS = 'BEARISH';
+            else data.currentBOS = 'NEUTRAL';
         }
 
-        // SMC: Entry Logic (Pullback to OB/FVG proxy)
+        // SMC Setup com liquidity sweep (Melhoria 5)
         function findSMCSetup(data, direction) {
-            const c = data.candles1H;
-            if (c.length < 5 || data.swingLows.length === 0 || data.swingHighs.length === 0) return false;
-            
+            const last = data.candles1H.at(-1);
+            if (!last || data.swingLows.length === 0 || data.swingHighs.length === 0) return false;
+
             if (direction === 'LONG' && data.currentBOS === 'BULLISH') {
-                if (data.price < data.ema50_1H && data.price > Math.min(...data.swingLows)) return true;
+                const swingLow = Math.min(...data.swingLows);
+                const sweep = last.low < swingLow && last.close > swingLow; // varreu e fechou acima
+                return sweep && data.price < data.ema50_1H;
             }
             if (direction === 'SHORT' && data.currentBOS === 'BEARISH') {
-                if (data.price > data.ema50_1H && data.price < Math.max(...data.swingHighs)) return true;
+                const swingHigh = Math.max(...data.swingHighs);
+                const sweep = last.high > swingHigh && last.close < swingHigh;
+                return sweep && data.price > data.ema50_1H;
             }
             return false;
         }
 
         // ================================================================
-        // 3. NOVOS FILTROS (Melhorias 1, 2, 3, 5)
+        // 3. FILTROS (Melhorias 1, 3, 4, 5 já integradas)
         // ================================================================
 
-        // Melhoria 1: Filtro de Mercado Lateral (ATR + Bollinger Bands)
+        // Melhoria 1: Filtro de Mercado Lateral (ATR + Bollinger)
         function checkLateralMarket(data, currentPrice) {
             const atr = data.atr_1H || 0;
-            const minATR = currentPrice * 0.015; // 1.5% do preço
-            const bbWidth = data.bbWidth || 0.1; // já calculado no warmUp
-            const maxBBWidth = 0.08; // 8%
+            const minATR = currentPrice * 0.015;
+            const bbWidth = data.bbWidth || 0.1;
+            const maxBBWidth = 0.08;
             
             if (atr < minATR || bbWidth < maxBBWidth) {
                 return { blocked: true, reason: `Lateral: ATR ${(atr/currentPrice*100).toFixed(2)}% < 1.5% ou BB ${(bbWidth*100).toFixed(1)}% < 8%` };
@@ -490,13 +496,10 @@
             return { blocked: false };
         }
 
-        // Melhoria 2: Confirmação MTF Rigorosa
+        // Melhoria 2: Confirmação MTF (já existente, mas agora atualizada no ciclo)
         function checkMTFAlignment(data, direction) {
-            // direction: 'LONG' ou 'SHORT'
             let aligned = 0;
-            // Tendência 4H: baseada em EMA200_4H
             const trend4H = data.trend4H || 'NEUTRAL';
-            // Tendência 1D: baseada em EMA200_1D (calculada no warmUp)
             const trend1D = data.trend1D || 'NEUTRAL';
             
             if (direction === 'LONG') {
@@ -507,31 +510,27 @@
                 if (trend1D === 'SHORT') aligned++;
             }
             
-            // Exige pelo menos 1 confirmação de timeframe maior
             if (aligned === 0) {
                 return { passed: false, reason: `Sem confirmação MTF (4H: ${trend4H}, 1D: ${trend1D})` };
             }
-            // Bonus de score: +5 por cada alinhamento (aplicado fora)
             return { passed: true, alignedCount: aligned };
         }
 
-        // Melhoria 3: Filtro de Volume Anômalo (Orderflow)
+        // Melhoria 3: Filtro de Volume (já existente)
         function checkVolumeConfirmation(data, direction) {
             const currentVol = data.currentVolume || 0;
             const avgVol = data.volumeAvg || 1;
-            if (avgVol === 0) return { passed: true }; // sem dados, ignora
+            if (avgVol === 0) return { passed: true };
             const ratio = currentVol / avgVol;
             const minRatio = 1.5;
             
             if (ratio < minRatio) {
                 return { passed: false, reason: `Volume insuficiente: ${ratio.toFixed(2)}x média` };
             }
-            // Verificar se o preço está se movendo na direção do volume (proxy)
-            // Se for LONG, esperamos que o preço tenha subido no último candle; SHORT, caído
             const candles = data.candles1H;
             if (candles.length > 1) {
-                const lastClose = candles[candles.length-1].close;
-                const prevClose = candles[candles.length-2].close;
+                const lastClose = candles.at(-1).close;
+                const prevClose = candles.at(-2).close;
                 const priceMove = lastClose - prevClose;
                 if (direction === 'LONG' && priceMove < 0) {
                     return { passed: false, reason: 'Volume alto mas preço caindo (divergência)' };
@@ -540,28 +539,34 @@
                     return { passed: false, reason: 'Volume alto mas preço subindo (divergência)' };
                 }
             }
-            // Bonus para volume muito alto (>2x)
             const bonus = ratio > 2.0 ? 5 : 0;
             return { passed: true, bonus: bonus };
         }
 
-        // Melhoria 5: Filtro de Funding Rate Extremo
+        // Melhoria 4: Filtro de Funding Rate (já existente)
         function checkFundingRateFilter(data, direction) {
             const fr = data.fundingRate || 0;
-            const threshold = 0.01; // 1%
+            const threshold = 0.01;
             if (Math.abs(fr) > threshold) {
-                // Funding extremo na mesma direção = perigo
                 if ((direction === 'LONG' && fr > 0) || (direction === 'SHORT' && fr < 0)) {
                     return { passed: false, reason: `Funding extremo: ${(fr*100).toFixed(3)}%` };
                 }
-                // Funding extremo na direção contrária = oportunidade (bonus)
                 return { passed: true, bonus: 8 };
             }
             return { passed: true, bonus: 0 };
         }
 
+        // Melhoria 6: Cap de exposição correlacionada
+        function checkPortfolioExposure(direction) {
+            const sameDir = Object.values(activePositions).filter(p => p.type === direction).length;
+            if (sameDir >= 1) {
+                return { blocked: true, reason: `Exposição correlacionada: já há ${sameDir} posição(ões) ${direction}` };
+            }
+            return { blocked: false };
+        }
+
         // ================================================================
-        // 4. SCORE DINÂMICO (Melhoria 6) + CÁLCULO DE FATORES
+        // 4. SCORE DINÂMICO (com confluência)
         // ================================================================
         function computeScore(symbol) {
             const data = assetsData[symbol];
@@ -572,12 +577,12 @@
             let blockReason = null;
             let scoreBonus = 0;
 
-            // 1. SMC Structure (peso 25%)
+            // 1. SMC Structure
             let smcScore = 50;
             if (data.currentBOS === 'BULLISH') { smcScore = 80; factors++; }
             else if (data.currentBOS === 'BEARISH') { smcScore = 20; factors++; }
 
-            // 2. MTF Alignment (peso 20%) - agora com filtro obrigatório
+            // 2. MTF Alignment (obrigatório)
             const primaryDirection = data.currentBOS === 'BULLISH' ? 'LONG' : (data.currentBOS === 'BEARISH' ? 'SHORT' : null);
             let mtfPassed = true;
             let mtfAlignedCount = 0;
@@ -588,18 +593,17 @@
                 if (!mtfPassed) {
                     blockReason = mtfCheck.reason;
                 } else {
-                    // Score bonus por alinhamento: +5 por timeframe alinhado (máx 10)
                     scoreBonus += mtfAlignedCount * 5;
                     factors++;
                 }
             }
 
-            // 3. Momentum (RSI) - com anti-trap
+            // 3. Momentum (RSI)
             let momScore = clamp(data.rsi_1H, 0, 100);
             if (primaryDirection === 'LONG' && data.rsi_1H > 75) momScore *= 0.6;
             if (primaryDirection === 'SHORT' && data.rsi_1H < 25) momScore = 100 - momScore;
 
-            // 4. Orderflow / Liquidation
+            // 4. Orderflow
             let ofScore = 50;
             const liq = liqMap[symbol] || { longs: 0, shorts: 0 };
             if (primaryDirection === 'LONG' && liq.shorts > 50000) ofScore = 80;
@@ -607,75 +611,53 @@
             else if (primaryDirection === 'SHORT' && liq.longs > 50000) ofScore = 80;
             else if (primaryDirection === 'SHORT' && liq.shorts > 50000) ofScore = 20;
 
-            // 5. Macro & Session Safety (já implementado)
+            // 5. Macro
             const macroSafe = isSafeToTrade() ? 100 : 0;
 
-            // 6. OI Delta (live)
+            // 6. OI Delta
             let oiScore = clamp(50 + (data.oiDelta * 2), 0, 100);
 
-            // --- Novos Filtros (Melhorias 1, 3, 5) ---
-            // Lateral Market (bloqueia)
+            // Novos filtros
             const lateralCheck = checkLateralMarket(data, data.price);
-            if (lateralCheck.blocked) {
-                blockReason = lateralCheck.reason;
-            }
+            if (lateralCheck.blocked) blockReason = lateralCheck.reason;
 
-            // Volume Confirmation (bloqueia e dá bonus)
             let volumeBonus = 0;
             if (primaryDirection) {
                 const volCheck = checkVolumeConfirmation(data, primaryDirection);
-                if (!volCheck.passed) {
-                    blockReason = volCheck.reason;
-                } else {
+                if (!volCheck.passed) blockReason = volCheck.reason;
+                else {
                     volumeBonus = volCheck.bonus || 0;
                     if (volumeBonus > 0) scoreBonus += volumeBonus;
                 }
             }
 
-            // Funding Rate Filter (bloqueia e dá bonus)
             let fundingBonus = 0;
             if (primaryDirection) {
                 const frCheck = checkFundingRateFilter(data, primaryDirection);
-                if (!frCheck.passed) {
-                    blockReason = frCheck.reason;
-                } else {
+                if (!frCheck.passed) blockReason = frCheck.reason;
+                else {
                     fundingBonus = frCheck.bonus || 0;
                     if (fundingBonus > 0) scoreBonus += fundingBonus;
                 }
             }
 
-            // Se houver bloqueio, retorna score neutro e motivo
+            // Se bloqueado, score neutro
             if (blockReason) {
                 return { score: 50, components: { mtf: '50', smc: '50', mom: '50', of: '50', macro: '50', oi: '50' }, blockReason };
             }
 
-            // Caso contrário, calcula score ponderado
-            // Pesos: SMC 25%, MTF 20%, Momentum 15%, Orderflow 10%, Macro 10%, OI 5%, Volume 10%, Funding 5%
+            // Score ponderado
             let rawScore = (smcScore * 0.25) + (momScore * 0.15) + (ofScore * 0.10) + (macroSafe * 0.10) + (oiScore * 0.05);
-            // MTF já influencia via bonus, mas adicionamos peso base: se alinhado, +10 pontos
             if (mtfPassed && primaryDirection) rawScore += 10;
-            // Volume e Funding já deram bonus via scoreBonus
 
-            // Aplicar choppiness (já existente)
+            // Choppiness (já existente)
             const chop = computeChoppiness(data);
             data.chopIndex = chop;
-            if (chop > 61) {
-                rawScore = 50 + (rawScore - 50) * 0.3;
-            }
+            if (chop > 61) rawScore = 50 + (rawScore - 50) * 0.3;
 
-            // Aplicar bonus de confluência (scoreBonus)
             rawScore += scoreBonus;
-
             let finalScore = Math.round(clamp(rawScore, 0, 100));
 
-            // Determinar ação
-            let action = 'NEUTRO';
-            if (finalScore >= 70) action = 'COMPRA';
-            else if (finalScore <= 30) action = 'VENDA';
-            else if (finalScore >= 55) action = 'COMPRA_FRACO';
-            else if (finalScore <= 45) action = 'VENDA_FRACO';
-
-            // Atualizar data com a tendência para uso futuro
             data.mtfTrend = (finalScore >= 55) ? 'LONG' : (finalScore <= 45 ? 'SHORT' : 'NEUTRAL');
 
             return {
@@ -689,12 +671,12 @@
                     oi: oiScore.toFixed(0)
                 },
                 blockReason: null,
-                action: action
+                action: finalScore >= 70 ? 'COMPRA' : (finalScore <= 30 ? 'VENDA' : 'NEUTRO')
             };
         }
 
         // ================================================================
-        // 5. POSITION MANAGEMENT & TRAILING (Melhoria 4 - TP Parcial + Trailing SMC)
+        // 5. POSITION MANAGEMENT & TRAILING (já existente com TP parcial)
         // ================================================================
         function checkPositionManagement(symbol, currentPrice) {
             const pos = activePositions[symbol];
@@ -704,7 +686,6 @@
             let updateUI = false;
 
             if (pos.type === 'LONG') {
-                // Trailing Stop baseado em Swing Lows (SMC)
                 if (data.swingLows.length > 0) {
                     const lastSwingLow = Math.min(...data.swingLows);
                     const newTrail = lastSwingLow - (data.atr_1H * 0.2);
@@ -714,7 +695,6 @@
                     }
                 }
                 
-                // TP1 parcial (50%) com movimentação para breakeven+buffer
                 if (currentPrice >= pos.tp1 && !pos.partialTaken) {
                     pos.partialTaken = true;
                     pos.sizeRemaining = 0.5;
@@ -724,7 +704,6 @@
                     sendTelegramAlert(`🎯 <b>TP1 PARCIAL (${symbol})</b>\n50% realizado em $${pos.tp1.toFixed(2)}\nRestante com trailing ativo (BE+${(data.atr_1H*0.1).toFixed(2)})`);
                     updateUI = true;
                 }
-                // TP2 (fecha tudo)
                 if (currentPrice >= pos.tp2) {
                     closePosition(symbol, 'TP2 ATINGIDO', true);
                     updateUI = true;
@@ -788,7 +767,6 @@
                 const score = scoreData.score;
                 const blockReason = scoreData.blockReason;
 
-                // Chart History
                 scoreHistory.push({ time: getCurrentTimestamp().split(' ')[1], symbol: symbol, score: score });
                 if (scoreHistory.length > 150) scoreHistory.shift();
 
@@ -796,7 +774,7 @@
 
                 const prevScore = previousScores[symbol] || 50;
                 
-                // Signal Logic - só gera sinal se não houver bloqueio e score extremo
+                // Signal Logic com os novos filtros
                 if (!activePositions[symbol] && !blockReason && isSafeToTrade()) {
                     const now = Date.now();
                     const cooldown = alertCooldowns[symbol] || 0;
@@ -804,31 +782,49 @@
                         const atr = data.atr_1H || (data.price * 0.02);
                         const primaryDirection = (score >= 70) ? 'LONG' : (score <= 30 ? 'SHORT' : null);
                         
-                        if (primaryDirection === 'LONG' && findSMCSetup(data, 'LONG')) {
-                            const stop = data.price - (atr * 1.5);
-                            const tp1 = data.price + (atr * 2);
-                            const tp2 = data.price + (atr * 4);
-                            const rr1 = (tp1 - data.price) / (data.price - stop);
-                            const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
+                        if (primaryDirection) {
+                            // Melhoria 6: Cap de exposição
+                            const expCheck = checkPortfolioExposure(primaryDirection);
+                            if (expCheck.blocked) {
+                                // Não envia alerta, apenas bloqueia
+                                return;
+                            }
+
+                            // Melhoria 3: Stop estrutural
+                            let stop, tp1, tp2;
+                            let structLevel;
+                            if (primaryDirection === 'LONG') {
+                                structLevel = Math.min(...data.swingLows) - (atr * 0.3);
+                                stop = Math.min(structLevel, data.price - atr * 1.5);
+                                tp1 = data.price + (atr * 2);
+                                tp2 = data.price + (atr * 4);
+                            } else {
+                                structLevel = Math.max(...data.swingHighs) + (atr * 0.3);
+                                stop = Math.max(structLevel, data.price + atr * 1.5);
+                                tp1 = data.price - (atr * 2);
+                                tp2 = data.price - (atr * 4);
+                            }
+                            const rr1 = primaryDirection === 'LONG' ? (tp1 - data.price) / (data.price - stop) : (data.price - tp1) / (stop - data.price);
                             
-                            sendTradeAlert(symbol, 'long', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Long + BOS Bullish + SMC Setup`, riskPct, null);
-                            activePositions[symbol] = { type: 'LONG', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
-                            updateActiveTradesUI();
-                        } else if (primaryDirection === 'SHORT' && findSMCSetup(data, 'SHORT')) {
-                            const stop = data.price + (atr * 1.5);
-                            const tp1 = data.price - (atr * 2);
-                            const tp2 = data.price - (atr * 4);
-                            const rr1 = (data.price - tp1) / (stop - data.price);
-                            const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
-                            
-                            sendTradeAlert(symbol, 'short', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Short + BOS Bearish + SMC Setup`, riskPct, null);
-                            activePositions[symbol] = { type: 'SHORT', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
-                            updateActiveTradesUI();
+                            // Melhoria 4: Filtro de R:R mínimo
+                            const MIN_RR = 1.5;
+                            if (rr1 < MIN_RR) return; // aborta
+
+                            if (primaryDirection === 'LONG' && findSMCSetup(data, 'LONG')) {
+                                const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
+                                sendTradeAlert(symbol, 'long', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Long + BOS Bullish + SMC Setup`, riskPct, null);
+                                activePositions[symbol] = { type: 'LONG', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
+                                updateActiveTradesUI();
+                            } else if (primaryDirection === 'SHORT' && findSMCSetup(data, 'SHORT')) {
+                                const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
+                                sendTradeAlert(symbol, 'short', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Short + BOS Bearish + SMC Setup`, riskPct, null);
+                                activePositions[symbol] = { type: 'SHORT', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
+                                updateActiveTradesUI();
+                            }
                         }
                     }
                 }
 
-                // Trend Change Alerts
                 if (prevScore < 50 && score >= 50) sendTelegramAlert(`🔄 <b>TENDÊNCIA MUDOU (${symbol})</b>\nScore subiu para ${score}. Possível reversão Long.`);
                 if (prevScore > 50 && score <= 50) sendTelegramAlert(`🔄 <b>TENDÊNCIA MUDOU (${symbol})</b>\nScore caiu para ${score}. Possível reversão Short.`);
                 
@@ -850,7 +846,6 @@
             } catch(e) { return []; }
         }
 
-        // Fetch Funding Rate
         async function fetchFundingRate(symbol) {
             try {
                 const url = `https://fapi.binance.com/fapi/v1/fundingRate?symbol=${symbol}&limit=1`;
@@ -867,7 +862,6 @@
             } catch(e) {}
         }
 
-        // Fetch Open Interest Delta
         async function fetchOpenInterest(symbol) {
             try {
                 const url = `https://fapi.binance.com/futures/data/openInterestHist?symbol=${symbol}&period=15m&limit=2`;
@@ -892,7 +886,6 @@
             } catch(e) {}
         }
 
-        // Cálculo de Bollinger Bands e outras métricas no warmUp
         function calculateBB(data, period=20, multiplier=2) {
             const candles = data.candles1H;
             if (candles.length < period) return { bbWidth: 0.1 };
@@ -910,8 +903,8 @@
             for (const symbol of ASSETS) {
                 const [c1H, c4H, c1D] = await Promise.all([
                     fetchHistoricalCandles(symbol, '1h', 200),
-                    fetchHistoricalCandles(symbol, '4h', 200),
-                    fetchHistoricalCandles(symbol, '1d', 100)
+                    fetchHistoricalCandles(symbol, '4h', 210),
+                    fetchHistoricalCandles(symbol, '1d', 210)
                 ]);
                 
                 assetsData[symbol].candles1H = c1H;
@@ -923,12 +916,11 @@
                     const highs = c1H.map(c => c.high);
                     const lows = c1H.map(c => c.low);
                     
-                    assetsData[symbol].price = closes[closes.length-1];
+                    assetsData[symbol].price = closes.at(-1);
                     assetsData[symbol].ema50_1H = closes.slice(-50).reduce((a,b)=>a+b,0) / 50;
                     assetsData[symbol].ema200_4H = closes.slice(-200).reduce((a,b)=>a+b,0) / 200; 
                     assetsData[symbol].atr_1H = calculateATR(highs, lows, closes, 14);
                     
-                    // ATR history
                     const atrHist = [];
                     for (let i = 14; i < highs.length; i++) {
                         const sliceHighs = highs.slice(i-14, i);
@@ -939,30 +931,27 @@
                     }
                     assetsData[symbol].atrHistory = atrHist.slice(-50);
 
-                    // RSI
                     let gains = 0, losses = 0;
                     for(let i=1; i<15; i++) { const d = closes[i]-closes[i-1]; if(d>0) gains+=d; else losses-=d; }
                     assetsData[symbol].rsiState = { avgGain: gains/14, avgLoss: losses/14, rsi: 50 };
 
-                    // Bollinger Bands width
                     const bb = calculateBB(assetsData[symbol], 20, 2);
                     assetsData[symbol].bbWidth = bb.bbWidth;
 
-                    // Volume average
                     const vols = c1H.map(c => c.volume);
                     assetsData[symbol].volumeAvg = vols.slice(-20).reduce((a,b)=>a+b,0)/20;
-                    assetsData[symbol].currentVolume = vols[vols.length-1] || 0;
+                    assetsData[symbol].currentVolume = vols.at(-1) || 0;
 
-                    // Tendências MTF
+                    // MTF trends (inicial)
                     if (c4H.length > 0) {
                         const closes4H = c4H.map(c => c.close);
                         const ema200_4H = closes4H.slice(-200).reduce((a,b)=>a+b,0)/200;
-                        assetsData[symbol].trend4H = closes4H[closes4H.length-1] > ema200_4H ? 'LONG' : 'SHORT';
+                        assetsData[symbol].trend4H = closes4H.at(-1) > ema200_4H ? 'LONG' : 'SHORT';
                     }
                     if (c1D.length > 0) {
                         const closes1D = c1D.map(c => c.close);
                         const ema200_1D = closes1D.slice(-200).reduce((a,b)=>a+b,0)/200;
-                        assetsData[symbol].trend1D = closes1D[closes1D.length-1] > ema200_1D ? 'LONG' : 'SHORT';
+                        assetsData[symbol].trend1D = closes1D.at(-1) > ema200_1D ? 'LONG' : 'SHORT';
                     }
                 }
             }
@@ -978,7 +967,6 @@
             return trs.slice(-period).reduce((a,b)=>a+b,0)/period;
         }
 
-        // Função isSafeToTrade (já existente)
         function isSafeToTrade() {
             const now = new Date();
             const hourUTC = now.getUTCHours();
@@ -998,7 +986,6 @@
             return false;
         }
 
-        // Choppiness Index
         function computeChoppiness(data) {
             const c = data.candles1H.slice(-14);
             if (c.length < 14) return 50;
@@ -1084,7 +1071,7 @@
 
         function updateTimestamps() { document.getElementById('header-timestamp').textContent = '📅 ' + getCurrentTimestamp(); document.getElementById('last-update').textContent = getCurrentTimestamp(); document.getElementById('live-update-time').textContent = getCurrentTimestamp(); const badge = document.getElementById('status-badge'); badge.textContent = '✅ LIVE'; badge.className = 'status-badge live'; }
 
-        // Chart.js e Lightweight Charts (código preservado)
+        // Chart.js e Lightweight Charts (preservados)
         window.charts = [];
         const chartColors = { primary: 'rgb(0, 180, 216)', secondary: 'rgb(233, 69, 96)', success: 'rgb(0, 217, 142)', warning: 'rgb(255, 214, 10)', text: 'rgb(236, 240, 241)', border: 'rgb(44, 62, 80)' };
         
@@ -1099,7 +1086,7 @@
             scoreChart.update('none');
         }
 
-        // Inicialização dos gráficos (mantido)
+        // Inicialização dos gráficos estáticos
         const ctx1 = document.getElementById('chart_etf_flows').getContext('2d');
         window.charts.push(new Chart(ctx1, { type: 'bar', data: { labels: ['22 JUN', '23 JUN', '24 JUN', '25 JUN', '26 JUN', '27 JUN', '28 JUN'], datasets: [{ label: 'BTC ETF Flow (ref)', data: [-120, -85, -155, -92, -138, -165, -445], backgroundColor: 'rgba(233,69,96,0.6)', borderColor: 'rgb(233,69,96)', borderWidth: 2 }, { label: 'ETH ETF Flow (ref)', data: [-8, -12, -15, -10, -18, -20, -12.85], backgroundColor: 'rgba(0,180,216,0.4)', borderColor: 'rgb(0,180,216)', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: chartColors.text } }, title: { display: true, text: 'ETF Flows (referência)', color: chartColors.text } }, scales: { y: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } }, x: { ticks: { color: chartColors.text }, grid: { color: chartColors.border } } } } }));
 
@@ -1139,11 +1126,11 @@
                 const response = await fetch(url); if (!response.ok) return null;
                 const data = await response.json();
                 const closes = data.map(k => parseFloat(k[4]));
-                const current = closes[closes.length - 1];
+                const current = closes.at(-1);
                 if (closes.length < 2) return null;
-                const dayAgo = closes[closes.length - 2];
-                const weekAgo = closes.length > 7 ? closes[closes.length - 8] : dayAgo;
-                const monthAgo = closes.length > 30 ? closes[closes.length - 31] : weekAgo;
+                const dayAgo = closes.at(-2);
+                const weekAgo = closes.length > 7 ? closes.at(-8) : dayAgo;
+                const monthAgo = closes.length > 30 ? closes.at(-31) : weekAgo;
                 return { current: current, day: dayAgo ? ((current - dayAgo) / dayAgo * 100) : 0, week: weekAgo ? ((current - weekAgo) / weekAgo * 100) : 0, month: monthAgo ? ((current - monthAgo) / monthAgo * 100) : 0 };
             } catch (e) { return null; }
         }
@@ -1224,13 +1211,14 @@
             setInterval(() => { fetchBRK(); fetchHashrate(); fetchGasPrice(); }, 600000);
             setInterval(() => updateTimestamps(), 1000);
             
-            // Evaluation Cycle (Fetch recent structure every 5 min)
+            // Evaluation Cycle (a cada 5 min) com atualização de dados MTF (Melhoria 1)
             setInterval(async () => {
                 for (const symbol of ASSETS) {
+                    // Atualiza candles 1H
                     const c1H = await fetchHistoricalCandles(symbol, '1h', 10);
                     if(c1H.length > 0) {
                         assetsData[symbol].candles1H = [...assetsData[symbol].candles1H.slice(0, -10), ...c1H];
-                        // Update metrics
+                        // Recalcula métricas básicas
                         const closes = assetsData[symbol].candles1H.map(c => c.close);
                         const highs = assetsData[symbol].candles1H.map(c => c.high);
                         const lows = assetsData[symbol].candles1H.map(c => c.low);
@@ -1243,11 +1231,28 @@
                             atrHist.push(atr);
                         }
                         assetsData[symbol].atrHistory = atrHist.slice(-50);
-                        assetsData[symbol].atr_1H = atrHist[atrHist.length-1] || 0;
-                        assetsData[symbol].currentVolume = c1H[c1H.length-1].volume;
+                        assetsData[symbol].atr_1H = atrHist.at(-1) || 0;
+                        assetsData[symbol].currentVolume = c1H.at(-1).volume;
                         const bb = calculateBB(assetsData[symbol], 20, 2);
                         assetsData[symbol].bbWidth = bb.bbWidth;
                     }
+
+                    // Melhoria 1: Recalcula tendências 4H e 1D
+                    const [c4H, c1D] = await Promise.all([
+                        fetchHistoricalCandles(symbol, '4h', 210),
+                        fetchHistoricalCandles(symbol, '1d', 210)
+                    ]);
+                    if (c4H.length > 0) {
+                        const closes4H = c4H.map(c => c.close);
+                        const ema200_4H = closes4H.slice(-200).reduce((a,b)=>a+b,0)/200;
+                        assetsData[symbol].trend4H = closes4H.at(-1) > ema200_4H ? 'LONG' : 'SHORT';
+                    }
+                    if (c1D.length > 0) {
+                        const closes1D = c1D.map(c => c.close);
+                        const ema200_1D = closes1D.slice(-200).reduce((a,b)=>a+b,0)/200;
+                        assetsData[symbol].trend1D = closes1D.at(-1) > ema200_1D ? 'LONG' : 'SHORT';
+                    }
+
                     if(assetsData[symbol].candles1H.length > 0 && candleCharts[symbol]) {
                         candleCharts[symbol].candleSeries.setData(assetsData[symbol].candles1H);
                     }
@@ -1336,7 +1341,7 @@
         function getCurrentTimestamp() { const now = new Date(); const o = { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'America/Sao_Paulo' }; return now.toLocaleString('pt-BR', o); }
         function updateSourceTimestamp(elementId) { const el = document.getElementById(elementId); if (el) { const currentText = el.textContent; if (currentText.includes('•')) el.textContent = currentText.replace(/•.*$/, '• ' + getCurrentTimestamp()); else el.textContent = currentText + ' • ' + getCurrentTimestamp(); } }
 
-        // WebSockets (já existentes, mantidos)
+        // WebSockets
         function initWebSockets() {
             const streams = ASSETS.map(a => a.toLowerCase() + '@trade').join('/');
             const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
