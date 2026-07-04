@@ -270,16 +270,13 @@
         .telegram-test-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(0, 180, 216, 0.6); }
         .telegram-test-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .telegram-test-btn .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s ease-in-out infinite; }
+        /* Painéis extras */
         .dynamic-bottom-panel {
             background: var(--bg-dark);
             padding: 16px;
             border-radius: 8px;
             border: 1px solid var(--border);
             margin-top: 16px;
-        }
-        .dynamic-bottom-panel .pillar-status {
-            display: inline-block;
-            width: 24px;
         }
         .mtf-sync-panel {
             background: var(--bg-dark);
@@ -297,6 +294,85 @@
         .mtf-sync-panel .tf-item .trend-up { color: var(--accent-green); }
         .mtf-sync-panel .tf-item .trend-down { color: var(--accent-red); }
         .mtf-sync-panel .tf-item .trend-neutral { color: var(--accent-yellow); }
+        /* Painel de Força do Sinal */
+        #signalStrengthPanel {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        #signalStrengthPanel .gauge-bar {
+            position: relative;
+            height: 28px;
+            background: #21262d;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        #signalStrengthPanel .gauge-fill {
+            height: 100%;
+            border-radius: 14px;
+            transition: width 0.6s ease, background 0.6s ease;
+            background: linear-gradient(90deg, #ff4d6d, #ffd60a, #00e896);
+        }
+        #signalStrengthPanel .gauge-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-weight: 800;
+            font-size: 13px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+        #signalStrengthPanel .mtf-badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        #signalStrengthPanel .mtf-bull { background: rgba(0,232,150,0.15); color: #00e896; border: 1px solid rgba(0,232,150,0.3); }
+        #signalStrengthPanel .mtf-bear { background: rgba(255,77,109,0.15); color: #ff4d6d; border: 1px solid rgba(255,77,109,0.3); }
+        #signalStrengthPanel .mtf-neutral { background: rgba(107,114,128,0.15); color: #6b7280; border: 1px solid rgba(107,114,128,0.3); }
+        #signalStrengthPanel .reason-tag {
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            background: rgba(0,180,216,0.12);
+            color: #00b4d8;
+            border: 1px solid rgba(0,180,216,0.2);
+        }
+        #signalStrengthPanel .reason-tag.negative {
+            background: rgba(255,77,109,0.12);
+            color: #ff4d6d;
+            border-color: rgba(255,77,109,0.2);
+        }
+        #signalStrengthPanel .reason-tag.positive {
+            background: rgba(0,232,150,0.12);
+            color: #00e896;
+            border-color: rgba(0,232,150,0.2);
+        }
+        #signalStrengthPanel .ob-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-family: var(--font-mono);
+        }
+        #signalStrengthPanel .ob-bar {
+            width: 50px;
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        #signalStrengthPanel .ob-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
         @media (max-width: 1024px) { .candles-grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 768px) { 
             .candles-grid { grid-template-columns: 1fr; } 
@@ -346,6 +422,36 @@
                     <div class="score-detail-item"><span class="label">OI Delta</span> <span class="value" id="score-oi">--</span></div>
                 </div>
                 <div id="block-reason" style="margin-top:10px;font-weight:700;color:var(--accent-red);display:none;"></div>
+            </div>
+        </section>
+
+        <!-- PAINEL DE FORÇA DO SINAL (NOVO) -->
+        <section>
+            <h2 class="section-title">📊 FORÇA DO SINAL & CONFLUÊNCIA</h2>
+            <div id="signalStrengthPanel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span style="color:#8b949e;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Força do Sinal</span>
+                    <span id="scoreLabel" style="font-size:13px;font-weight:800;padding:3px 10px;border-radius:20px;background:rgba(107,114,128,0.15);color:#6b7280;border:1px solid #6b7280;">NEUTRO</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill" id="scoreBar" style="width:50%;"></div>
+                    <div class="gauge-label"><span id="scoreValue">50</span>/100</div>
+                    <div style="position:absolute;left:20%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.15);"></div>
+                    <div style="position:absolute;left:80%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.15);"></div>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;" id="mtfBadges"></div>
+                <div id="scoreReasons" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
+                <div style="margin-top:10px;padding-top:10px;border-top:1px solid #21262d;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">
+                    <span style="color:#8b949e;">Funding Rate</span>
+                    <span id="fundingDisplay" style="font-weight:700;text-align:right;">--</span>
+                    <span style="color:#8b949e;">ADX (Tendência)</span>
+                    <span id="adxDisplay" style="font-weight:700;text-align:right;">--</span>
+                    <span style="color:#8b949e;">Fear & Greed</span>
+                    <span id="fgDisplay" style="font-weight:700;text-align:right;">--</span>
+                    <span style="color:#8b949e;">Order Book Imbalance</span>
+                    <span id="obDisplay" style="font-weight:700;text-align:right;">--</span>
+                </div>
+                <div id="miniOrderBook" style="margin-top:8px;padding-top:8px;border-top:1px solid #21262d;font-size:10px;font-family:var(--font-mono);"></div>
             </div>
         </section>
 
@@ -427,13 +533,11 @@
                     <div class="confirmation-pillar"><div class="pillar-status" id="p-smart">❌</div><div class="pillar-name">Smart Money Acum.</div></div>
                     <div class="confirmation-pillar"><div class="pillar-status" id="p-macro">❌</div><div class="pillar-name">Macro Suporta</div></div>
                 </div>
-                <!-- Painel de Confirmação Dinâmica -->
                 <div class="dynamic-bottom-panel" id="dynamic-bottom-panel">
                     <div><strong>Confirmação Dinâmica:</strong> <span id="bottom-conf-count">0</span>/5 pilares</div>
                     <div>Multiplicador de Posição: <span id="bottom-multiplier">0%</span></div>
                     <div>Status: <span id="bottom-status">❌ Bloqueado</span></div>
                 </div>
-                <!-- Painel MTF Sync -->
                 <div class="mtf-sync-panel" id="mtf-sync-panel">
                     <div><strong>🎯 MTF Synchronization</strong></div>
                     <div id="mtf-alignment"></div>
@@ -548,7 +652,10 @@
                 mvrv: 1.2,
                 sopr: 0.95,
                 realizedPrice: 53600,
-                htfStructure: { bias: 'NEUTRAL', lastSwingHigh: 0, lastSwingLow: Infinity }
+                htfStructure: { bias: 'NEUTRAL', lastSwingHigh: 0, lastSwingLow: Infinity },
+                // Para divergência RSI
+                rsiHistory: [],
+                priceHistory: []
             };
         });
 
@@ -566,7 +673,9 @@
             onChain: { mvrv: 1.2, sopr: 0.95, realizedPrice: 53600, activeAddresses: 605298, timestamp: 0 },
             macro: { dxy: 101.37, us10y: 4.28, vix: 18.41, timestamp: 0 },
             hashrate: { value: 893, timestamp: 0 },
-            gas: { value: 5.68, timestamp: 0 }
+            gas: { value: 5.68, timestamp: 0 },
+            orderBook: null,
+            fearGreed: null
         };
         const CACHE_TTL = 300000; // 5 minutos
 
@@ -598,7 +707,7 @@
         let scoreHistory = []; 
         let previousScores = { 'BTCUSDT': 50, 'ETHUSDT': 50, 'SOLUSDT': 50 };
         let systemHealth = { apiErrors: 0, lastError: null, status: 'loading' };
-        window.positionMultiplier = 1; // para ajuste de tamanho de posição
+        window.positionMultiplier = 1;
 
         // ===== CACHE DE DOM =====
         const DOM = {};
@@ -929,8 +1038,97 @@
             return false;
         }
 
+        // --- 3.11 DIVERGÊNCIA RSI (NOVA) ---
+        function detectRSIDivergence(candles, rsiValues, lookback = 5) {
+            if (candles.length < lookback * 2 + 1 || rsiValues.length < candles.length) return null;
+            
+            const recentCandles = candles.slice(-lookback * 2);
+            const recentRSI = rsiValues.slice(-lookback * 2);
+            
+            // Encontrar bottoms
+            let bottoms = [];
+            for (let i = lookback; i < recentCandles.length; i++) {
+                const window = recentCandles.slice(i - lookback, i + 1);
+                const minIdx = window.findIndex(c => c.low === Math.min(...window.map(w => w.low)));
+                if (minIdx === Math.floor(lookback / 2) || minIdx === Math.ceil(lookback / 2)) {
+                    const idx = i - lookback + minIdx;
+                    bottoms.push({ priceIdx: idx, low: window[minIdx].low, rsi: recentRSI[idx] });
+                }
+            }
+            
+            if (bottoms.length >= 2) {
+                const last = bottoms[bottoms.length - 1];
+                const prev = bottoms[bottoms.length - 2];
+                // Bullish divergence: preço faz fundo mais baixo, RSI faz fundo mais alto
+                if (last.low < prev.low && last.rsi > prev.rsi && last.rsi < 45) {
+                    return { type: 'BULLISH_DIVERGENCE', strength: Math.min((last.rsi - prev.rsi) * 2, 100).toFixed(0) };
+                }
+            }
+            
+            // Tops
+            let tops = [];
+            for (let i = lookback; i < recentCandles.length; i++) {
+                const window = recentCandles.slice(i - lookback, i + 1);
+                const maxIdx = window.findIndex(c => c.high === Math.max(...window.map(w => w.high)));
+                if (maxIdx === Math.floor(lookback / 2) || maxIdx === Math.ceil(lookback / 2)) {
+                    const idx = i - lookback + maxIdx;
+                    tops.push({ priceIdx: idx, high: window[maxIdx].high, rsi: recentRSI[idx] });
+                }
+            }
+            
+            if (tops.length >= 2) {
+                const lastTop = tops[tops.length - 1];
+                const prevTop = tops[tops.length - 2];
+                if (lastTop.high > prevTop.high && lastTop.rsi < prevTop.rsi && lastTop.rsi > 55) {
+                    return { type: 'BEARISH_DIVERGENCE', strength: Math.min((prevTop.rsi - lastTop.rsi) * 2, 100).toFixed(0) };
+                }
+            }
+            
+            return null;
+        }
+
+        // --- 3.12 ORDER BOOK IMBALANCE (NOVA) ---
+        function orderBookFilter(obData, signalDirection) {
+            if (!obData) return { pass: true, reason: 'Sem dados orderbook', imbalance: 0 };
+            const imbalance = parseFloat(obData.imbalance) || 0;
+            if (signalDirection === 'LONG') {
+                if (imbalance < -15) return { pass: false, reason: `OrderBook contra LONG (imbalance: ${imbalance}%)`, imbalance };
+                if (imbalance > 10) return { pass: true, bonus: `OrderBook favorável LONG (imbalance: ${imbalance}%)`, imbalance };
+            }
+            if (signalDirection === 'SHORT') {
+                if (imbalance > 15) return { pass: false, reason: `OrderBook contra SHORT (imbalance: ${imbalance}%)`, imbalance };
+                if (imbalance < -10) return { pass: true, bonus: `OrderBook favorável SHORT (imbalance: ${imbalance}%)`, imbalance };
+            }
+            return { pass: true, reason: `OrderBook neutro (imbalance: ${imbalance}%)`, imbalance };
+        }
+
+        // --- 3.13 FEAR & GREED FILTER (NOVA) ---
+        function fearGreedFilter(fgData, signalDirection) {
+            if (!fgData) return { pass: true, multiplier: 1, reason: 'Sem dados F&G' };
+            const v = fgData.value;
+            let multiplier = 1;
+            let reason = 'Sentimento neutro';
+            if (v < 20 && signalDirection === 'LONG') {
+                multiplier = 1.3;
+                reason = 'Extreme Fear — oportunidade contrarian LONG';
+            } else if (v > 80 && signalDirection === 'SHORT') {
+                multiplier = 1.3;
+                reason = 'Extreme Greed — oportunidade contrarian SHORT';
+            } else if (v >= 40 && v <= 60) {
+                multiplier = 1;
+                reason = 'Sentimento neutro — sem ajuste';
+            } else if (v < 15 && signalDirection === 'SHORT') {
+                multiplier = 0.5;
+                reason = 'Extreme Fear — reduzir SHORT (potencial bounce)';
+            } else if (v > 85 && signalDirection === 'LONG') {
+                multiplier = 0.5;
+                reason = 'Extreme Greed — reduzir LONG (potencial correção)';
+            }
+            return { pass: true, multiplier, reason, value: v, classification: fgData.classification };
+        }
+
         // ================================================================
-        // 4. SCORE (com pesos normalizados)
+        // 4. SCORE (com pesos normalizados + divergência RSI + orderbook + F&G)
         // ================================================================
         function computeScore(symbol) {
             const data = assetsData[symbol];
@@ -960,6 +1158,18 @@
             let momScore = clamp(data.rsi_1H, 0, 100);
             if (primaryDirection === 'LONG' && data.rsi_1H > 75) momScore *= 0.6;
             if (primaryDirection === 'SHORT' && data.rsi_1H < 25) momScore = 100 - momScore;
+
+            // Divergência RSI
+            if (primaryDirection && data.candles1H && data.rsiHistory && data.rsiHistory.length > 10) {
+                const div = detectRSIDivergence(data.candles1H, data.rsiHistory);
+                if (div) {
+                    if (div.type === 'BULLISH_DIVERGENCE' && primaryDirection === 'LONG') {
+                        scoreBonus += parseInt(div.strength) * 0.15;
+                    } else if (div.type === 'BEARISH_DIVERGENCE' && primaryDirection === 'SHORT') {
+                        scoreBonus += parseInt(div.strength) * 0.15;
+                    }
+                }
+            }
 
             let ofScore = 50;
             const liq = liqMap[symbol] || { longs: 0, shorts: 0 };
@@ -996,6 +1206,25 @@
             if (liqConfluence.alert) {
                 scoreBonus += 20;
                 sendTelegramAlert(liqConfluence.message);
+            }
+
+            // Order Book Imbalance (se disponível)
+            if (primaryDirection && dataCache.orderBook) {
+                const obFilt = orderBookFilter(dataCache.orderBook, primaryDirection);
+                if (!obFilt.pass) {
+                    blockReason = obFilt.reason;
+                } else {
+                    if (obFilt.bonus) scoreBonus += 8;
+                }
+            }
+
+            // Fear & Greed (se disponível)
+            if (primaryDirection && dataCache.fearGreed) {
+                const fgFilt = fearGreedFilter(dataCache.fearGreed, primaryDirection);
+                // Não bloqueia, apenas ajusta multiplicador (armazenado globalmente)
+                window.fgMultiplier = fgFilt.multiplier;
+                if (fgFilt.multiplier > 1) scoreBonus += 10;
+                if (fgFilt.multiplier < 1) scoreBonus -= 5;
             }
 
             // Bônus de confirmação de fundo (para BTC)
@@ -1138,6 +1367,8 @@
                     updateMainScoreUI(scoreData, blockReason);
                     const bottom = checkBottomConfirmation();
                     window.positionMultiplier = bottom.positionMultiplier;
+                    // Atualizar painel de força
+                    updateStrengthPanel(scoreData);
                 }
 
                 const prevScore = previousScores[symbol] || 50;
@@ -1169,13 +1400,15 @@
                             if (rr1 < 1.5) return;
                             if (primaryDirection === 'LONG' && findSMCSetup(data, 'LONG')) {
                                 const baseRisk = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
-                                const riskPct = baseRisk * (window.positionMultiplier || 1);
+                                const fgMult = window.fgMultiplier || 1;
+                                const riskPct = baseRisk * (window.positionMultiplier || 1) * fgMult;
                                 sendTradeAlert(symbol, 'long', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Long + BOS Bullish + SMC Setup`, riskPct, null);
                                 activePositions[symbol] = { type: 'LONG', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
                                 updateActiveTradesUI();
                             } else if (primaryDirection === 'SHORT' && findSMCSetup(data, 'SHORT')) {
                                 const baseRisk = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
-                                const riskPct = baseRisk * (window.positionMultiplier || 1);
+                                const fgMult = window.fgMultiplier || 1;
+                                const riskPct = baseRisk * (window.positionMultiplier || 1) * fgMult;
                                 sendTradeAlert(symbol, 'short', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Short + BOS Bearish + SMC Setup`, riskPct, null);
                                 activePositions[symbol] = { type: 'SHORT', entryPrice: data.price, stop: stop, tp1: tp1, tp2: tp2, movedToBE: false, trailingStop: stop, partialTaken: false, sizeRemaining: 1, realizedPNL: 0 };
                                 updateActiveTradesUI();
@@ -1189,11 +1422,110 @@
             });
             updateScoreChart();
             updateSystemStatus();
-            // Atualizar MTF Sync para BTC
             updateMTFSyncPanel('BTCUSDT');
         }
 
-        // --- Função para atualizar o painel MTF ---
+        // --- Painel de Força do Sinal (atualização) ---
+        function updateStrengthPanel(scoreData) {
+            const labelEl = document.getElementById('scoreLabel');
+            const barEl = document.getElementById('scoreBar');
+            const valEl = document.getElementById('scoreValue');
+            const reasonsEl = document.getElementById('scoreReasons');
+            const mtfEl = document.getElementById('mtfBadges');
+            const fundingEl = document.getElementById('fundingDisplay');
+            const adxEl = document.getElementById('adxDisplay');
+            const fgEl = document.getElementById('fgDisplay');
+            const obEl = document.getElementById('obDisplay');
+            const obMini = document.getElementById('miniOrderBook');
+
+            const s = scoreData.score;
+            valEl.textContent = s;
+            barEl.style.width = s + '%';
+
+            // Label
+            let label = 'NEUTRO', color = '#6b7280', bg = 'rgba(107,114,128,0.15)';
+            if (s >= 80) { label = 'MUITO FORTE'; color = '#00e896'; bg = 'rgba(0,232,150,0.2)'; }
+            else if (s >= 65) { label = 'FORTE'; color = '#00c853'; bg = 'rgba(0,200,83,0.15)'; }
+            else if (s >= 55) { label = 'MODERADO'; color = '#ffc107'; bg = 'rgba(255,193,7,0.15)'; }
+            else if (s <= 20) { label = 'MUITO FORTE CONTRA'; color = '#ff1744'; bg = 'rgba(255,23,68,0.2)'; }
+            else if (s <= 35) { label = 'FORTE CONTRA'; color = '#ff5252'; bg = 'rgba(255,82,82,0.15)'; }
+            else if (s <= 45) { label = 'MODERADO CONTRA'; color = '#ff9800'; bg = 'rgba(255,152,0,0.15)'; }
+            labelEl.textContent = label;
+            labelEl.style.color = color;
+            labelEl.style.background = bg;
+            labelEl.style.borderColor = color;
+
+            // Reasons (simulado com os componentes do score)
+            const comps = scoreData.components || {};
+            const reasons = [];
+            if (comps.mtf === 'OK') reasons.push({ text: 'MTF Alinhado', cls: 'positive' });
+            if (comps.smc && parseInt(comps.smc) > 60) reasons.push({ text: 'SMC Forte', cls: 'positive' });
+            if (comps.mom && parseInt(comps.mom) > 60) reasons.push({ text: 'Momentum Favorável', cls: 'positive' });
+            if (comps.of && parseInt(comps.of) > 60) reasons.push({ text: 'Orderflow Favorável', cls: 'positive' });
+            if (comps.macro === '100') reasons.push({ text: 'Macro Seguro', cls: 'positive' });
+            if (comps.oi && parseInt(comps.oi) > 60) reasons.push({ text: 'OI Favorável', cls: 'positive' });
+            if (reasons.length === 0) reasons.push({ text: 'Sem confluência clara', cls: 'negative' });
+            reasonsEl.innerHTML = reasons.map(r => `<span class="reason-tag ${r.cls}">${r.text}</span>`).join('');
+
+            // MTF badges
+            const data = assetsData['BTCUSDT'];
+            if (data) {
+                const trends = {
+                    '1D': data.trend1D || 'NEUTRAL',
+                    '4H': data.trend4H || 'NEUTRAL',
+                    '1H': data.mtfTrend || 'NEUTRAL'
+                };
+                mtfEl.innerHTML = Object.entries(trends).map(([tf, dir]) => {
+                    const cls = dir === 'LONG' ? 'mtf-bull' : dir === 'SHORT' ? 'mtf-bear' : 'mtf-neutral';
+                    return `<span class="mtf-badge ${cls}">${tf} ${dir}</span>`;
+                }).join('');
+            }
+
+            // Funding
+            const fr = data?.fundingRate || 0;
+            fundingEl.textContent = (fr * 100).toFixed(4) + '%';
+            fundingEl.style.color = fr > 0.01 ? '#ff4d6d' : fr < -0.01 ? '#00e896' : '#ffc107';
+
+            // ADX (simulado via Choppiness)
+            const chop = data?.chopIndex || 50;
+            adxEl.textContent = chop.toFixed(1) + (chop > 61.8 ? ' (Lateral)' : ' (Tendência)');
+            adxEl.style.color = chop > 61.8 ? '#ff4d6d' : '#00e896';
+
+            // Fear & Greed
+            if (dataCache.fearGreed) {
+                const fg = dataCache.fearGreed;
+                fgEl.textContent = `${fg.value} (${fg.classification})`;
+                fgEl.style.color = fg.color;
+            } else {
+                fgEl.textContent = '--';
+            }
+
+            // Order Book
+            if (dataCache.orderBook) {
+                const ob = dataCache.orderBook;
+                obEl.textContent = ob.imbalance + '%';
+                obEl.style.color = parseFloat(ob.imbalance) > 5 ? '#00e896' : parseFloat(ob.imbalance) < -5 ? '#ff4d6d' : '#ffc107';
+                // Mini book
+                let html = '<div style="font-size:10px;font-family:var(--font-mono);">';
+                for (let i = ob.asks.length - 1; i >= 0; i--) {
+                    const a = ob.asks[i];
+                    const width = Math.min((a.qty / Math.max(...ob.asks.map(x=>x.qty), ...ob.bids.map(x=>x.qty))) * 100, 100);
+                    html += `<div class="ob-row"><span style="color:#ff4d6d;">${a.price.toFixed(2)}</span><span>${a.qty.toFixed(4)}</span><div class="ob-bar"><div class="ob-fill" style="width:${width}%;background:#ff4d6d;"></div></div></div>`;
+                }
+                html += `<div style="text-align:center;color:#ffc107;padding:2px 0;">Spread: ${((ob.asks[0]?.price - ob.bids[0]?.price) / ob.bids[0]?.price * 100 || 0).toFixed(3)}%</div>`;
+                for (const b of ob.bids) {
+                    const width = Math.min((b.qty / Math.max(...ob.asks.map(x=>x.qty), ...ob.bids.map(x=>x.qty))) * 100, 100);
+                    html += `<div class="ob-row"><span style="color:#00e896;">${b.price.toFixed(2)}</span><span>${b.qty.toFixed(4)}</span><div class="ob-bar"><div class="ob-fill" style="width:${width}%;background:#00e896;"></div></div></div>`;
+                }
+                html += '</div>';
+                obMini.innerHTML = html;
+            } else {
+                obEl.textContent = '--';
+                obMini.innerHTML = '';
+            }
+        }
+
+        // --- MTF Sync Panel ---
         function updateMTFSyncPanel(symbol) {
             const data = assetsData[symbol];
             if (!data) return;
@@ -1213,7 +1545,7 @@
             panel.innerHTML = html;
         }
 
-        // --- Painel de Confirmação Dinâmica ---
+        // --- Confirmação de Fundo Dinâmica ---
         function checkBottomConfirmation() {
             const mvrv = parseFloat(assetsData['BTCUSDT']?.mvrv || 1.2);
             const fear = document.getElementById('header-fng')?.textContent || '';
@@ -1261,7 +1593,7 @@
         }
 
         // ================================================================
-        // 7. DATA FETCHING
+        // 7. DATA FETCHING (APIs)
         // ================================================================
         async function fetchHistoricalCandles(symbol, interval, limit=200) {
             try {
@@ -1318,6 +1650,39 @@
                     }
                 }
             } catch(e) { handleApiError(`OpenInterest ${symbol}`, e); }
+        }
+
+        async function fetchOrderBook(symbol = 'BTCUSDT', limit = 10) {
+            try {
+                const r = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=${limit}`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                const d = await r.json();
+                const bids = d.bids.slice(0, limit).map(b => ({ price: +b[0], qty: +b[1] }));
+                const asks = d.asks.slice(0, limit).map(a => ({ price: +a[0], qty: +a[1] }));
+                const bidTotal = bids.reduce((s, b) => s + b.qty * b.price, 0);
+                const askTotal = asks.reduce((s, a) => s + a.qty * a.price, 0);
+                const imbalance = ((bidTotal - askTotal) / (bidTotal + askTotal) * 100);
+                dataCache.orderBook = { bids, asks, bidTotal, askTotal, imbalance: imbalance.toFixed(2) };
+                return dataCache.orderBook;
+            } catch(e) { handleApiError('OrderBook', e); return null; }
+        }
+
+        async function fetchFearGreed() {
+            try {
+                const r = await fetch('https://api.alternative.me/fng/?limit=1');
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                const d = await r.json();
+                const v = parseInt(d.data[0].value);
+                const fg = {
+                    value: v,
+                    classification: d.data[0].value_classification,
+                    color: v < 25 ? '#ff4d6d' : v < 45 ? '#ff9800' : v < 55 ? '#ffc107' : v < 75 ? '#8bc34a' : '#00e896'
+                };
+                dataCache.fearGreed = fg;
+                document.getElementById('header-fng').innerHTML = '😱 FEAR & GREED: ' + v + ' (' + d.data[0].value_classification + ')';
+                document.getElementById('header-sentiment').textContent = v <= 25 ? '⚠️ PESSIMISTA' : '✅ BULLISH';
+                return fg;
+            } catch(e) { handleApiError('FearGreed', e); return null; }
         }
 
         async function fetchOnChainData() {
@@ -1504,6 +1869,11 @@
                     const vols = c1H.map(c => c.volume);
                     assetsData[symbol].volumeAvg = vols.slice(-20).reduce((a,b)=>a+b,0)/20;
                     assetsData[symbol].currentVolume = vols.at(-1) || 0;
+                    // RSI history para divergência
+                    assetsData[symbol].rsiHistory = closes.map((c, idx) => {
+                        if (idx < 14) return 50;
+                        return assetsData[symbol].rsiState.rsi || 50;
+                    });
                     if (c4H && c4H.length > 0) {
                         const closes4H = c4H.map(c => c.close);
                         const ema200_4H = closes4H.slice(-200).reduce((a,b)=>a+b,0)/200;
@@ -1519,6 +1889,8 @@
             }
             await fetchOnChainData();
             await fetchMacroIndicators();
+            await fetchOrderBook();
+            await fetchFearGreed();
             evaluateMarkets();
         }
 
@@ -1751,11 +2123,16 @@
                     if (symbol && assetsData[symbol] && !isNaN(price)) {
                         const prevPrice = assetsData[symbol].price;
                         assetsData[symbol].price = price;
+                        // Atualiza RSI e EMA
                         if (prevPrice > 0) {
                             assetsData[symbol].ema50_1H = updateStatefulEMA(assetsData[symbol].ema50_1H, price, 50);
                             assetsData[symbol].ema200_4H = updateStatefulEMA(assetsData[symbol].ema200_4H, price, 200);
                             assetsData[symbol].rsiState = updateStatefulRSI(assetsData[symbol].rsiState, price, prevPrice);
                             assetsData[symbol].rsi_1H = assetsData[symbol].rsiState.rsi;
+                            // Armazenar histórico RSI para divergência
+                            if (!assetsData[symbol].rsiHistory) assetsData[symbol].rsiHistory = [];
+                            assetsData[symbol].rsiHistory.push(assetsData[symbol].rsi_1H);
+                            if (assetsData[symbol].rsiHistory.length > 100) assetsData[symbol].rsiHistory.shift();
                         }
                         checkPositionManagement(symbol, price);
                         updateLivePriceUI(symbol, price);
@@ -1863,11 +2240,14 @@
                 fetchOpenInterest('BTCUSDT'),
                 fetchOpenInterest('ETHUSDT'),
                 fetchOpenInterest('SOLUSDT'),
-                fetchOnChainData()
+                fetchOnChainData(),
+                fetchOrderBook(),
             ]);
 
             await fetchMacroIndicators();
             setInterval(fetchMacroIndicators, 300000);
+            setInterval(fetchOrderBook, 60000); // a cada minuto
+            setInterval(fetchFearGreed, 300000);
 
             const btn = document.getElementById('test-telegram-btn');
             btn.addEventListener('click', async () => {
@@ -1879,7 +2259,6 @@
             });
 
             setInterval(() => fetchPrices(), 60000);
-            setInterval(() => fetchFearGreed(), 300000);
             setInterval(() => fetchDeFiData(), 300000);
             setInterval(() => {
                 fetchBinanceDerivatives();
@@ -1972,10 +2351,6 @@
                     if (elChange) elChange.textContent = (data.solana.usd_24h_change >= 0 ? '+' : '') + data.solana.usd_24h_change.toFixed(2) + '%';
                 }
             } catch(e){ handleApiError('CoinGecko', e); }
-        }
-
-        async function fetchFearGreed() { 
-            try { const r = await fetch('https://api.alternative.me/fng/?limit=1'); if(!r.ok) throw new Error(`HTTP ${r.status}`); const d = await r.json(); const v = d.data[0].value; document.getElementById('header-fng').innerHTML = '😱 FEAR & GREED: ' + v + ' (' + d.data[0].value_classification + ')'; document.getElementById('header-sentiment').textContent = v <= 25 ? '⚠️ PESSIMISTA' : '✅ BULLISH'; } catch(e){ handleApiError('FearGreed', e); }
         }
 
         async function fetchDeFiData() { 
