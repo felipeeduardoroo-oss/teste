@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        /* ===== CSS REFORMULADO (mesmo da versão anterior) ===== */
+        /* ===== CSS REFORMULADO ===== */
         :root {
             --bg-dark: #08090d;
             --bg-card: #0f1117;
@@ -628,6 +628,7 @@
             return { avgGain, avgLoss, rsi };
         }
 
+        // ===== SWING POINTS & BOS (mantido) =====
         function updateSwingPoints(data) {
             const c1H = data.candles1H;
             if (c1H.length < 10) return;
@@ -649,25 +650,30 @@
             else data.currentBOS = 'NEUTRAL';
         }
 
+        // ===== SMC SETUP COM SWEEP EM JANELA DE 5 CANDLES (Melhoria 2) =====
         function findSMCSetup(data, direction) {
-            const last = data.candles1H.at(-1);
+            const c1H = data.candles1H;
+            const last = c1H.at(-1);
             if (!last || data.swingLows.length === 0 || data.swingHighs.length === 0) return false;
+            const lookback = c1H.slice(-5);
             if (direction === 'LONG' && data.currentBOS === 'BULLISH') {
                 const swingLow = Math.min(...data.swingLows);
-                const sweep = last.low < swingLow && last.close > swingLow;
+                const sweep = lookback.some(k => k.low < swingLow && k.close > swingLow);
                 return sweep && data.price < data.ema50_1H;
             }
             if (direction === 'SHORT' && data.currentBOS === 'BEARISH') {
                 const swingHigh = Math.max(...data.swingHighs);
-                const sweep = last.high > swingHigh && last.close < swingHigh;
+                const sweep = lookback.some(k => k.high > swingHigh && k.close < swingHigh);
                 return sweep && data.price > data.ema50_1H;
             }
             return false;
         }
 
         // ================================================================
-        // 3. FILTROS (mesmos da versão anterior)
+        // 3. FILTROS (com correções)
         // ================================================================
+
+        // ===== LATERAL (mantido, mas poderia ser unificado com Choppiness) =====
         function checkLateralMarket(data, currentPrice) {
             const atr = data.atr_1H || 0;
             const atrPercent = atr / currentPrice;
@@ -685,6 +691,7 @@
             return { blocked: false, bonus: 0 };
         }
 
+        // ===== HTF STRUCTURE (mantido) =====
         function detectHTFStructure(data, htfCandles) {
             if (!htfCandles || htfCandles.length < 20) return { bias: 'NEUTRAL', lastSwingHigh: 0, lastSwingLow: Infinity };
             let highs = [], lows = [];
@@ -709,6 +716,7 @@
             return { passed: false, penalty: 30, reason: `HTF ${htf.bias} não alinhado com LTF ${ltfDirection}` };
         }
 
+        // ===== ON-CHAIN (mantido) =====
         function checkOnChainFilter(data, symbol) {
             if (symbol !== 'BTCUSDT') return { allow: true, bonus: 0 };
             const mvrv = data.mvrv || 1.2;
@@ -722,54 +730,73 @@
             return { allow: true, bonus: 0 };
         }
 
+        // ===== FUNÇÃO FVG REAL (Melhoria 6) =====
+        function findRecentFVG(candles, direction, lookback = 8) {
+            const zones = [];
+            const start = Math.max(2, candles.length - lookback);
+            for (let i = start; i < candles.length; i++) {
+                const a = candles[i - 2], c = candles[i];
+                if (direction === 'LONG' && a.high < c.low) zones.push({ top: c.low, bottom: a.high });
+                if (direction === 'SHORT' && a.low > c.high) zones.push({ top: a.low, bottom: c.high });
+            }
+            return zones;
+        }
+
+        // ===== VOLUME E ORDERFLOW com FVG real e CVD a partir de takerBuyVol =====
         function checkVolumeAndOrderflow(data, direction) {
             const currentVol = data.currentVolume || 0;
             const avgVol = data.volumeAvg || 1;
             if (avgVol === 0) return { volumeConfirmed: false, bonus: 0 };
             const ratio = currentVol / avgVol;
             const volumeSpike = ratio > 2.5;
+
             const candles = data.candles1H;
+            // CVD real baseado em volume comprador agressor (taker buy)
             let cvdDelta = 0;
-            if (candles.length > 2) {
-                const lastClose = candles.at(-1).close;
-                const prevClose = candles.at(-2).close;
-                cvdDelta = (lastClose - prevClose) / prevClose;
+            if (candles.length > 2 && candles.at(-1).takerBuyVol !== undefined) {
+                const last = candles.at(-1);
+                const buyVol = last.takerBuyVol;
+                const sellVol = last.volume - last.takerBuyVol;
+                cvdDelta = last.volume > 0 ? (buyVol - sellVol) / last.volume : 0;
             }
-            const cvdSpike = Math.abs(cvdDelta) > 0.01;
+            const cvdSpike = direction === 'LONG' ? cvdDelta > 0.15 : cvdDelta < -0.15;
+
+            // FVG real (substitui o antigo)
             let fvgConfluence = false;
-            if (candles.length > 3) {
-                const c1 = candles.at(-3);
-                const c2 = candles.at(-2);
-                const c3 = candles.at(-1);
-                if (direction === 'LONG' && c1.low > c2.high && c3.close > c2.high) fvgConfluence = true;
-                if (direction === 'SHORT' && c1.high < c2.low && c3.close < c2.low) fvgConfluence = true;
+            if (candles.length > 10) {
+                const zones = findRecentFVG(candles, direction, 8);
+                const price = candles.at(-1).close;
+                fvgConfluence = zones.some(z => price >= z.bottom && price <= z.top);
             }
+
             let bonus = 0;
             if (volumeSpike && cvdSpike) bonus += 25;
             if (fvgConfluence) bonus += 15;
             return { volumeConfirmed: volumeSpike, orderflowConfirmed: cvdSpike, fvgConfluence, bonus };
         }
 
+        // ===== DERIVATIVES FILTER com escala corrigida (Melhoria 3) =====
         function checkDerivativesFilter(data, direction) {
             const fr = data.fundingRate || 0;
-            const oiDelta = data.oiDelta || 0;
+            const oiDelta = data.oiDelta || 0; // já em pontos percentuais (ex.: 3.2 = +3,2%)
             const frThreshold = 0.0001;
-            const oiThreshold = 0.05;
+            const oiThreshold = 3; // CORRIGIDO: era 0.05 (escala incompatível)
             if (fr > frThreshold && oiDelta > oiThreshold) {
                 return { allow: false, reason: `Funding alto (${(fr*100).toFixed(3)}%) e OI subindo (${oiDelta.toFixed(1)}%) - superaquecido` };
             }
             if (fr < -frThreshold && oiDelta < -oiThreshold) {
                 return { allow: false, reason: `Funding negativo (${(fr*100).toFixed(3)}%) e OI caindo (${oiDelta.toFixed(1)}%) - sobrevendido` };
             }
-            if (Math.abs(fr) < 0.00005 && oiDelta > 0.02) {
+            if (Math.abs(fr) < 0.00005 && oiDelta > 1) { // CORRIGIDO: era 0.02
                 return { allow: true, bonus: 8, reason: 'Funding neutro e OI subindo - tendência saudável' };
             }
-            if (fr > 0.00005 && oiDelta < -0.02) {
+            if (fr > 0.00005 && oiDelta < -1) { // CORRIGIDO: era -0.02
                 return { allow: true, bonus: 8, reason: 'Funding positivo e OI caindo - correção provável' };
             }
             return { allow: true, bonus: 0 };
         }
 
+        // ===== LIQUIDAÇÃO CONFLUÊNCIA (mantido) =====
         function checkLiquidationConfluence(symbol, data) {
             const levels = liquidationLevels[symbol] || [];
             if (levels.length === 0) return { alert: false };
@@ -797,23 +824,24 @@
             return zones;
         }
 
+        // ===== MTF ALIGNMENT HIERÁRQUICO (Melhoria 4) =====
         function checkMTFAlignment(data, direction) {
-            let aligned = 0;
             const trend4H = data.trend4H || 'NEUTRAL';
             const trend1D = data.trend1D || 'NEUTRAL';
-            if (direction === 'LONG') {
-                if (trend4H === 'LONG') aligned++;
-                if (trend1D === 'LONG') aligned++;
-            } else if (direction === 'SHORT') {
-                if (trend4H === 'SHORT') aligned++;
-                if (trend1D === 'SHORT') aligned++;
+            const opposite = direction === 'LONG' ? 'SHORT' : 'LONG';
+            // 1D é a maior autoridade: nunca opera contra ele
+            if (trend1D === opposite) {
+                return { passed: false, reason: `1D contrário (${trend1D}) bloqueia ${direction} independente do 4H` };
             }
-            if (aligned === 0) {
-                return { passed: false, reason: `Sem confirmação MTF (4H: ${trend4H}, 1D: ${trend1D})` };
+            // 4H a favor passa a ser obrigatório
+            if (trend4H !== direction) {
+                return { passed: false, reason: `4H (${trend4H}) não confirma ${direction}` };
             }
+            const aligned = trend1D === direction ? 2 : 1;
             return { passed: true, alignedCount: aligned };
         }
 
+        // ===== EXPOSIÇÃO (mantido) =====
         function checkPortfolioExposure(direction) {
             const sameDir = Object.values(activePositions).filter(p => p.type === direction).length;
             if (sameDir >= 1) {
@@ -823,7 +851,7 @@
         }
 
         // ================================================================
-        // 4. SCORE
+        // 4. SCORE (com normalização dos pesos)
         // ================================================================
         function computeScore(symbol) {
             const data = assetsData[symbol];
@@ -895,7 +923,10 @@
                 return { score: 50, components: { mtf: '50', smc: '50', mom: '50', of: '50', macro: '50', oi: '50' }, blockReason };
             }
 
-            let rawScore = (smcScore * 0.25) + (momScore * 0.15) + (ofScore * 0.10) + (macroSafe * 0.10) + (oiScore * 0.05);
+            // ===== NORMALIZAÇÃO DOS PESOS (soma = 1) =====
+            const wSMC = 0.25, wMom = 0.15, wOF = 0.10, wMacro = 0.10, wOI = 0.05;
+            const totalWeight = wSMC + wMom + wOF + wMacro + wOI;
+            let rawScore = ((smcScore * wSMC) + (momScore * wMom) + (ofScore * wOF) + (macroSafe * wMacro) + (oiScore * wOI)) / totalWeight;
             if (mtfPassed && primaryDirection) rawScore += 10;
             const chop = computeChoppiness(data);
             data.chopIndex = chop;
@@ -920,7 +951,7 @@
         }
 
         // ================================================================
-        // 5. POSITION MANAGEMENT
+        // 5. POSITION MANAGEMENT (com TP dinâmico - Melhoria 5)
         // ================================================================
         function checkPositionManagement(symbol, currentPrice) {
             const pos = activePositions[symbol];
@@ -1028,20 +1059,26 @@
                         if (primaryDirection) {
                             const expCheck = checkPortfolioExposure(primaryDirection);
                             if (expCheck.blocked) return;
-                            let stop, tp1, tp2, structLevel;
+                            let stop, tp1, tp2, structLevel, riskDist;
                             if (primaryDirection === 'LONG') {
                                 structLevel = Math.min(...data.swingLows) - (atr * 0.3);
                                 stop = Math.min(structLevel, data.price - atr * 1.5);
-                                tp1 = data.price + (atr * 2);
-                                tp2 = data.price + (atr * 4);
+                                riskDist = data.price - stop;
+                                tp1 = data.price + (riskDist * 1.5);
+                                tp2 = data.price + (riskDist * 3);
                             } else {
                                 structLevel = Math.max(...data.swingHighs) + (atr * 0.3);
                                 stop = Math.max(structLevel, data.price + atr * 1.5);
-                                tp1 = data.price - (atr * 2);
-                                tp2 = data.price - (atr * 4);
+                                riskDist = stop - data.price;
+                                tp1 = data.price - (riskDist * 1.5);
+                                tp2 = data.price - (riskDist * 3);
                             }
-                            const rr1 = primaryDirection === 'LONG' ? (tp1 - data.price) / (data.price - stop) : (data.price - tp1) / (stop - data.price);
-                            if (rr1 < 1.5) return;
+                            // Guarda-corpo contra risco irreal
+                            if (riskDist <= 0 || riskDist / data.price > 0.15) return;
+                            const rr1 = primaryDirection === 'LONG' ? (tp1 - data.price) / riskDist : (data.price - tp1) / riskDist;
+                            // R:R agora é garantido ~1.5, não precisa de filtro rígido, mas mantemos segurança
+                            if (rr1 < 1.0) return; // valor mínimo de segurança
+
                             if (primaryDirection === 'LONG' && findSMCSetup(data, 'LONG')) {
                                 const riskPct = KellyPositionSize(tradeStats.wins / (tradeStats.wins + tradeStats.losses + 1), rr1);
                                 sendTradeAlert(symbol, 'long', score, data.price, stop, [{price: tp1, rr: rr1}, {price: tp2, rr: rr1*2}], `MTF Long + BOS Bullish + SMC Setup`, riskPct, null);
@@ -1066,13 +1103,18 @@
         // ================================================================
         // 7. DATA FETCHING
         // ================================================================
+        // ===== HISTÓRICO DE CANDLES COM TAKER BUY VOLUME (Melhoria CVD) =====
         async function fetchHistoricalCandles(symbol, interval, limit=200) {
             try {
                 const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
                 const resp = await fetch(url);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const data = await resp.json();
-                return data.map(k => ({ time: k[0]/1000, open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]), volume: parseFloat(k[5]) }));
+                return data.map(k => ({
+                    time: k[0]/1000, open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]),
+                    close: parseFloat(k[4]), volume: parseFloat(k[5]),
+                    takerBuyVol: parseFloat(k[9]) // NOVO: volume comprador agressor
+                }));
             } catch(e) { handleApiError(`Binance (${symbol} ${interval})`, e); return []; }
         }
 
@@ -1139,7 +1181,7 @@
             } catch(e) { handleApiError('OnChain', e); }
         }
 
-        // ===== NOVA FUNÇÃO: BUSCA DADOS MACRO VIA YAHOO FINANCE =====
+        // ===== MACRO INDICATORS (Yahoo Finance) =====
         async function fetchMacroIndicators() {
             const symbols = ['DX-Y.NYB', '^TNX', '^VIX'];
             const ids = ['dxy-value', 'us10y-value', 'vix-value'];
@@ -1171,16 +1213,6 @@
             } catch(e) {
                 handleApiError('Macro (Yahoo)', e);
             }
-        }
-
-        // Função para atualizar a UI macro com os valores estáticos iniciais (fallback)
-        function updateMacroUI() {
-            // Os valores já estão no HTML, apenas atualizamos os timestamps
-            const now = getCurrentTimestamp();
-            ['dxy-update', 'us10y-update', 'vix-update'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = 'atualizado ' + now;
-            });
         }
 
         function calculateBB(data, period=20, multiplier=2) {
@@ -1244,7 +1276,7 @@
                 }
             }
             await fetchOnChainData();
-            await fetchMacroIndicators(); // busca inicial macro
+            await fetchMacroIndicators();
             evaluateMarkets();
         }
 
@@ -1257,20 +1289,27 @@
             return trs.slice(-period).reduce((a,b)=>a+b,0)/period;
         }
 
+        // ===== IS SAFE TO TRADE (CORRIGIDO: getUTCDay, remoção da whitelist) =====
         function isSafeToTrade() {
             const now = new Date();
             const hourUTC = now.getUTCHours();
             const minUTC = now.getUTCMinutes();
-            const day = now.getUTCDate();
-            if (day <= 5 && hourUTC === 12 && minUTC >= 20) return false;
-            if (day <= 5 && hourUTC === 13 && minUTC <= 40) return false;
+            const weekday = now.getUTCDay(); // CORRIGIDO: era getUTCDate() (dia do mês)
+            const isWeekday = weekday >= 1 && weekday <= 5;
+
+            // Blackout de dados macro (NFP/CPI/PCE) em dia útil, janela de 30min
+            if (isWeekday && hourUTC === 12 && minUTC >= 20) return false;
+            if (isWeekday && hourUTC === 13 && minUTC <= 40) return false;
+
+            // Proteção por volatilidade (ATR spike)
             const data = assetsData['BTCUSDT'];
             if (data && data.atrHistory && data.atrHistory.length > 20) {
                 const avgATR = data.atrHistory.slice(-20).reduce((a,b)=>a+b,0)/20;
                 if (data.atr_1H > avgATR * 2.5) return false;
             }
-            if ((hourUTC >= 13 && hourUTC <= 17) || (hourUTC >= 0 && hourUTC <= 4)) return true;
-            return false;
+
+            // Removida a whitelist de 10h que bloqueava 58% do dia
+            return true;
         }
 
         function computeChoppiness(data) {
@@ -1299,7 +1338,7 @@
         }
 
         // ================================================================
-        // 8. UI UPDATES (com flash de preço e PnL)
+        // 8. UI UPDATES
         // ================================================================
         function updateLivePriceUI(symbol, price) {
             const prefix = symbol.replace('USDT', '').toLowerCase();
@@ -1382,7 +1421,7 @@
         }
 
         // ================================================================
-        // 9. CHART.JS & LIGHTWEIGHT CHARTS (preservados)
+        // 9. CHART.JS & LIGHTWEIGHT CHARTS
         // ================================================================
         window.charts = [];
         const chartColors = { primary: 'rgb(0, 180, 216)', secondary: 'rgb(233, 69, 96)', success: 'rgb(0, 217, 142)', warning: 'rgb(255, 214, 10)', text: 'rgb(236, 240, 241)', border: 'rgb(44, 62, 80)' };
