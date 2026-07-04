@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        /* ===== CSS REFORMULADO (mesmo da versão anterior) ===== */
+        /* ===== NOVO CSS INSTITUCIONAL ===== */
         :root {
             --bg-dark: #08090d;
             --bg-card: #0f1117;
@@ -94,8 +94,6 @@
         @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .status-badge { background: rgba(255, 214, 10, 0.1); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
         .status-badge.live { border-color: var(--accent-green); color: var(--accent-green); background: rgba(0, 232, 150, 0.1); }
-        .status-badge.warning { border-color: var(--accent-yellow); color: var(--accent-yellow); background: rgba(255, 214, 10, 0.1); }
-        .status-badge.error { border-color: var(--accent-red); color: var(--accent-red); background: rgba(255, 77, 109, 0.1); }
         .telegram-badge { background: rgba(0, 180, 216, 0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
         .active-trades-panel { 
             background: var(--bg-card); 
@@ -122,9 +120,6 @@
         .trade-item.short { border-left-color: var(--accent-red); box-shadow: inset 4px 0 15px -5px rgba(255, 77, 109, 0.2); }
         .trade-title { font-weight: 600; font-size: 1rem; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .trade-details { font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono); }
-        .trade-pnl { font-size: 0.9rem; font-weight: 600; margin-top: 6px; font-family: var(--font-mono); }
-        .trade-pnl.positive { color: var(--accent-green); }
-        .trade-pnl.negative { color: var(--accent-red); }
         .score-card { 
             background: var(--bg-card); 
             border: 1px solid var(--border); 
@@ -524,7 +519,7 @@
         let liqMap = { 'BTCUSDT': { longs: 0, shorts: 0 }, 'ETHUSDT': { longs: 0, shorts: 0 }, 'SOLUSDT': { longs: 0, shorts: 0 } };
         let liquidationLevels = { 'BTCUSDT': [], 'ETHUSDT': [], 'SOLUSDT': [] };
 
-        // FIX: Cache para dados on-chain e macro (evita chamadas repetidas em caso de falha)
+        // Cache para dados on-chain e macro (evita chamadas repetidas em caso de falha)
         const dataCache = {
             onChain: { mvrv: 1.2, sopr: 0.95, realizedPrice: 53600, activeAddresses: 605298, timestamp: 0 },
             macro: { dxy: 101.37, us10y: 4.28, vix: 18.41, timestamp: 0 },
@@ -1050,7 +1045,7 @@
         function evaluateMarkets() {
             ASSETS.forEach(symbol => {
                 const data = assetsData[symbol];
-                if (!data || !data.candles1H || data.candles1H.length === 0) return; // FIX: skip if no data
+                if (!data || !data.candles1H || data.candles1H.length === 0) return; // skip if no data
                 updateSwingPoints(data);
                 const scoreData = computeScore(symbol);
                 const score = scoreData.score;
@@ -1159,7 +1154,7 @@
             } catch(e) { handleApiError(`OpenInterest ${symbol}`, e); }
         }
 
-        // FIX: On-chain data via CoinMetrics (funcional, com CORS)
+        // On-chain data via CoinMetrics (funcional, com CORS)
         async function fetchOnChainData() {
             const now = Date.now();
             if (dataCache.onChain.timestamp && (now - dataCache.onChain.timestamp) < CACHE_TTL) {
@@ -1202,7 +1197,7 @@
             }
         }
 
-        // FIX: Macro indicators via FRED (com fallback para Yahoo via proxy CORS)
+        // Macro indicators via FRED (com fallback para Yahoo via proxy CORS)
         async function fetchMacroIndicators() {
             const now = Date.now();
             if (dataCache.macro.timestamp && (now - dataCache.macro.timestamp) < CACHE_TTL) {
@@ -1830,7 +1825,7 @@
         async function fetchBinanceDerivatives() { 
             try { const r = await fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1'); if(!r.ok) throw new Error(`HTTP ${r.status}`); const d = await r.json(); document.getElementById('funding-rate').textContent = (parseFloat(d[0].fundingRate)*100).toFixed(4) + '%'; } catch(e){ handleApiError('Binance Funding', e); }
         }
-        // FIX: BRK usando CoinMetrics + fallback para cache
+        // BRK usando CoinMetrics + fallback para cache
         async function fetchBRK() {
             const metrics = [
                 { id: 'mvrv', el: 'mvrv', interp: 'mvrv-interp', source: 'mvrv-source' },
@@ -1904,7 +1899,7 @@
             document.getElementById('active-addresses').textContent = activeAddresses.toLocaleString('en-US') + ' (cache)';
         }
 
-        // FIX: Hashrate via Mempool.space (CORS habilitado)
+        // Hashrate via Mempool.space (CORS habilitado)
         async function fetchHashrate() {
             const now = Date.now();
             if (dataCache.hashrate.timestamp && (now - dataCache.hashrate.timestamp) < CACHE_TTL) {
@@ -1930,7 +1925,7 @@
             }
         }
 
-        // FIX: Gas Price via Etherscan (já funcional, mas com fallback)
+        // Gas Price via Etherscan (já funcional, mas com fallback)
         async function fetchGasPrice() {
             const now = Date.now();
             if (dataCache.gas.timestamp && (now - dataCache.gas.timestamp) < CACHE_TTL) {
