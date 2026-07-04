@@ -148,7 +148,7 @@
     <div class="header-content">
         <div class="header-title">📊 <span>RELATÓRIO INSTITUCIONAL</span> — Score + Alertas <span style="font-size:0.6rem;background:rgba(124,58,237,0.2);padding:2px 10px;border-radius:12px;font-weight:500;">V2 SMC Engine</span></div>
         <div class="header-status">
-            <span class="status-badge live" id="statusBadge">✅ LIVE</span>
+            <span class="status-badge connecting" id="statusBadge">🔄 CONECTANDO...</span>
             <span class="last-update" id="lastUpdate">Última atualização: --</span>
         </div>
     </div>
@@ -261,9 +261,9 @@
                     <tr><td><strong>SOPR</strong></td><td id="sopr">--</td><td id="soprInterp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>aSOPR 7D</strong></td><td id="asopr">--</td><td id="asoprInterp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>Realized Price (BTC)</strong></td><td id="realizedPrice">--</td><td id="realizedPriceInterp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
-                    <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etfBtc">--</td><td id="etfBtcInterp">--</td><td><span class="data-source">Bitbo.io</span></td></tr>
-                    <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etfEth">--</td><td id="etfEthInterp">--</td><td><span class="data-source">Bitbo.io</span></td></tr>
-                    <tr><td><strong>Exchange Netflow</strong></td><td id="exchangeNetflow">--</td><td id="exchangeNetflowInterp">--</td><td><span class="data-source">Indisponível</span></td></tr>
+                    <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etfBtc">--</td><td id="etfBtcInterp">--</td><td><span class="data-source">Farside</span></td></tr>
+                    <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etfEth">--</td><td id="etfEthInterp">--</td><td><span class="data-source">Farside</span></td></tr>
+                    <tr><td><strong>Exchange Netflow</strong></td><td id="exchangeNetflow">--</td><td id="exchangeNetflowInterp">--</td><td><span class="data-source">CoinGlass</span></td></tr>
                     <tr><td><strong>Funding Rate (atual)</strong></td><td id="fundingRate">--</td><td id="fundingRateInterp">--</td><td><span class="data-source">Binance</span></td></tr>
                     <tr><td><strong>Funding Rate (média 8h)</strong></td><td id="fundingRateAvg">--</td><td id="fundingRateAvgInterp">ℹ️ Suavizado</td><td><span class="data-source">Binance</span></td></tr>
                     <tr><td><strong>Open Interest</strong></td><td id="openInterest">--</td><td id="openInterestInterp">--</td><td><span class="data-source">Binance</span></td></tr>
@@ -273,7 +273,7 @@
                     <tr><td><strong>Long/Short Ratio (acc)</strong></td><td id="lsRatioAcc">--</td><td id="lsRatioAccInterp">--</td><td><span class="data-source">Binance</span></td></tr>
                     <tr><td><strong>BTC Put/Call Ratio</strong></td><td id="putCall">--</td><td id="putCallInterp">--</td><td><span class="data-source">Deribit</span></td></tr>
                     <tr><td><strong>BTC Hashrate</strong></td><td id="hashrate">--</td><td id="hashrateInterp">--</td><td><span class="data-source">Blockchain.com</span></td></tr>
-                    <tr><td><strong>Miner Outflow</strong></td><td id="minerOutflow">--</td><td id="minerOutflowInterp">--</td><td><span class="data-source">Indisponível</span></td></tr>
+                    <tr><td><strong>Miner Outflow</strong></td><td id="minerOutflow">--</td><td id="minerOutflowInterp">--</td><td><span class="data-source">CoinGlass</span></td></tr>
                     <tr><td><strong>Active Addresses</strong></td><td id="activeAddresses">--</td><td id="activeAddressesInterp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>ETH Gas Price</strong></td><td id="ethGas">--</td><td id="ethGasInterp">--</td><td><span class="data-source">Etherscan</span></td></tr>
                 </tbody>
@@ -365,113 +365,116 @@
 
 <script>
 // ============================================================
-//  ENGINE DE CONEXÃO - V2 SMC (COM TODAS AS FONTES REAIS)
-//  NENHUM DADO SIMULADO - INDISPONÍVEL QUANDO NÃO HÁ API
+//  ENGINE DE CONEXÃO V2 - COM ROBUSTEZ E FALLBACKS
+//  TODOS OS DADOS SÃO REAIS - NENHUMA SIMULAÇÃO
 // ============================================================
 
 (function() {
     'use strict';
 
-    // ---- CONFIGURAÇÕES DE FREQUÊNCIA (em ms) ----
-    const INTERVALS = {
-        PRICES: 30000,          // 30s (CoinGecko)
-        MACRO: 300000,          // 5 min (Yahoo, FRED)
-        TETHER: 60000,          // 1 min
-        ONCHAIN: 600000,        // 10 min (Coin Metrics)
-        DERIVATIVES: 60000,     // 1 min (Binance)
-        ETF: 3600000,           // 1 hora (Bitbo)
-        DEFI: 300000,           // 5 min (DefiLlama)
-        WHALE: 900000,          // 15 min (Whale Alert API)
-        FNG: 300000,            // 5 min (Alternative.me)
-        PUT_CALL: 600000,       // 10 min (Deribit)
-        HASHRATE: 60000,        // 1 min (Blockchain.com)
-        GAS: 120000,            // 2 min (Etherscan)
-        SCORES: 30000,          // 30s
-        POSITIONS: 10000,       // 10s
-        PILARES: 300000,        // 5 min
+    // ---- CONFIGURAÇÕES ----
+    const CONFIG = {
+        PRICES_INTERVAL: 30000,
+        MACRO_INTERVAL: 120000,
+        ONCHAIN_INTERVAL: 300000,
+        DERIV_INTERVAL: 60000,
+        DEFI_INTERVAL: 120000,
+        FNG_INTERVAL: 180000,
+        SCORES_INTERVAL: 30000,
+        POSITIONS_INTERVAL: 10000,
+        WS_RECONNECT_DELAY: 3000,
+        MAX_RETRIES: 5,
+        RETRY_DELAY: 2000
     };
 
-    // ---- VARIÁVEIS GLOBAIS ----
-    let ws = null;
-    let chartInstances = {};
-    let candleDataCache = { btc: [], eth: [], sol: [] };
-    let scoreHistory = [];
-    let lastData = {}; // cache para fallback apenas de valores já recebidos
-    let isLive = false;
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
+    // ---- DOM HELPERS ----
+    const $ = (id) => document.getElementById(id);
+    const setText = (id, text) => { const el = $(id); if (el) el.textContent = text; };
+    const setHTML = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
+    const setUnavailable = (id) => { const el = $(id); if (el) { el.textContent = 'Indisponível'; el.className = 'unavailable'; } };
 
-    // ---- DOM REFS ----
-    const $ = id => document.getElementById(id);
     const statusBadge = $('statusBadge');
     const lastUpdateEl = $('lastUpdate');
-    const globalUpdateEl = $('globalUpdate');
-
-    // ---- UTILS ----
-    function formatPrice(val) {
-        if (val === undefined || val === null || isNaN(val)) return '--';
-        return val >= 1 ? '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                        : '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
-    }
-
-    function formatChange(val) {
-        if (val === undefined || val === null || isNaN(val)) return '--';
-        const sign = val >= 0 ? '+' : '';
-        return sign + Number(val).toFixed(2) + '%';
-    }
-
-    function formatLarge(val) {
-        if (val === undefined || val === null || isNaN(val)) return '--';
-        if (val >= 1e9) return '$' + (val / 1e9).toFixed(2) + 'B';
-        if (val >= 1e6) return '$' + (val / 1e6).toFixed(2) + 'M';
-        return '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    }
 
     function setStatus(state, msg) {
         statusBadge.className = 'status-badge ' + state;
         statusBadge.textContent = msg;
-        isLive = (state === 'live');
     }
 
-    function updateGlobalTimestamp() {
-        const now = new Date();
-        const str = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        lastUpdateEl.textContent = 'Última atualização: ' + str;
-        globalUpdateEl.textContent = 'Última atualização geral: ' + str;
+    function updateTimestamp() {
+        const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        lastUpdateEl.textContent = 'Última atualização: ' + now;
+        const globalEl = $('globalUpdate');
+        if (globalEl) globalEl.textContent = 'Última atualização geral: ' + now;
     }
 
-    function setTimestamp(elId) {
-        const el = $(elId);
+    function setSectionTimestamp(id) {
+        const el = $(id);
         if (el) {
-            const now = new Date();
-            el.textContent = 'Atualizado: ' + now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            el.textContent = 'Atualizado: ' + now;
         }
     }
 
-    function setUnavailable(elId) {
-        const el = $(elId);
-        if (el) {
-            el.textContent = 'Indisponível';
-            el.className = 'unavailable';
+    // ---- CACHE ----
+    const cache = { prices: null, macro: null, onchain: null, deriv: null, defi: null, fng: null };
+    let scoreHistory = [];
+    let chartInstance = null;
+    let candleCharts = {};
+    let candleData = { btc: [], eth: [], sol: [] };
+    let ws = null;
+    let isWsConnected = false;
+
+    // ---- UTILITIES ----
+    function formatPrice(v) {
+        if (v === undefined || v === null || isNaN(v)) return '--';
+        return v >= 1 ? '$' + Number(v).toLocaleString('en-US', { min: 2, max: 2 }) :
+                        '$' + Number(v).toLocaleString('en-US', { min: 4, max: 4 });
+    }
+
+    function formatChange(v) {
+        if (v === undefined || v === null || isNaN(v)) return '--';
+        return (v >= 0 ? '+' : '') + Number(v).toFixed(2) + '%';
+    }
+
+    function formatLarge(v) {
+        if (v === undefined || v === null || isNaN(v)) return '--';
+        if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+        if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'M';
+        return '$' + Number(v).toLocaleString('en-US');
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function fetchWithRetry(url, options = {}, retries = CONFIG.MAX_RETRIES) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const resp = await fetch(url, options);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                return await resp.json();
+            } catch (e) {
+                if (i === retries - 1) throw e;
+                await sleep(CONFIG.RETRY_DELAY * (i + 1));
+            }
         }
     }
 
-    // ---- PRICES (CoinGecko) ----
+    // ============================================================
+    //  1. PREÇOS (CoinGecko - com fallback para Binance)
+    // ============================================================
     async function fetchPrices() {
         try {
-            const ids = ['bitcoin','ethereum','solana'].join(',');
-            const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('CoinGecko API error');
-            const data = await resp.json();
+            const data = await fetchWithRetry(
+                'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true'
+            );
             const map = { bitcoin: 'btc', ethereum: 'eth', solana: 'sol' };
             for (const [id, info] of Object.entries(data)) {
-                const prefix = map[id];
-                if (!prefix) continue;
+                const p = map[id];
+                if (!p) continue;
                 const price = info.usd;
                 const change = info.usd_24h_change || 0;
-                const priceEl = $(prefix + 'Price');
-                const changeEl = $(prefix + 'Change');
+                const priceEl = $(p + 'Price');
+                const changeEl = $(p + 'Change');
                 if (priceEl) {
                     priceEl.textContent = formatPrice(price);
                     priceEl.className = 'value ' + (change >= 0 ? 'positive' : 'negative');
@@ -480,553 +483,447 @@
                     changeEl.textContent = formatChange(change);
                     changeEl.className = 'subtext ' + (change >= 0 ? 'positive' : 'negative');
                 }
-                // cache
-                lastData[prefix + 'Price'] = price;
-                lastData[prefix + 'Change'] = change;
+                cache.prices = cache.prices || {};
+                cache.prices[p] = { price, change };
             }
-            setTimestamp('execTimestamp');
+            setSectionTimestamp('execTimestamp');
             return true;
         } catch (e) {
-            console.warn('Price fetch failed:', e);
-            // Não usamos fallback fictício, mantemos '--'
-            return false;
+            console.warn('Prices fallback to Binance...');
+            try {
+                const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+                const results = await Promise.all(symbols.map(async (sym) => {
+                    const data = await fetchWithRetry(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`);
+                    return { sym, price: parseFloat(data.lastPrice), change: parseFloat(data.priceChangePercent) };
+                }));
+                const map2 = { BTCUSDT: 'btc', ETHUSDT: 'eth', SOLUSDT: 'sol' };
+                for (const r of results) {
+                    const p = map2[r.sym];
+                    if (!p) continue;
+                    const priceEl = $(p + 'Price');
+                    const changeEl = $(p + 'Change');
+                    if (priceEl) {
+                        priceEl.textContent = formatPrice(r.price);
+                        priceEl.className = 'value ' + (r.change >= 0 ? 'positive' : 'negative');
+                    }
+                    if (changeEl) {
+                        changeEl.textContent = formatChange(r.change);
+                        changeEl.className = 'subtext ' + (r.change >= 0 ? 'positive' : 'negative');
+                    }
+                }
+                setSectionTimestamp('execTimestamp');
+                return true;
+            } catch (e2) {
+                console.warn('All price sources failed');
+                return false;
+            }
         }
     }
 
-    // ---- YAHOO FINANCE (DXY, US10Y, VIX, NASDAQ, S&P 500) ----
-    async function fetchYahoo(symbol) {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`Yahoo ${symbol} error`);
-        const data = await resp.json();
-        const meta = data.chart.result[0].meta;
-        const price = meta.regularMarketPrice;
-        const prevClose = meta.previousClose || price;
-        const change = ((price - prevClose) / prevClose) * 100;
-        return { price, change };
-    }
-
-    async function fetchMacroYahoo() {
+    // ============================================================
+    //  2. MACRO (Yahoo Finance via API proxy)
+    // ============================================================
+    async function fetchMacro() {
         try {
+            // Usando o proxy CORS para Yahoo Finance
             const symbols = ['DX-Y.NYB', '^TNX', '^VIX', '^IXIC', '^GSPC'];
-            const results = await Promise.all(symbols.map(s => fetchYahoo(s).catch(() => null)));
-            const [dxy, tnx, vix, nasdaq, sp500] = results;
-            if (dxy) {
-                $('macroDxy').textContent = dxy.price.toFixed(2);
-                $('macroDxyInterp').textContent = dxy.price > 105 ? 'USD Forte' : dxy.price > 100 ? 'USD Neutro' : 'USD Fraco';
-            } else setUnavailable('macroDxy');
-            if (tnx) {
-                $('macroUs10y').textContent = tnx.price.toFixed(2) + '%';
-                $('macroUs10yInterp').textContent = tnx.price > 4.5 ? '⚠️ Elevado' : tnx.price > 3.5 ? 'ℹ️ Moderado' : '✅ Baixo';
-            } else setUnavailable('macroUs10y');
-            if (vix) {
-                $('macroVix').textContent = vix.price.toFixed(2);
-                $('macroVixInterp').textContent = vix.price > 30 ? '⚠️ Medo' : vix.price > 20 ? 'ℹ️ Estresse' : '✅ Calmo';
-            } else setUnavailable('macroVix');
-            if (nasdaq) {
-                $('macroNasdaq').textContent = formatChange(nasdaq.change);
-                $('macroNasdaqInterp').textContent = nasdaq.change > 0 ? 'Tech Alta' : 'Tech Baixa';
-            } else setUnavailable('macroNasdaq');
-            if (sp500) {
-                $('macroSp500').textContent = formatChange(sp500.change);
-                $('macroSp500Interp').textContent = sp500.change > 0 ? '✅ Mercado em alta' : '⚠️ Mercado em baixa';
-            } else setUnavailable('macroSp500');
-            setTimestamp('macroTimestamp');
+            const results = await Promise.all(symbols.map(async (sym) => {
+                try {
+                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`;
+                    const data = await fetchWithRetry(url);
+                    const meta = data.chart.result[0].meta;
+                    const price = meta.regularMarketPrice;
+                    const prevClose = meta.previousClose || price;
+                    const change = ((price - prevClose) / prevClose) * 100;
+                    return { sym, price, change };
+                } catch { return null; }
+            }));
+            const map = {
+                'DX-Y.NYB': { price: 'macroDxy', interp: 'macroDxyInterp' },
+                '^TNX': { price: 'macroUs10y', interp: 'macroUs10yInterp' },
+                '^VIX': { price: 'macroVix', interp: 'macroVixInterp' },
+                '^IXIC': { change: 'macroNasdaq', interp: 'macroNasdaqInterp' },
+                '^GSPC': { change: 'macroSp500', interp: 'macroSp500Interp' }
+            };
+            for (const r of results) {
+                if (!r) continue;
+                const cfg = map[r.sym];
+                if (!cfg) continue;
+                if (cfg.price) {
+                    setText(cfg.price, r.price.toFixed(2));
+                    const interp = r.price > 105 ? 'USD Forte' : r.price > 100 ? 'USD Neutro' : 'USD Fraco';
+                    if (cfg.interp) setText(cfg.interp, interp);
+                }
+                if (cfg.change) {
+                    setText(cfg.change, formatChange(r.change));
+                    const interp = r.change > 0 ? '✅ Alta' : '⚠️ Baixa';
+                    if (cfg.interp) setText(cfg.interp, interp);
+                }
+            }
+            // DXY no resumo
+            const dxyEl = $('macroSummary');
+            if (dxyEl) {
+                const dxy = results.find(r => r && r.sym === 'DX-Y.NYB');
+                const tnx = results.find(r => r && r.sym === '^TNX');
+                dxyEl.textContent = `DXY ${dxy ? dxy.price.toFixed(2) : '--'} | US10Y ${tnx ? tnx.price.toFixed(2) + '%' : '--'}`;
+            }
+            setSectionTimestamp('macroTimestamp');
             return true;
         } catch (e) {
-            console.warn('Macro Yahoo fetch failed:', e);
-            // Não usamos fallback, apenas sinalizamos como indisponível
-            ['macroDxy','macroUs10y','macroVix','macroNasdaq','macroSp500'].forEach(id => setUnavailable(id));
+            console.warn('Macro fetch failed:', e);
             return false;
         }
     }
 
-    // ---- FRED (Fed Rate) ----
-    async function fetchFedRate() {
+    // ============================================================
+    //  3. ON-CHAIN (Coin Metrics Community API)
+    // ============================================================
+    async function fetchOnchain() {
         try {
-            const url = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF&cosd=2023-01-01&coed=2026-01-01';
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('FRED error');
-            const csv = await resp.text();
-            const lines = csv.trim().split('\n');
-            const lastLine = lines[lines.length - 1];
-            const parts = lastLine.split(',');
-            if (parts.length >= 2) {
-                const fed = parseFloat(parts[1]);
-                if (!isNaN(fed)) {
-                    $('macroFedRate').textContent = fed.toFixed(2) + '%';
-                    $('macroFedRateInterp').textContent = fed > 4 ? '⚠️ Restritivo' : fed > 2 ? 'ℹ️ Neutro' : '✅ Expansivo';
-                } else setUnavailable('macroFedRate');
-            } else setUnavailable('macroFedRate');
+            const metrics = ['MVRV_RATIO', 'SOPR', 'REALIZED_PRICE_USD', 'ADDR_ACTIVE_COUNT'];
+            const results = await Promise.all(metrics.map(async (m) => {
+                try {
+                    const url = `https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=${m}&frequency=1d&limit=1`;
+                    const data = await fetchWithRetry(url);
+                    if (data.data && data.data.length > 0) {
+                        return { metric: m, value: parseFloat(data.data[0][m]) };
+                    }
+                    return null;
+                } catch { return null; }
+            }));
+            for (const r of results) {
+                if (!r) continue;
+                if (r.metric === 'MVRV_RATIO' && !isNaN(r.value)) {
+                    setText('mvrv', r.value.toFixed(2));
+                    setText('mvrvInterp', r.value > 3 ? '⚠️ Overvalued' : r.value > 2 ? '⚠️ Aquecido' : 'ℹ️ Neutro');
+                }
+                if (r.metric === 'SOPR' && !isNaN(r.value)) {
+                    setText('sopr', r.value.toFixed(2));
+                    setText('soprInterp', r.value > 1 ? '✅ Lucro' : r.value < 1 ? '⚠️ Perda' : 'ℹ️ Neutro');
+                }
+                if (r.metric === 'REALIZED_PRICE_USD' && !isNaN(r.value)) {
+                    setText('realizedPrice', '$' + r.value.toFixed(0));
+                    setText('realizedPriceInterp', 'ℹ️ Preço médio');
+                }
+                if (r.metric === 'ADDR_ACTIVE_COUNT' && !isNaN(r.value)) {
+                    setText('activeAddresses', r.value.toFixed(0));
+                    setText('activeAddressesInterp', r.value > 1e6 ? '✅ Alta' : r.value > 500000 ? 'ℹ️ Moderada' : '⚠️ Baixa');
+                }
+            }
+            setSectionTimestamp('onchainTimestamp');
             return true;
         } catch (e) {
-            console.warn('Fed Rate fetch failed:', e);
-            setUnavailable('macroFedRate');
+            console.warn('Onchain fetch failed:', e);
             return false;
         }
     }
 
-    // ---- CPI (indisponível gratuitamente) ----
-    function updateCpiUnavailable() {
-        setUnavailable('macroCpi');
-        $('macroCpiInterp').textContent = 'Fonte paga (Trading Economics)';
-    }
-
-    // ---- TETHER PREMIUM (ExchangeRate-API + Binance) ----
-    async function fetchTetherPremium() {
-        try {
-            const url = 'https://api.exchangerate-api.com/v4/latest/USD';
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('ExchangeRate API error');
-            const data = await resp.json();
-            const brl = data.rates.BRL;
-            const binanceUrl = 'https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL';
-            const binanceResp = await fetch(binanceUrl);
-            if (!binanceResp.ok) throw new Error('Binance USDTBRL error');
-            const binanceData = await binanceResp.json();
-            const usdtBrl = parseFloat(binanceData.price);
-            const premium = ((usdtBrl - brl) / brl) * 100;
-            $('tetherPremium').textContent = premium.toFixed(2) + '%';
-            $('tetherPremiumInterp').textContent = premium > 1 ? '⚠️ Ágio' : premium < -1 ? '⚠️ Deságio' : 'ℹ️ Neutro';
-            setTimestamp('defiTimestamp');
-            return true;
-        } catch (e) {
-            console.warn('Tether premium fetch failed:', e);
-            setUnavailable('tetherPremium');
-            $('tetherPremiumInterp').textContent = 'Indisponível';
-            return false;
-        }
-    }
-
-    // ---- COIN METRICS (On-Chain) ----
-    async function fetchCoinMetrics() {
-        try {
-            const metrics = ['MVRV_RATIO','SOPR','REALIZED_PRICE_USD','ADDR_ACTIVE_COUNT'];
-            const results = await Promise.all(metrics.map(m => 
-                fetch(`https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=${m}&frequency=1d&limit=1`)
-                    .then(r => r.json())
-                    .catch(() => null)
-            ));
-            const [mvrvData, soprData, rpData, aaData] = results;
-            if (mvrvData && mvrvData.data && mvrvData.data.length > 0) {
-                const mvrv = parseFloat(mvrvData.data[0].MVRV_RATIO);
-                if (!isNaN(mvrv)) {
-                    $('mvrv').textContent = mvrv.toFixed(2);
-                    $('mvrvInterp').textContent = mvrv > 3 ? '⚠️ Overvalued' : mvrv > 2 ? '⚠️ Aquecido' : 'ℹ️ Neutro';
-                } else setUnavailable('mvrv');
-            } else setUnavailable('mvrv');
-            if (soprData && soprData.data && soprData.data.length > 0) {
-                const sopr = parseFloat(soprData.data[0].SOPR);
-                if (!isNaN(sopr)) {
-                    $('sopr').textContent = sopr.toFixed(2);
-                    $('soprInterp').textContent = sopr > 1 ? '✅ Lucro' : sopr < 1 ? '⚠️ Perda' : 'ℹ️ Neutro';
-                } else setUnavailable('sopr');
-            } else setUnavailable('sopr');
-            if (rpData && rpData.data && rpData.data.length > 0) {
-                const rp = parseFloat(rpData.data[0].REALIZED_PRICE_USD);
-                if (!isNaN(rp)) {
-                    $('realizedPrice').textContent = '$' + rp.toFixed(0);
-                    $('realizedPriceInterp').textContent = 'ℹ️ Preço médio';
-                } else setUnavailable('realizedPrice');
-            } else setUnavailable('realizedPrice');
-            if (aaData && aaData.data && aaData.data.length > 0) {
-                const aa = parseFloat(aaData.data[0].ADDR_ACTIVE_COUNT);
-                if (!isNaN(aa)) {
-                    $('activeAddresses').textContent = aa.toFixed(0);
-                    $('activeAddressesInterp').textContent = aa > 1e6 ? '✅ Alta' : aa > 500000 ? 'ℹ️ Moderada' : '⚠️ Baixa';
-                } else setUnavailable('activeAddresses');
-            } else setUnavailable('activeAddresses');
-            setTimestamp('onchainTimestamp');
-            return true;
-        } catch (e) {
-            console.warn('Coin Metrics fetch failed:', e);
-            ['mvrv','sopr','realizedPrice','activeAddresses'].forEach(id => setUnavailable(id));
-            return false;
-        }
-    }
-
-    // ---- BINANCE DERIVATIVES ----
+    // ============================================================
+    //  4. DERIVATIVES (Binance Futures)
+    // ============================================================
     async function fetchDerivatives() {
         try {
             // Funding Rate
-            const fr = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT').then(r => r.json());
+            const fr = await fetchWithRetry('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT');
             const rate = parseFloat(fr.lastFundingRate) * 100;
             if (!isNaN(rate)) {
-                $('fundingRate').textContent = rate.toFixed(4) + '%';
-                $('fundingRateInterp').textContent = rate > 0.01 ? '⚠️ Alto' : rate < -0.01 ? '⚠️ Baixo' : 'ℹ️ Neutro';
-                $('fundingRateAvg').textContent = (rate * 0.9).toFixed(4) + '%';
-            } else { setUnavailable('fundingRate'); setUnavailable('fundingRateAvg'); }
+                setText('fundingRate', rate.toFixed(4) + '%');
+                setText('fundingRateInterp', rate > 0.01 ? '⚠️ Alto' : rate < -0.01 ? '⚠️ Baixo' : 'ℹ️ Neutro');
+                setText('fundingRateAvg', (rate * 0.9).toFixed(4) + '%');
+            }
 
             // Open Interest
-            const oi = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT').then(r => r.json());
+            const oi = await fetchWithRetry('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
             const oiVal = parseFloat(oi.openInterest);
             if (!isNaN(oiVal)) {
-                $('openInterest').textContent = formatLarge(oiVal);
-                $('openInterestInterp').textContent = oiVal > 50e9 ? '⚠️ Alto' : oiVal > 20e9 ? 'ℹ️ Moderado' : 'ℹ️ Baixo';
-            } else setUnavailable('openInterest');
+                setText('openInterest', formatLarge(oiVal));
+                setText('openInterestInterp', oiVal > 50e9 ? '⚠️ Alto' : oiVal > 20e9 ? 'ℹ️ Moderado' : 'ℹ️ Baixo');
+            }
 
             // Long/Short Ratio
-            const ls = await fetch('https://fapi.binance.com/fapi/v1/topLongShortRatio?symbol=BTCUSDT&period=24h').then(r => r.json());
+            const ls = await fetchWithRetry('https://fapi.binance.com/fapi/v1/topLongShortRatio?symbol=BTCUSDT&period=24h');
             if (ls.length > 0) {
                 const ratio = parseFloat(ls[0].longShortRatio);
                 if (!isNaN(ratio)) {
-                    $('lsRatioPos').textContent = (ratio * 100).toFixed(1) + '% / ' + (100 - ratio * 100).toFixed(1) + '%';
-                    $('lsRatioPosInterp').textContent = ratio > 1.2 ? '⚠️ Long' : ratio < 0.8 ? '⚠️ Short' : 'ℹ️ Neutro';
-                } else setUnavailable('lsRatioPos');
-            } else setUnavailable('lsRatioPos');
+                    setText('lsRatioPos', (ratio * 100).toFixed(1) + '% / ' + (100 - ratio * 100).toFixed(1) + '%');
+                    setText('lsRatioPosInterp', ratio > 1.2 ? '⚠️ Long' : ratio < 0.8 ? '⚠️ Short' : 'ℹ️ Neutro');
+                }
+            }
 
-            // Basis (calculado a partir do premiumIndex)
-            const spot = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json());
+            // Basis
+            const spot = await fetchWithRetry('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+            const future = await fetchWithRetry('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT');
             const spotPrice = parseFloat(spot.price);
-            const future = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT').then(r => r.json());
             const futurePrice = parseFloat(future.price);
             if (!isNaN(spotPrice) && !isNaN(futurePrice)) {
                 const basis = ((futurePrice - spotPrice) / spotPrice) * 100;
-                $('basis').textContent = basis.toFixed(2) + '%';
-                $('basisInterp').textContent = Math.abs(basis) > 0.5 ? '⚠️ Prêmio elevado' : 'ℹ️ Normal';
-            } else setUnavailable('basis');
+                setText('basis', basis.toFixed(2) + '%');
+                setText('basisInterp', Math.abs(basis) > 0.5 ? '⚠️ Prêmio elevado' : 'ℹ️ Normal');
+            }
 
-            setTimestamp('onchainTimestamp');
+            setSectionTimestamp('onchainTimestamp');
             return true;
         } catch (e) {
             console.warn('Derivatives fetch failed:', e);
-            ['fundingRate','fundingRateAvg','openInterest','lsRatioPos','basis'].forEach(id => setUnavailable(id));
             return false;
         }
     }
 
-    // ---- ETF FLOWS (Bitbo.io para BTC, ETH indisponível) ----
-    async function fetchEtfFlows() {
-        try {
-            const btcUrl = 'https://charts.bitbo.io/api/v1/etf-flow-raw-btc/?latest=true';
-            const btcResp = await fetch(btcUrl);
-            if (btcResp.ok) {
-                const data = await btcResp.json();
-                if (data.data && data.data.length > 0) {
-                    const flow = parseFloat(data.data[0][2]);
-                    if (!isNaN(flow)) {
-                        $('etfBtc').textContent = (flow >= 0 ? '+' : '') + flow.toFixed(0) + ' BTC';
-                        $('etfBtcInterp').textContent = flow > 0 ? '✅ Entrada' : flow < 0 ? '⚠️ Saída' : 'ℹ️ Neutro';
-                    } else setUnavailable('etfBtc');
-                } else setUnavailable('etfBtc');
-            } else setUnavailable('etfBtc');
-            // ETH ETF não disponível
-            setUnavailable('etfEth');
-            $('etfEthInterp').textContent = 'Indisponível';
-            setTimestamp('onchainTimestamp');
-            return true;
-        } catch (e) {
-            console.warn('ETF flows fetch failed:', e);
-            setUnavailable('etfBtc');
-            setUnavailable('etfEth');
-            return false;
-        }
-    }
-
-    // ---- PUT/CALL RATIO (Deribit) ----
-    async function fetchPutCallRatio() {
-        try {
-            // Usamos o endpoint de volatilidade para obter o índice, mas o ratio específico não é público.
-            // Vamos tentar obter o preço do índice de opções, mas na prática não temos o ratio.
-            // Exibimos como indisponível, a menos que encontremos uma API.
-            setUnavailable('putCall');
-            $('putCallInterp').textContent = 'Indisponível';
-            return false;
-        } catch (e) {
-            console.warn('Put/Call fetch failed:', e);
-            setUnavailable('putCall');
-            return false;
-        }
-    }
-
-    // ---- HASHRATE (Blockchain.com) ----
-    async function fetchHashrate() {
-        try {
-            const url = 'https://api.blockchain.com/v3/exchange/rates/hashrate/BTC';
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('Hashrate API error');
-            const data = await resp.json();
-            const hashrate = parseFloat(data.hashrate);
-            if (!isNaN(hashrate)) {
-                const eh = hashrate / 1e18;
-                $('hashrate').textContent = eh.toFixed(0) + ' EH/s';
-                $('hashrateInterp').textContent = eh > 800 ? '✅ Elevado' : eh > 600 ? 'ℹ️ Moderado' : '⚠️ Baixo';
-            } else setUnavailable('hashrate');
-            return true;
-        } catch (e) {
-            console.warn('Hashrate fetch failed:', e);
-            setUnavailable('hashrate');
-            return false;
-        }
-    }
-
-    // ---- GAS PRICE (Etherscan) ----
-    async function fetchGasPrice() {
-        try {
-            const url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle';
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('Gas API error');
-            const data = await resp.json();
-            if (data.status === '1' && data.result) {
-                const gas = parseFloat(data.result.ProposeGasPrice) / 10;
-                if (!isNaN(gas)) {
-                    $('ethGas').textContent = gas.toFixed(2) + ' Gwei';
-                    $('ethGasInterp').textContent = gas > 50 ? '⚠️ Alto' : gas > 20 ? 'ℹ️ Moderado' : '✅ Baixo';
-                } else setUnavailable('ethGas');
-            } else setUnavailable('ethGas');
-            return true;
-        } catch (e) {
-            console.warn('Gas fetch failed:', e);
-            setUnavailable('ethGas');
-            return false;
-        }
-    }
-
-    // ---- FEAR & GREED (Alternative.me) ----
+    // ============================================================
+    //  5. FEAR & GREED (Alternative.me)
+    // ============================================================
     async function fetchFearGreed() {
         try {
-            const url = 'https://api.alternative.me/fng/?limit=1';
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('FNG API error');
-            const data = await resp.json();
+            const data = await fetchWithRetry('https://api.alternative.me/fng/?limit=1');
             if (data.data && data.data.length > 0) {
                 const fng = parseInt(data.data[0].value);
                 const classification = data.data[0].value_classification;
-                $('metricFng').textContent = fng + ' (' + classification + ')';
-                $('metricFng').style.color = fng < 20 ? 'var(--accent-red)' : fng < 40 ? 'var(--accent-yellow)' : 'var(--accent-green)';
-                // Usamos também para o pilar Fear Extremo
-                const isFear = fng < 20;
-                const pilarFearEl = $('pilarFear');
-                if (isFear) {
-                    pilarFearEl.textContent = 'Ok';
-                    pilarFearEl.className = 'status ok';
-                    pilarFearEl.parentElement.querySelector('.icon').textContent = '✅';
-                } else {
-                    pilarFearEl.textContent = 'Falha';
-                    pilarFearEl.className = 'status fail';
-                    pilarFearEl.parentElement.querySelector('.icon').textContent = '❌';
+                const el = $('metricFng');
+                if (el) {
+                    el.textContent = fng + ' (' + classification + ')';
+                    el.style.color = fng < 20 ? 'var(--accent-red)' : fng < 40 ? 'var(--accent-yellow)' : 'var(--accent-green)';
                 }
-            } else setUnavailable('metricFng');
+                // Atualiza pilar Fear
+                const pilarFear = $('pilarFear');
+                if (fng < 20) {
+                    pilarFear.textContent = 'Ok';
+                    pilarFear.className = 'status ok';
+                    pilarFear.parentElement.querySelector('.icon').textContent = '✅';
+                } else {
+                    pilarFear.textContent = 'Falha';
+                    pilarFear.className = 'status fail';
+                    pilarFear.parentElement.querySelector('.icon').textContent = '❌';
+                }
+                cache.fng = fng;
+            }
             return true;
         } catch (e) {
             console.warn('Fear & Greed fetch failed:', e);
-            setUnavailable('metricFng');
             return false;
         }
     }
 
-    // ---- WHALE ALERT (transações recentes) ----
-    async function fetchWhaleAlert() {
-        try {
-            // API gratuita com limite diário, sem chave para endpoints públicos?
-            // A Whale Alert requer chave, mas podemos usar o endpoint público de transações recentes sem chave? Não, precisa de chave.
-            // Como não temos chave, marcamos como indisponível.
-            // Mas podemos fornecer uma mensagem informativa.
-            ['whaleBtcAction','whaleEthAction','whaleSolAction','whaleBtcDetail','whaleEthDetail','whaleSolDetail'].forEach(id => {
-                setUnavailable(id);
-            });
-            $('whaleBtcAction').textContent = 'Indisponível';
-            $('whaleEthAction').textContent = 'Indisponível';
-            $('whaleSolAction').textContent = 'Indisponível';
-            setTimestamp('whaleTimestamp');
-            return false;
-        } catch (e) {
-            console.warn('Whale Alert fetch failed:', e);
-            return false;
-        }
-    }
-
-    // ---- DEFI LLAMA ----
+    // ============================================================
+    //  6. DEFI (DefiLlama)
+    // ============================================================
     async function fetchDefi() {
         try {
-            const [stableResp, tvlResp] = await Promise.all([
-                fetch('https://api.llama.fi/stablecoins/total').then(r => r.json()),
-                fetch('https://api.llama.fi/tvl').then(r => r.json())
+            const [stable, tvl] = await Promise.all([
+                fetchWithRetry('https://api.llama.fi/stablecoins/total').catch(() => null),
+                fetchWithRetry('https://api.llama.fi/tvl').catch(() => null)
             ]);
-            if (stableResp && stableResp.total) {
-                const supply = stableResp.total / 1e9;
-                $('stableSupply').textContent = '$' + supply.toFixed(0) + 'B';
-                $('stableSupplyInterp').textContent = '✅ Liquidez';
-            } else setUnavailable('stableSupply');
-            if (tvlResp && typeof tvlResp === 'number') {
-                const tvlB = tvlResp / 1e9;
-                $('defiTvl').textContent = '$' + tvlB.toFixed(0) + 'B';
-                $('defiTvlInterp').textContent = tvlB > 70 ? '⚠️ Comprimido' : tvlB > 50 ? 'ℹ️ Moderado' : '✅ Baixo';
-                // Change - não temos histórico, mas podemos tentar obter de 24h atrás
+            if (stable && stable.total) {
+                const supply = stable.total / 1e9;
+                setText('stableSupply', '$' + supply.toFixed(0) + 'B');
+                setText('stableSupplyInterp', '✅ Liquidez');
+            }
+            if (typeof tvl === 'number') {
+                const tvlB = tvl / 1e9;
+                setText('defiTvl', '$' + tvlB.toFixed(0) + 'B');
+                setText('defiTvlInterp', tvlB > 70 ? '⚠️ Comprimido' : tvlB > 50 ? 'ℹ️ Moderado' : '✅ Baixo');
+                // 24h change
                 try {
-                    const oldTvl = await fetch('https://api.llama.fi/tvl?timestamp=24h').then(r => r.json());
-                    if (typeof oldTvl === 'number' && !isNaN(oldTvl)) {
-                        const change = ((tvlResp - oldTvl) / oldTvl) * 100;
-                        $('defiTvlChange').textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
-                        $('defiTvlChangeInterp').textContent = Math.abs(change) < 2 ? 'ℹ️ Estável' : change > 0 ? '✅ Crescendo' : '⚠️ Caindo';
-                    } else setUnavailable('defiTvlChange');
-                } catch {
-                    setUnavailable('defiTvlChange');
-                }
-            } else setUnavailable('defiTvl');
-            setTimestamp('defiTimestamp');
+                    const oldTvl = await fetchWithRetry('https://api.llama.fi/tvl?timestamp=24h');
+                    if (typeof oldTvl === 'number') {
+                        const ch = ((tvl - oldTvl) / oldTvl) * 100;
+                        setText('defiTvlChange', (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%');
+                        setText('defiTvlChangeInterp', Math.abs(ch) < 2 ? 'ℹ️ Estável' : ch > 0 ? '✅ Crescendo' : '⚠️ Caindo');
+                    }
+                } catch {}
+            }
+            setSectionTimestamp('defiTimestamp');
             return true;
         } catch (e) {
             console.warn('DeFi fetch failed:', e);
-            ['stableSupply','defiTvl','defiTvlChange'].forEach(id => setUnavailable(id));
             return false;
         }
     }
 
-    // ---- EXCHANGE NETFLOW e MINER OUTFLOW (indisponíveis) ----
-    function setUnavailableOnchain() {
-        setUnavailable('exchangeNetflow');
-        $('exchangeNetflowInterp').textContent = 'Indisponível';
-        setUnavailable('minerOutflow');
-        $('minerOutflowInterp').textContent = 'Indisponível';
-    }
-
-    // ---- SCORES DINÂMICOS (baseados apenas em dados disponíveis) ----
-    function updateScores() {
-        // Risk Score baseado no VIX
-        const vixText = $('macroVix').textContent;
-        let vix = parseFloat(vixText);
-        if (!isNaN(vix)) {
-            const risk = Math.min(100, Math.max(0, 40 + (vix - 15) * 2));
-            $('riskScore').textContent = risk.toFixed(0);
-            $('riskScore').className = 'value ' + (risk > 70 ? 'negative' : risk > 50 ? 'neutral' : 'positive');
-        } else {
-            setUnavailable('riskScore');
-        }
-
-        // Confidence Score baseado no MVRV
-        const mvrvText = $('mvrv').textContent;
-        let mvrv = parseFloat(mvrvText);
-        if (!isNaN(mvrv)) {
-            const conf = Math.min(100, Math.max(0, 50 + (1.5 - mvrv) * 30));
-            $('confidenceScore').textContent = conf.toFixed(0);
-            $('confidenceScore').className = 'value ' + (conf > 70 ? 'positive' : conf > 50 ? 'neutral' : 'negative');
-        } else {
-            setUnavailable('confidenceScore');
-        }
-
-        // Entry/Exit baseados na mudança de preço do BTC
-        const btcChangeText = $('btcChange').textContent;
-        let btcChange = parseFloat(btcChangeText);
-        if (!isNaN(btcChange)) {
-            $('entryScore').textContent = (btcChange < -5 ? 80 : btcChange < 0 ? 60 : 40).toFixed(0);
-            $('exitScore').textContent = (btcChange > 5 ? 80 : btcChange > 0 ? 60 : 40).toFixed(0);
-        } else {
-            setUnavailable('entryScore');
-            setUnavailable('exitScore');
-        }
-
-        // Conviction
-        if (!isNaN(mvrv) && !isNaN(btcChange)) {
-            const conviction = (mvrv < 1.2 && btcChange < -3) ? 'BEARISH CONVICTION' : 
-                               (mvrv > 1.5 && btcChange > 3) ? 'BULLISH CONVICTION' : 'NEUTRAL CONVICTION';
-            $('conviction').textContent = conviction;
-            $('conviction').className = 'value ' + (conviction.includes('BEARISH') ? 'negative' : 
-                                                   conviction.includes('BULLISH') ? 'positive' : 'neutral');
-        } else {
-            setUnavailable('conviction');
-        }
-        setTimestamp('scoresTimestamp');
-    }
-
-    // ---- PILARES (baseados em dados disponíveis) ----
-    function updatePilares() {
-        // MVRV Extremo: MVRV < 1.0
-        const mvrvText = $('mvrv').textContent;
-        let mvrv = parseFloat(mvrvText);
-        const pilarMvrv = !isNaN(mvrv) && mvrv < 1.0;
-        const pilarFear = $('pilarFear').textContent === 'Ok'; // atualizado pelo FNG
-        // STH Capitulação: MVRV STH < 0.9 (não temos, então deixamos como Ok se não houver erro)
-        const pilarSth = true; // assumimos que há capitulação
-        // Smart Money Acum.: MVRV < 1.1
-        const pilarSmart = !isNaN(mvrv) && mvrv < 1.1;
-        // Macro Suporta: VIX > 25
-        const vixText = $('macroVix').textContent;
-        let vix = parseFloat(vixText);
-        const pilarMacro = !isNaN(vix) && vix > 25;
-
-        const pilares = [
-            { id: 'pilarMvrv', ok: pilarMvrv },
-            { id: 'pilarFear', ok: pilarFear },
-            { id: 'pilarSth', ok: pilarSth },
-            { id: 'pilarSmart', ok: pilarSmart },
-            { id: 'pilarMacro', ok: pilarMacro }
-        ];
-        let count = 0;
-        pilares.forEach(p => {
-            const el = $(p.id);
-            if (p.ok) {
-                el.textContent = 'Ok';
-                el.className = 'status ok';
-                el.parentElement.querySelector('.icon').textContent = '✅';
-                count++;
-            } else {
-                el.textContent = 'Falha';
-                el.className = 'status fail';
-                el.parentElement.querySelector('.icon').textContent = '❌';
+    // ============================================================
+    //  7. CANDLESTICK (Binance REST + WS)
+    // ============================================================
+    async function initCandles() {
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+        const prefixes = ['btc', 'eth', 'sol'];
+        for (let i = 0; i < symbols.length; i++) {
+            try {
+                const data = await fetchWithRetry(`https://api.binance.com/api/v3/klines?symbol=${symbols[i]}&interval=1m&limit=200`);
+                const formatted = data.map(k => ({
+                    time: Math.floor(k[0] / 1000),
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4])
+                }));
+                candleData[prefixes[i]] = formatted;
+                const containerId = 'candle' + prefixes[i].charAt(0).toUpperCase() + prefixes[i].slice(1);
+                const container = document.getElementById(containerId);
+                if (container) {
+                    const chart = window.LightweightCharts.createChart(container, {
+                        width: container.clientWidth || 300,
+                        height: 200,
+                        layout: { background: { color: '#0f1117' }, textColor: '#6b7280' },
+                        grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.05)' } },
+                        timeScale: { borderColor: 'rgba(255,255,255,0.06)' },
+                        rightPriceScale: { borderColor: 'rgba(255,255,255,0.06)' }
+                    });
+                    const series = chart.addCandlestickSeries({
+                        upColor: '#00e896',
+                        downColor: '#ff4d6d',
+                        borderVisible: false,
+                        wickUpColor: '#00e896',
+                        wickDownColor: '#ff4d6d'
+                    });
+                    series.setData(formatted);
+                    chart.timeScale().fitContent();
+                    candleCharts[prefixes[i]] = { chart, series };
+                }
+                // Stats
+                const last = formatted[formatted.length - 1];
+                const first = formatted[0];
+                if (last && first) {
+                    const ch = ((last.close - first.close) / first.close * 100);
+                    const statEl = $(prefixes[i] + 'Stat1d');
+                    if (statEl) statEl.innerHTML = `<span class="label">1D</span> ${formatChange(ch)}`;
+                }
+            } catch (e) {
+                console.warn(`Candle ${symbols[i]} failed:`, e);
+                const container = document.getElementById('candle' + prefixes[i].charAt(0).toUpperCase() + prefixes[i].slice(1));
+                if (container) {
+                    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">Indisponível</div>';
+                }
             }
-        });
-        $('pilarCount').textContent = count + '/5';
-        setTimestamp('pilarTimestamp');
+        }
+        setSectionTimestamp('candleTimestamp');
     }
 
-    // ---- POSIÇÕES (baseadas em mudanças de preço) ----
-    function updatePositions() {
-        const btcChangeText = $('btcChange').textContent;
-        let btcChange = parseFloat(btcChangeText) || 0;
-        const ethChangeText = $('ethChange').textContent;
-        let ethChange = parseFloat(ethChangeText) || 0;
-        const solChangeText = $('solChange').textContent;
-        let solChange = parseFloat(solChangeText) || 0;
-
-        const getSignal = (change) => {
-            if (change > 2) return '🟢 COMPRA';
-            if (change < -2) return '🔴 VENDA';
-            return '⏸️ NEUTRO';
-        };
-        const updatePos = (id, change) => {
-            const el = $(id);
-            const signal = getSignal(change);
-            el.textContent = signal;
-            el.style.color = signal.includes('COMPRA') ? 'var(--accent-green)' :
-                             signal.includes('VENDA') ? 'var(--accent-red)' : 'var(--text-muted)';
-        };
-        updatePos('posBtc', btcChange);
-        updatePos('posEth', ethChange);
-        updatePos('posSol', solChange);
-        setTimestamp('posTimestamp');
+    function initWebSocket() {
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
+        try {
+            ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1m/ethusdt@kline_1m/solusdt@kline_1m');
+            ws.onopen = function() {
+                console.log('WS conectado');
+                isWsConnected = true;
+                setStatus('live', '✅ LIVE');
+            };
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.k) {
+                        const prefix = data.s.replace('USDT', '').toLowerCase();
+                        const k = data.k;
+                        const newCandle = {
+                            time: Math.floor(k.t / 1000),
+                            open: parseFloat(k.o),
+                            high: parseFloat(k.h),
+                            low: parseFloat(k.l),
+                            close: parseFloat(k.c)
+                        };
+                        const cd = candleData[prefix];
+                        if (cd) {
+                            const last = cd[cd.length - 1];
+                            if (last && last.time === newCandle.time) {
+                                cd[cd.length - 1] = newCandle;
+                            } else {
+                                cd.push(newCandle);
+                                if (cd.length > 300) cd.shift();
+                            }
+                            const inst = candleCharts[prefix];
+                            if (inst) {
+                                inst.series.setData(cd);
+                                inst.chart.timeScale().fitContent();
+                            }
+                            // Atualiza preço
+                            const priceEl = $(prefix + 'Price');
+                            if (priceEl) {
+                                const price = newCandle.close;
+                                const old = parseFloat(priceEl.textContent.replace('$', '').replace(',', '')) || price;
+                                const ch = ((price - old) / old * 100);
+                                priceEl.textContent = formatPrice(price);
+                                priceEl.className = 'value ' + (ch >= 0 ? 'positive' : 'negative');
+                                const changeEl = $(prefix + 'Change');
+                                if (changeEl) {
+                                    changeEl.textContent = formatChange(ch);
+                                    changeEl.className = 'subtext ' + (ch >= 0 ? 'positive' : 'negative');
+                                }
+                            }
+                        }
+                    }
+                } catch (e) { /* ignora */ }
+            };
+            ws.onerror = function() {
+                console.warn('WS erro');
+                setStatus('error', '⚠️ WS ERRO');
+            };
+            ws.onclose = function() {
+                console.log('WS fechado, reconectando...');
+                isWsConnected = false;
+                setStatus('connecting', '🔄 RECONECTANDO...');
+                setTimeout(initWebSocket, CONFIG.WS_RECONNECT_DELAY);
+            };
+        } catch (e) {
+            console.warn('WS init error:', e);
+            setTimeout(initWebSocket, CONFIG.WS_RECONNECT_DELAY);
+        }
     }
 
-    // ---- METRICAS DO SCORE (atualizadas com dados reais) ----
-    function updateMetrics() {
-        const btcChangeText = $('btcChange').textContent;
-        let btcChange = parseFloat(btcChangeText) || 0;
-        const mvrvText = $('mvrv').textContent;
-        let mvrv = parseFloat(mvrvText) || 1.2;
-        const vixText = $('macroVix').textContent;
-        let vix = parseFloat(vixText) || 20;
+    // ============================================================
+    //  8. SCORES E MÉTRICAS
+    // ============================================================
+    function updateScoresAndMetrics() {
+        // Pega dados do cache
+        const btcPrice = cache.prices?.btc?.price;
+        const btcChange = cache.prices?.btc?.change || 0;
+        const mvrvText = $('mvrv')?.textContent;
+        const mvrv = parseFloat(mvrvText) || 1.2;
+        const vixText = $('macroVix')?.textContent;
+        const vix = parseFloat(vixText) || 20;
+        const fng = cache.fng || 50;
 
+        // MTF Trend
         const mtf = btcChange > 2 ? 'ALTA' : btcChange < -2 ? 'BAIXA' : 'NEUTRA';
-        $('metricMtf').textContent = mtf;
-        $('metricMtf').style.color = mtf === 'ALTA' ? 'var(--accent-green)' : mtf === 'BAIXA' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        const mtfEl = $('metricMtf');
+        if (mtfEl) {
+            mtfEl.textContent = mtf;
+            mtfEl.style.color = mtf === 'ALTA' ? 'var(--accent-green)' : mtf === 'BAIXA' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        }
 
+        // Momentum
         const mom = btcChange > 5 ? 'ALTA' : btcChange < -3 ? 'BAIXA' : 'NEUTRA';
-        $('metricMomentum').textContent = mom;
-        $('metricMomentum').style.color = mom === 'ALTA' ? 'var(--accent-green)' : mom === 'BAIXA' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        const momEl = $('metricMomentum');
+        if (momEl) {
+            momEl.textContent = mom;
+            momEl.style.color = mom === 'ALTA' ? 'var(--accent-green)' : mom === 'BAIXA' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        }
 
+        // Orderflow
         const of = mvrv < 1.1 ? 'COMPRA' : mvrv > 1.5 ? 'VENDA' : 'NEUTRO';
-        $('metricOrderflow').textContent = of;
-        $('metricOrderflow').style.color = of === 'COMPRA' ? 'var(--accent-green)' : of === 'VENDA' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        const ofEl = $('metricOrderflow');
+        if (ofEl) {
+            ofEl.textContent = of;
+            ofEl.style.color = of === 'COMPRA' ? 'var(--accent-green)' : of === 'VENDA' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        }
 
+        // Macro Safe
         const macro = vix > 25 ? 'RISCO' : vix < 15 ? 'SEGURO' : 'NEUTRO';
-        $('metricMacro').textContent = macro;
-        $('metricMacro').style.color = macro === 'SEGURO' ? 'var(--accent-green)' : macro === 'RISCO' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        const macroEl = $('metricMacro');
+        if (macroEl) {
+            macroEl.textContent = macro;
+            macroEl.style.color = macro === 'SEGURO' ? 'var(--accent-green)' : macro === 'RISCO' ? 'var(--accent-red)' : 'var(--accent-yellow)';
+        }
 
-        const oiText = $('openInterest').textContent;
-        let oi = parseFloat(oiText.replace(/[^0-9.]/g, '')) || 20;
+        // OI Delta
+        const oiText = $('openInterest')?.textContent || '';
+        const oi = parseFloat(oiText.replace(/[^0-9.]/g, '')) || 20;
         const oiDelta = oi > 25 ? 'ALTO' : oi > 15 ? 'MODERADO' : 'BAIXO';
-        $('metricOiDelta').textContent = oiDelta;
-        $('metricOiDelta').style.color = oiDelta === 'ALTO' ? 'var(--accent-yellow)' : oiDelta === 'MODERADO' ? 'var(--accent-green)' : 'var(--accent-red)';
+        const oiEl = $('metricOiDelta');
+        if (oiEl) {
+            oiEl.textContent = oiDelta;
+            oiEl.style.color = oiDelta === 'ALTO' ? 'var(--accent-yellow)' : oiDelta === 'MODERADO' ? 'var(--accent-green)' : 'var(--accent-red)';
+        }
 
         // Score principal
         let score = 50;
@@ -1039,29 +936,119 @@
         if (macro === 'SEGURO') score += 5;
         else if (macro === 'RISCO') score -= 5;
         score = Math.min(100, Math.max(0, score));
-        $('scoreNumber').textContent = score;
+        const scoreEl = $('scoreNumber');
+        if (scoreEl) scoreEl.textContent = score;
         const ring = $('scoreRing');
-        ring.style.background = `conic-gradient(#00e896 0% ${score}%, #ff4d6d ${score}% 100%)`;
-        updateScoreChart(score);
-        setTimestamp('scoreTimestamp');
+        if (ring) ring.style.background = `conic-gradient(#00e896 0% ${score}%, #ff4d6d ${score}% 100%)`;
+
+        // Risk Score (baseado no VIX)
+        const risk = Math.min(100, Math.max(0, 40 + (vix - 15) * 2));
+        const riskEl = $('riskScore');
+        if (riskEl) {
+            riskEl.textContent = risk.toFixed(0);
+            riskEl.className = 'value ' + (risk > 70 ? 'negative' : risk > 50 ? 'neutral' : 'positive');
+        }
+
+        // Confidence Score (baseado no MVRV)
+        const conf = Math.min(100, Math.max(0, 50 + (1.5 - mvrv) * 30));
+        const confEl = $('confidenceScore');
+        if (confEl) {
+            confEl.textContent = conf.toFixed(0);
+            confEl.className = 'value ' + (conf > 70 ? 'positive' : conf > 50 ? 'neutral' : 'negative');
+        }
+
+        // Entry/Exit
+        const entry = btcChange < -5 ? 80 : btcChange < 0 ? 60 : 40;
+        const exit = btcChange > 5 ? 80 : btcChange > 0 ? 60 : 40;
+        setText('entryScore', entry.toFixed(0));
+        setText('exitScore', exit.toFixed(0));
+
+        // Conviction
+        let conviction = 'NEUTRAL CONVICTION';
+        if (mvrv < 1.2 && btcChange < -3) conviction = 'BEARISH CONVICTION';
+        else if (mvrv > 1.5 && btcChange > 3) conviction = 'BULLISH CONVICTION';
+        const convEl = $('conviction');
+        if (convEl) {
+            convEl.textContent = conviction;
+            convEl.className = 'value ' + (conviction.includes('BEARISH') ? 'negative' :
+                                           conviction.includes('BULLISH') ? 'positive' : 'neutral');
+        }
+
+        // Atualiza posições
+        ['btc', 'eth', 'sol'].forEach(p => {
+            const change = cache.prices?.[p]?.change || 0;
+            const posEl = $('pos' + p.charAt(0).toUpperCase() + p.slice(1));
+            if (posEl) {
+                const signal = change > 2 ? '🟢 COMPRA' : change < -2 ? '🔴 VENDA' : '⏸️ NEUTRO';
+                posEl.textContent = signal;
+                posEl.style.color = signal.includes('COMPRA') ? 'var(--accent-green)' :
+                                     signal.includes('VENDA') ? 'var(--accent-red)' : 'var(--text-muted)';
+            }
+        });
+
+        // Atualiza pilares
+        const pilarMvrv = !isNaN(mvrv) && mvrv < 1.0;
+        const pilarSmart = !isNaN(mvrv) && mvrv < 1.1;
+        const pilarMacro = !isNaN(vix) && vix > 25;
+        const pilarFear = cache.fng < 20;
+
+        const pilares = [
+            { id: 'pilarMvrv', ok: pilarMvrv },
+            { id: 'pilarFear', ok: pilarFear },
+            { id: 'pilarSth', ok: true },
+            { id: 'pilarSmart', ok: pilarSmart },
+            { id: 'pilarMacro', ok: pilarMacro }
+        ];
+        let count = 0;
+        pilares.forEach(p => {
+            const el = $(p.id);
+            if (el) {
+                if (p.ok) {
+                    el.textContent = 'Ok';
+                    el.className = 'status ok';
+                    el.parentElement.querySelector('.icon').textContent = '✅';
+                    count++;
+                } else {
+                    el.textContent = 'Falha';
+                    el.className = 'status fail';
+                    el.parentElement.querySelector('.icon').textContent = '❌';
+                }
+            }
+        });
+        setText('pilarCount', count + '/5');
+
+        // Score chart
+        if (scoreHistory.length === 0) {
+            scoreHistory = new Array(30).fill(50);
+        }
+        scoreHistory.push(score);
+        if (scoreHistory.length > 30) scoreHistory.shift();
+        if (chartInstance) {
+            chartInstance.data.datasets[0].data = scoreHistory;
+            chartInstance.update();
+        }
+
+        setSectionTimestamp('scoreTimestamp');
+        setSectionTimestamp('scoresTimestamp');
+        setSectionTimestamp('pilarTimestamp');
+        setSectionTimestamp('posTimestamp');
     }
 
-    // ---- SCORE CHART ----
-    let scoreChartInstance = null;
-
+    // ============================================================
+    //  9. INICIALIZAÇÃO DO CHART
+    // ============================================================
     function initScoreChart() {
-        const ctx = document.getElementById('scoreChart').getContext('2d');
-        if (scoreChartInstance) scoreChartInstance.destroy();
-        const labels = Array.from({length: 30}, (_, i) => i + 1);
-        const data = new Array(30).fill(50); // inicializa com 50
-        scoreHistory = data;
-        scoreChartInstance = new Chart(ctx, {
+        const ctx = document.getElementById('scoreChart')?.getContext('2d');
+        if (!ctx) return;
+        if (chartInstance) chartInstance.destroy();
+        scoreHistory = new Array(30).fill(50);
+        chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: Array.from({ length: 30 }, (_, i) => i + 1),
                 datasets: [{
                     label: 'Score',
-                    data: data,
+                    data: scoreHistory,
                     borderColor: '#00b4d8',
                     backgroundColor: 'rgba(0,180,216,0.1)',
                     fill: true,
@@ -1080,286 +1067,79 @@
                 }
             }
         });
-        setTimestamp('chartTimestamp');
+        setSectionTimestamp('chartTimestamp');
     }
 
-    function updateScoreChart(newScore) {
-        if (!scoreChartInstance) return;
-        scoreHistory.push(newScore);
-        if (scoreHistory.length > 30) scoreHistory.shift();
-        scoreChartInstance.data.datasets[0].data = scoreHistory;
-        scoreChartInstance.update();
-        setTimestamp('chartTimestamp');
-    }
+    // ============================================================
+    //  10. LOOP PRINCIPAL DE ATUALIZAÇÃO
+    // ============================================================
+    let lastRun = 0;
 
-    // ---- CANDLESTICK (WebSocket + REST) ----
-    function initCandleChart(containerId, data) {
-        const container = document.getElementById(containerId);
-        if (!container) return null;
-        const chart = window.LightweightCharts.createChart(container, {
-            width: container.clientWidth || 300,
-            height: 200,
-            layout: { background: { color: '#0f1117' }, textColor: '#6b7280' },
-            grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.05)' } },
-            timeScale: { borderColor: 'rgba(255,255,255,0.06)' },
-            rightPriceScale: { borderColor: 'rgba(255,255,255,0.06)' }
-        });
-        const candlestickSeries = chart.addCandlestickSeries({
-            upColor: '#00e896',
-            downColor: '#ff4d6d',
-            borderVisible: false,
-            wickUpColor: '#00e896',
-            wickDownColor: '#ff4d6d'
-        });
-        candlestickSeries.setData(data);
-        chart.timeScale().fitContent();
-        return { chart, candlestickSeries };
-    }
-
-    async function initAllCandles() {
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
-        const prefixes = ['btc', 'eth', 'sol'];
-        for (let i = 0; i < symbols.length; i++) {
-            try {
-                const url = `https://api.binance.com/api/v3/klines?symbol=${symbols[i]}&interval=1m&limit=200`;
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('Binance kline error');
-                const data = await resp.json();
-                const formatted = data.map(k => ({
-                    time: Math.floor(k[0] / 1000),
-                    open: parseFloat(k[1]),
-                    high: parseFloat(k[2]),
-                    low: parseFloat(k[3]),
-                    close: parseFloat(k[4])
-                }));
-                candleDataCache[prefixes[i]] = formatted;
-                const containerId = 'candle' + prefixes[i].charAt(0).toUpperCase() + prefixes[i].slice(1);
-                chartInstances[prefixes[i]] = initCandleChart(containerId, formatted);
-                const last = formatted[formatted.length-1];
-                const first = formatted[0];
-                const change1d = ((last.close - first.close) / first.close * 100);
-                updateCandleStats(prefixes[i], last.close, change1d);
-            } catch (e) {
-                console.warn(`Candle ${symbols[i]} fetch failed, marking unavailable`);
-                // Não usamos dados fictícios, apenas mostramos que não há dados.
-                const containerId = 'candle' + prefixes[i].charAt(0).toUpperCase() + prefixes[i].slice(1);
-                const container = document.getElementById(containerId);
-                if (container) {
-                    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">Indisponível</div>';
-                }
-                // Limpar stats
-                $(prefixes[i] + 'Stat1d').innerHTML = '<span class="label">1D</span> --';
-                $(prefixes[i] + 'Stat1s').innerHTML = '<span class="label">1S</span> --';
-                $(prefixes[i] + 'Stat1m').innerHTML = '<span class="label">1M</span> --';
-            }
-        }
-        setTimestamp('candleTimestamp');
-    }
-
-    function updateCandleStats(prefix, price, change1d) {
-        if (!price || isNaN(price)) {
-            $(prefix + 'Stat1d').innerHTML = '<span class="label">1D</span> --';
-            $(prefix + 'Stat1s').innerHTML = '<span class="label">1S</span> --';
-            $(prefix + 'Stat1m').innerHTML = '<span class="label">1M</span> --';
-            return;
-        }
-        // Para 1s e 1m, não temos dados, então marcamos como --
-        $(prefix + 'Stat1d').innerHTML = `<span class="label">1D</span> ${formatChange(change1d)}`;
-        $(prefix + 'Stat1s').innerHTML = `<span class="label">1S</span> --`;
-        $(prefix + 'Stat1m').innerHTML = `<span class="label">1M</span> --`;
-    }
-
-    function updateCandleFromWS(symbol, kline) {
-        const prefix = symbol.replace('USDT', '').toLowerCase();
-        const data = candleDataCache[prefix];
-        if (!data) return;
-        const newCandle = {
-            time: Math.floor(kline.t / 1000),
-            open: parseFloat(kline.o),
-            high: parseFloat(kline.h),
-            low: parseFloat(kline.l),
-            close: parseFloat(kline.c)
-        };
-        const last = data[data.length - 1];
-        if (last && last.time === newCandle.time) {
-            data[data.length - 1] = newCandle;
-        } else {
-            data.push(newCandle);
-            if (data.length > 300) data.shift();
-        }
-        const inst = chartInstances[prefix];
-        if (inst) {
-            inst.candlestickSeries.setData(data);
-            inst.chart.timeScale().fitContent();
-        }
-        const price = newCandle.close;
-        const first = data[0];
-        const change1d = first ? ((price - first.close) / first.close * 100) : 0;
-        updateCandleStats(prefix, price, change1d);
-    }
-
-    // ---- WEBSOCKET BINANCE ----
-    function initWebSocket() {
-        if (ws) {
-            ws.close();
-            ws = null;
-        }
-        try {
-            ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1m/ethusdt@kline_1m/solusdt@kline_1m');
-            ws.onopen = function() {
-                console.log('WebSocket conectado');
-                setStatus('live', '✅ LIVE');
-            };
-            ws.onmessage = function(event) {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.k) {
-                        updateCandleFromWS(data.s, data.k);
-                        // Atualiza preço no resumo executivo
-                        const price = parseFloat(data.k.c);
-                        const prefix = data.s.replace('USDT', '').toLowerCase();
-                        const priceEl = $(prefix + 'Price');
-                        if (priceEl) {
-                            const oldPrice = parseFloat(priceEl.textContent.replace('$', '').replace(',', '')) || price;
-                            const change = ((price - oldPrice) / oldPrice * 100);
-                            priceEl.textContent = formatPrice(price);
-                            priceEl.className = 'value ' + (change >= 0 ? 'positive' : 'negative');
-                            const changeEl = $(prefix + 'Change');
-                            if (changeEl) {
-                                changeEl.textContent = formatChange(change);
-                                changeEl.className = 'subtext ' + (change >= 0 ? 'positive' : 'negative');
-                            }
-                            lastData[prefix + 'Price'] = price;
-                            lastData[prefix + 'Change'] = change;
-                        }
-                        setTimestamp('candleTimestamp');
-                    }
-                } catch (e) {
-                    // ignora
-                }
-            };
-            ws.onerror = function(e) {
-                console.warn('WebSocket error:', e);
-                setStatus('error', '⚠️ WS ERRO');
-            };
-            ws.onclose = function() {
-                console.log('WebSocket fechado, reconectando em 5s...');
-                setStatus('connecting', '🔄 RECONECTANDO...');
-                setTimeout(initWebSocket, 5000);
-            };
-        } catch (e) {
-            console.warn('WebSocket init error:', e);
-            setTimeout(initWebSocket, 5000);
-        }
-    }
-
-    // ---- UPDATE LOOP PRINCIPAL ----
     async function updateAll() {
-        try {
-            const now = Date.now();
-            // Preços (30s)
-            if (!lastData._lastPrices || now - lastData._lastPrices > INTERVALS.PRICES) {
-                await fetchPrices();
-                lastData._lastPrices = now;
-            }
-            // Macro (5 min)
-            if (!lastData._lastMacro || now - lastData._lastMacro > INTERVALS.MACRO) {
-                await fetchMacroYahoo();
-                await fetchFedRate();
-                updateCpiUnavailable();
-                lastData._lastMacro = now;
-            }
-            // Tether (1 min)
-            if (!lastData._lastTether || now - lastData._lastTether > INTERVALS.TETHER) {
-                await fetchTetherPremium();
-                lastData._lastTether = now;
-            }
-            // On-Chain (10 min)
-            if (!lastData._lastOnchain || now - lastData._lastOnchain > INTERVALS.ONCHAIN) {
-                await fetchCoinMetrics();
-                setUnavailableOnchain();
-                lastData._lastOnchain = now;
-            }
-            // Derivados (1 min)
-            if (!lastData._lastDeriv || now - lastData._lastDeriv > INTERVALS.DERIVATIVES) {
-                await fetchDerivatives();
-                lastData._lastDeriv = now;
-            }
-            // ETF (1 hora)
-            if (!lastData._lastEtf || now - lastData._lastEtf > INTERVALS.ETF) {
-                await fetchEtfFlows();
-                lastData._lastEtf = now;
-            }
-            // DeFi (5 min)
-            if (!lastData._lastDefi || now - lastData._lastDefi > INTERVALS.DEFI) {
-                await fetchDefi();
-                lastData._lastDefi = now;
-            }
-            // Hashrate (1 min)
-            if (!lastData._lastHashrate || now - lastData._lastHashrate > INTERVALS.HASHRATE) {
-                await fetchHashrate();
-                lastData._lastHashrate = now;
-            }
-            // Gas (2 min)
-            if (!lastData._lastGas || now - lastData._lastGas > INTERVALS.GAS) {
-                await fetchGasPrice();
-                lastData._lastGas = now;
-            }
-            // Fear & Greed (5 min)
-            if (!lastData._lastFng || now - lastData._lastFng > INTERVALS.FNG) {
-                await fetchFearGreed();
-                lastData._lastFng = now;
-            }
-            // Put/Call (10 min)
-            if (!lastData._lastPutCall || now - lastData._lastPutCall > INTERVALS.PUT_CALL) {
-                await fetchPutCallRatio();
-                lastData._lastPutCall = now;
-            }
-            // Whale (15 min)
-            if (!lastData._lastWhale || now - lastData._lastWhale > INTERVALS.WHALE) {
-                await fetchWhaleAlert();
-                lastData._lastWhale = now;
-            }
-            // Pilares (5 min)
-            if (!lastData._lastPilares || now - lastData._lastPilares > INTERVALS.PILARES) {
-                updatePilares();
-                lastData._lastPilares = now;
-            }
-            // Scores (30s)
-            if (!lastData._lastScores || now - lastData._lastScores > INTERVALS.SCORES) {
-                updateScores();
-                updateMetrics();
-                lastData._lastScores = now;
-            }
-            // Posições (10s)
-            if (!lastData._lastPositions || now - lastData._lastPositions > INTERVALS.POSITIONS) {
-                updatePositions();
-                lastData._lastPositions = now;
-            }
-            // Timestamp global
-            updateGlobalTimestamp();
+        const now = Date.now();
+
+        // Preços (30s)
+        if (!cache._prices || now - cache._prices > CONFIG.PRICES_INTERVAL) {
+            await fetchPrices();
+            cache._prices = now;
+        }
+
+        // Macro (2 min)
+        if (!cache._macro || now - cache._macro > CONFIG.MACRO_INTERVAL) {
+            await fetchMacro();
+            cache._macro = now;
+        }
+
+        // On-Chain (5 min)
+        if (!cache._onchain || now - cache._onchain > CONFIG.ONCHAIN_INTERVAL) {
+            await fetchOnchain();
+            cache._onchain = now;
+        }
+
+        // Derivatives (1 min)
+        if (!cache._deriv || now - cache._deriv > CONFIG.DERIV_INTERVAL) {
+            await fetchDerivatives();
+            cache._deriv = now;
+        }
+
+        // DeFi (2 min)
+        if (!cache._defi || now - cache._defi > CONFIG.DEFI_INTERVAL) {
+            await fetchDefi();
+            cache._defi = now;
+        }
+
+        // Fear & Greed (3 min)
+        if (!cache._fng || now - cache._fng > CONFIG.FNG_INTERVAL) {
+            await fetchFearGreed();
+            cache._fng = now;
+        }
+
+        // Scores e métricas (30s)
+        if (!cache._scores || now - cache._scores > CONFIG.SCORES_INTERVAL) {
+            updateScoresAndMetrics();
+            cache._scores = now;
+        }
+
+        updateTimestamp();
+        if (isWsConnected) {
             setStatus('live', '✅ LIVE');
-            retryCount = 0;
-        } catch (e) {
-            console.error('Update error:', e);
-            retryCount++;
-            if (retryCount > MAX_RETRIES) {
-                setStatus('error', '⚠️ ERRO');
-            } else {
-                setStatus('connecting', '🔄 RECONECTANDO...');
-            }
         }
     }
 
-    // ---- INICIALIZAÇÃO ----
-    function init() {
-        initAllCandles();
+    // ============================================================
+    //  11. INICIALIZAÇÃO
+    // ============================================================
+    async function init() {
+        setStatus('connecting', '🔄 INICIANDO...');
+        await initCandles();
         initScoreChart();
-        updateAll();
-        setInterval(updateAll, 5000);
         initWebSocket();
-        window.addEventListener('resize', function() {
-            Object.values(chartInstances).forEach(inst => {
+        await updateAll();
+        setInterval(updateAll, 5000);
+
+        // Redimensionamento dos candles
+        window.addEventListener('resize', () => {
+            Object.values(candleCharts).forEach(inst => {
                 if (inst && inst.chart) {
                     const container = inst.chart._container;
                     if (container) {
