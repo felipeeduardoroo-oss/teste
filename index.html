@@ -669,14 +669,14 @@
             <table>
                 <thead><tr><th>Métrica</th><th>Valor</th><th>Interpretação</th><th>Fonte</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>MVRV (BTC)</strong></td><td id="mvrv">--</td><td id="mvrv-interp">--</td><td><span class="data-source" id="mvrv-source">BitView</span></td></tr>
+                    <tr><td><strong>MVRV (BTC)</strong></td><td id="mvrv">--</td><td id="mvrv-interp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>MVRV STH (BTC)</strong></td><td id="mvrv-sth">--</td><td id="mvrv-sth-interp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>SOPR</strong></td><td id="sopr">--</td><td id="sopr-interp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>aSOPR 7D</strong></td><td id="asopr">--</td><td id="asopr-interp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>Realized Price (BTC)</strong></td><td id="realized-price">--</td><td id="realized-price-interp">ℹ️ Preço médio</td><td><span class="data-source">Coin Metrics</span></td></tr>
-                    <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etf-btc-live">--</td><td id="etf-btc-interp">--</td><td><span class="data-source">Farside</span></td></tr>
+                    <tr><td><strong>ETF Flows (BTC)</strong></td><td id="etf-btc-live">--</td><td id="etf-btc-interp">--</td><td><span class="data-source">Farside • Bitbo</span></td></tr>
                     <tr><td><strong>ETF Flows (ETH)</strong></td><td id="etf-eth-live">--</td><td id="etf-eth-interp">--</td><td><span class="data-source">Farside</span></td></tr>
-                    <tr><td><strong>Exchange Netflow</strong></td><td id="exchange-netflow">--</td><td id="exchange-netflow-interp">--</td><td><span class="data-source">CoinGlass</span></td></tr>
+                    <tr><td><strong>Exchange Netflow</strong></td><td id="exchange-netflow">--</td><td id="exchange-netflow-interp">--</td><td><span class="data-source">Indisponível</span></td></tr>
                     <tr><td><strong>Funding Rate (atual)</strong></td><td id="funding-rate">--</td><td id="funding-rate-interp">--</td><td><span class="data-source">Binance</span></td></tr>
                     <tr><td><strong>Funding Rate (média 8h)</strong></td><td id="funding-rate-avg">--</td><td id="funding-rate-avg-interp">ℹ️ Suavizado</td><td><span class="data-source">Binance</span></td></tr>
                     <tr><td><strong>Open Interest</strong></td><td id="open-interest">--</td><td id="open-interest-interp">--</td><td><span class="data-source">Binance</span></td></tr>
@@ -684,10 +684,10 @@
                     <tr><td><strong>Basis (perp vs spot)</strong></td><td id="basis">--</td><td id="basis-interp">ℹ️ Prêmio</td><td><span class="data-source">Binance</span></td></tr>
                     <tr><td><strong>Long/Short Ratio (pos)</strong></td><td id="ls-ratio-pos">--</td><td id="ls-ratio-pos-interp">--</td><td><span class="data-source">Binance</span></td></tr>
                     <tr><td><strong>Long/Short Ratio (acc)</strong></td><td id="ls-ratio-acc">--</td><td id="ls-ratio-acc-interp">--</td><td><span class="data-source">Binance</span></td></tr>
-                    <tr><td><strong>BTC Put/Call Ratio</strong></td><td id="put-call-ratio">--</td><td id="put-call-interp">--</td><td><span class="data-source">Deribit</span></td></tr>
+                    <tr><td><strong>BTC Put/Call Ratio</strong></td><td id="put-call-ratio">--</td><td id="put-call-interp">--</td><td><span class="data-source">Indisponível</span></td></tr>
                     <tr><td><strong>BTC Hashrate</strong></td><td id="btc-hashrate">--</td><td id="hashrate-interp">--</td><td><span class="data-source">Blockchain.com</span></td></tr>
-                    <tr><td><strong>Miner Outflow</strong></td><td id="miner-outflow">--</td><td id="miner-outflow-interp">--</td><td><span class="data-source">CoinGlass</span></td></tr>
-                    <tr><td><strong>Active Addresses</strong></td><td id="active-addresses">--</td><td id="active-addresses-interp">--</td><td><span class="data-source">BitView</span></td></tr>
+                    <tr><td><strong>Miner Outflow</strong></td><td id="miner-outflow">--</td><td id="miner-outflow-interp">--</td><td><span class="data-source">Indisponível</span></td></tr>
+                    <tr><td><strong>Active Addresses</strong></td><td id="active-addresses">--</td><td id="active-addresses-interp">--</td><td><span class="data-source">Coin Metrics</span></td></tr>
                     <tr><td><strong>ETH Gas Price</strong></td><td id="eth-gas">--</td><td id="eth-gas-interp">--</td><td><span class="data-source">Etherscan</span></td></tr>
                 </tbody>
             </table>
@@ -1974,163 +1974,275 @@ function updateScoreChart() {
 }
 
 // ================================================================
-// 7. DATA FETCHING (APIs)
+// 7. DATA FETCHING (APIs) – CORREÇÕES ADICIONADAS
 // ================================================================
-async function fetchHistoricalCandles(symbol, interval, limit=200) {
-    try {
-        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        return data.map(k => ({
-            time: k[0]/1000,
-            open: parseFloat(k[1]),
-            high: parseFloat(k[2]),
-            low: parseFloat(k[3]),
-            close: parseFloat(k[4]),
-            volume: parseFloat(k[5]),
-            takerBuyVol: parseFloat(k[9])
-        }));
-    } catch(e) { return []; }
-}
 
-async function fetchFundingRate(symbol) {
+// --- 7.1 ON-CHAIN (BRK) – substitui fetchOnChainData
+async function fetchBRK() {
     try {
-        const url = `https://fapi.binance.com/fapi/v1/fundingRate?symbol=${symbol}&limit=1`;
-        const r = await fetch(url);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const d = await r.json();
-        if (d && d.length > 0) {
-            const fr = parseFloat(d[0].fundingRate);
-            if (assetsData[symbol]) assetsData[symbol].fundingRate = fr;
-            if (symbol === 'BTCUSDT') {
-                document.getElementById('funding-rate').textContent = (fr*100).toFixed(4) + '%';
-            }
-        }
-    } catch(e) {}
-}
-
-async function fetchOpenInterest(symbol) {
-    try {
-        const url = `https://fapi.binance.com/fapi/v1/openInterestHist?symbol=${symbol}&period=15m&limit=2`;
-        const r = await fetch(url);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const d = await r.json();
-        if (d && d.length === 2) {
-            const prev = parseFloat(d[0].sumOpenInterest);
-            const curr = parseFloat(d[1].sumOpenInterest);
-            const delta = ((curr - prev) / prev) * 100;
-            if (assetsData[symbol]) {
-                assetsData[symbol].oiDelta = delta;
-                if (symbol === 'BTCUSDT') {
-                    document.getElementById('oi-delta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + '%';
-                    document.getElementById('oi-delta-interp').textContent = delta > 5 ? '🟢 Alta' : delta < -5 ? '🔴 Baixa' : 'ℹ️ Neutro';
-                }
-            }
-        }
-    } catch(e) {}
-}
-
-async function fetchOrderBook(symbol = 'BTCUSDT', limit = 10) {
-    try {
-        const r = await fetch(`https://api.binance.com/api/v3/depth?symbol=${symbol}&limit=${limit}`);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const d = await r.json();
-        const bids = d.bids.slice(0, limit).map(b => ({ price: +b[0], qty: +b[1] }));
-        const asks = d.asks.slice(0, limit).map(a => ({ price: +a[0], qty: +a[1] }));
-        const bidTotal = bids.reduce((s, b) => s + b.qty * b.price, 0);
-        const askTotal = asks.reduce((s, a) => s + a.qty * a.price, 0);
-        const imbalance = ((bidTotal - askTotal) / (bidTotal + askTotal) * 100);
-        dataCache.orderBook = { bids, asks, bidTotal, askTotal, imbalance: imbalance.toFixed(2) };
-        return dataCache.orderBook;
-    } catch(e) { return null; }
-}
-
-async function fetchFearGreed() {
-    try {
-        const r = await fetch('https://api.alternative.me/fng/?limit=1');
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const d = await r.json();
-        const v = parseInt(d.data[0].value);
-        const fg = {
-            value: v,
-            classification: d.data[0].value_classification,
-            color: v < 25 ? '#ff4d6d' : v < 45 ? '#ff9800' : v < 55 ? '#ffc107' : v < 75 ? '#8bc34a' : '#00e896'
-        };
-        dataCache.fearGreed = fg;
-        return fg;
-    } catch(e) { return null; }
-}
-
-async function fetchETFData() {
-    try {
-        const url = 'https://api.farside.co.uk/etf/flows/latest';
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        if (data && data.btc && data.eth) {
-            const btcFlow = data.btc.net_flow || 0;
-            const ethFlow = data.eth.net_flow || 0;
-            dataCache.etfFlows.btc = btcFlow;
-            dataCache.etfFlows.eth = ethFlow;
-            dataCache.etfFlows.timestamp = Date.now();
-            document.getElementById('etf-btc-live').innerHTML = '<strong>' +
-                (btcFlow >= 0 ? '+' : '') + btcFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
-            document.getElementById('etf-eth-live').innerHTML = '<strong>' +
-                (ethFlow >= 0 ? '+' : '') + ethFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
-        }
-    } catch(e) {}
-}
-
-async function fetchOnChainData() {
-    try {
-        const metrics = ['mvrv', 'sopr', 'realized_price'];
-        const promises = metrics.map(async (m) => {
+        const metrics = ['MVRV_RATIO', 'MVRV_STH', 'SOPR', 'SOPR_ADJUSTED', 'REALIZED_PRICE_USD', 'ADDR_ACTIVE_COUNT'];
+        const results = await Promise.all(metrics.map(async (m) => {
             const url = `https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=${m}&frequency=1d&limit=1`;
             const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (!resp.ok) return null;
             const data = await resp.json();
-            if (data && data.data && data.data.length > 0) {
+            if (data?.data?.length > 0) {
                 const val = parseFloat(data.data[0][m]);
                 return { metric: m, value: val };
             }
             return null;
-        });
-        const results = await Promise.all(promises);
+        }));
+
         results.forEach(res => {
-            if (res) {
-                const val = res.value;
-                if (res.metric === 'mvrv') { assetsData['BTCUSDT'].mvrv = val; dataCache.onChain.mvrv = val; }
-                else if (res.metric === 'sopr') { assetsData['BTCUSDT'].sopr = val; dataCache.onChain.sopr = val; }
-                else if (res.metric === 'realized_price') { assetsData['BTCUSDT'].realizedPrice = val; dataCache.onChain.realizedPrice = val; }
+            if (!res) return;
+            const { metric, value } = res;
+            const elMap = {
+                'MVRV_RATIO': 'mvrv',
+                'MVRV_STH': 'mvrv-sth',
+                'SOPR': 'sopr',
+                'SOPR_ADJUSTED': 'asopr',
+                'REALIZED_PRICE_USD': 'realized-price',
+                'ADDR_ACTIVE_COUNT': 'active-addresses'
+            };
+            const interpMap = {
+                'MVRV_RATIO': (v) => v > 3 ? '⚠️ Overvalued' : v > 2 ? '⚠️ Aquecido' : 'ℹ️ Neutro',
+                'MVRV_STH': (v) => v < 1 ? '✅ STH em perda' : '⚠️ STH em lucro',
+                'SOPR': (v) => v > 1 ? '✅ Lucro' : v < 1 ? '⚠️ Perda' : 'ℹ️ Neutro',
+                'SOPR_ADJUSTED': (v) => v < 1 ? '⚠️ Ajustado fraco' : 'ℹ️ Neutro',
+                'REALIZED_PRICE_USD': () => 'ℹ️ Preço médio',
+                'ADDR_ACTIVE_COUNT': (v) => v > 1e6 ? '✅ Alta' : v > 500000 ? 'ℹ️ Moderada' : '⚠️ Baixa'
+            };
+            const elId = elMap[metric];
+            const interpId = elId + '-interp';
+            const el = document.getElementById(elId);
+            const interpEl = document.getElementById(interpId);
+            if (el) {
+                let display = value;
+                if (metric === 'REALIZED_PRICE_USD') display = '$' + value.toFixed(0);
+                else if (metric === 'ADDR_ACTIVE_COUNT') display = value.toFixed(0);
+                else display = value.toFixed(2);
+                el.textContent = display + ' (live)';
+                if (metric === 'MVRV_RATIO') { assetsData['BTCUSDT'].mvrv = value; dataCache.onChain.mvrv = value; }
+                if (metric === 'SOPR') { assetsData['BTCUSDT'].sopr = value; dataCache.onChain.sopr = value; }
+                if (metric === 'REALIZED_PRICE_USD') { assetsData['BTCUSDT'].realizedPrice = value; dataCache.onChain.realizedPrice = value; }
+                if (metric === 'ADDR_ACTIVE_COUNT') { dataCache.onChain.activeAddresses = value; }
+            }
+            if (interpEl && interpMap[metric]) {
+                interpEl.textContent = interpMap[metric](value);
             }
         });
-        dataCache.onChain.timestamp = Date.now();
-    } catch(e) {}
+        setTimestamp('onchainTimestamp');
+    } catch (e) {
+        console.warn('BRK fetch failed:', e);
+        // Fallback: manter valores anteriores
+    }
 }
 
-async function fetchMacroIndicators() {
+// --- 7.2 HASHRATE
+async function fetchHashrate() {
     try {
-        const dxy = await fetchYahoo('DX-Y.NYB');
-        const us10y = await fetchYahoo('^TNX');
-        const vix = await fetchYahoo('^VIX');
-        if (dxy) { dataCache.macro.dxy = dxy.price; document.getElementById('dxy-value').textContent = dxy.price.toFixed(2); }
-        if (us10y) { dataCache.macro.us10y = us10y.price; document.getElementById('us10y-value').textContent = us10y.price.toFixed(2) + '%'; }
-        if (vix) { dataCache.macro.vix = vix.price; document.getElementById('vix-value').textContent = vix.price.toFixed(2); }
-        dataCache.macro.timestamp = Date.now();
-    } catch(e) {}
-}
-
-async function fetchYahoo(symbol) {
-    try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+        const url = 'https://api.blockchain.com/v3/exchange/rates/hashrate/BTC';
         const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`Yahoo ${symbol} error`);
+        if (!resp.ok) throw new Error('Hashrate API error');
         const data = await resp.json();
-        const meta = data.chart.result[0].meta;
-        const price = meta.regularMarketPrice;
-        return { price };
-    } catch(e) { return null; }
+        const hashrate = parseFloat(data.hashrate);
+        if (!isNaN(hashrate)) {
+            const eh = hashrate / 1e18;
+            document.getElementById('btc-hashrate').textContent = eh.toFixed(0) + ' EH/s (live)';
+            document.getElementById('hashrate-interp').textContent = eh > 800 ? '✅ Elevado' : eh > 600 ? 'ℹ️ Moderado' : '⚠️ Baixo';
+            dataCache.hashrate.value = eh;
+            dataCache.hashrate.timestamp = Date.now();
+        }
+    } catch (e) {
+        console.warn('Hashrate fetch failed:', e);
+        document.getElementById('btc-hashrate').textContent = 'Indisponível';
+        document.getElementById('hashrate-interp').textContent = 'Falha na API';
+    }
+}
+
+// --- 7.3 GAS PRICE
+async function fetchGasPrice() {
+    try {
+        const url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle';
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Gas API error');
+        const data = await resp.json();
+        if (data.status === '1' && data.result) {
+            const gas = parseFloat(data.result.ProposeGasPrice) / 10;
+            if (!isNaN(gas)) {
+                document.getElementById('eth-gas').textContent = gas.toFixed(2) + ' Gwei (live)';
+                document.getElementById('eth-gas-interp').textContent = gas > 50 ? '⚠️ Alto' : gas > 20 ? 'ℹ️ Moderado' : '✅ Baixo';
+                dataCache.gas.value = gas;
+                dataCache.gas.timestamp = Date.now();
+            }
+        }
+    } catch (e) {
+        console.warn('Gas fetch failed:', e);
+        document.getElementById('eth-gas').textContent = 'Indisponível';
+        document.getElementById('eth-gas-interp').textContent = 'Falha na API';
+    }
+}
+
+// --- 7.4 DEFI (Stablecoin Supply e TVL)
+async function fetchDefi() {
+    try {
+        const [stableResp, tvlResp] = await Promise.all([
+            fetch('https://api.llama.fi/stablecoins/total').then(r => r.json()),
+            fetch('https://api.llama.fi/tvl').then(r => r.json())
+        ]);
+        if (stableResp && stableResp.total) {
+            const supply = stableResp.total / 1e9;
+            document.getElementById('stablecoin-supply').textContent = '$' + supply.toFixed(0) + 'B (live)';
+            document.getElementById('stablecoin-interp').textContent = '✅ Liquidez';
+        }
+        if (tvlResp && typeof tvlResp === 'number') {
+            const tvlB = tvlResp / 1e9;
+            document.getElementById('defi-tvl').textContent = '$' + tvlB.toFixed(0) + 'B (live)';
+            document.getElementById('defi-tvl-interp').textContent = tvlB > 70 ? '⚠️ Comprimido' : tvlB > 50 ? 'ℹ️ Moderado' : '✅ Baixo';
+            try {
+                const oldTvl = await fetch('https://api.llama.fi/tvl?timestamp=24h').then(r => r.json());
+                if (typeof oldTvl === 'number' && !isNaN(oldTvl)) {
+                    const change = ((tvlResp - oldTvl) / oldTvl) * 100;
+                    document.getElementById('defi-tvl-change').textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '% (live)';
+                    document.getElementById('defi-tvl-change-interp').textContent = Math.abs(change) < 2 ? 'ℹ️ Estável' : change > 0 ? '✅ Crescendo' : '⚠️ Caindo';
+                }
+            } catch (e) {
+                document.getElementById('defi-tvl-change').textContent = 'Indisponível';
+            }
+        }
+        setTimestamp('defiTimestamp');
+    } catch (e) {
+        console.warn('DeFi fetch failed:', e);
+        document.getElementById('stablecoin-supply').textContent = 'Indisponível';
+        document.getElementById('defi-tvl').textContent = 'Indisponível';
+        document.getElementById('defi-tvl-change').textContent = 'Indisponível';
+    }
+}
+
+// --- 7.5 TETHER PREMIUM
+async function fetchTetherPremium() {
+    try {
+        const url = 'https://api.exchangerate-api.com/v4/latest/USD';
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('ExchangeRate API error');
+        const data = await resp.json();
+        const brl = data.rates.BRL;
+        const binanceUrl = 'https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL';
+        const binanceResp = await fetch(binanceUrl);
+        if (!binanceResp.ok) throw new Error('Binance USDTBRL error');
+        const binanceData = await binanceResp.json();
+        const usdtBrl = parseFloat(binanceData.price);
+        const premium = ((usdtBrl - brl) / brl) * 100;
+        document.getElementById('tether-premium').textContent = premium.toFixed(2) + '% (live)';
+        document.getElementById('tether-premium-interp').textContent = premium > 1 ? '⚠️ Ágio' : premium < -1 ? '⚠️ Deságio' : 'ℹ️ Neutro';
+        setTimestamp('defiTimestamp');
+    } catch (e) {
+        console.warn('Tether premium fetch failed:', e);
+        document.getElementById('tether-premium').textContent = 'Indisponível';
+        document.getElementById('tether-premium-interp').textContent = 'Falha na API';
+    }
+}
+
+// --- 7.6 FED RATE
+async function fetchFedRate() {
+    try {
+        const url = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF&cosd=2023-01-01&coed=2026-01-01';
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('FRED error');
+        const csv = await resp.text();
+        const lines = csv.trim().split('\n');
+        const lastLine = lines[lines.length - 1];
+        const parts = lastLine.split(',');
+        if (parts.length >= 2) {
+            const fed = parseFloat(parts[1]);
+            if (!isNaN(fed)) {
+                document.getElementById('fed-rate').textContent = fed.toFixed(2) + '% (live)';
+                document.getElementById('fed-interp').textContent = fed > 4 ? '⚠️ Restritivo' : fed > 2 ? 'ℹ️ Neutro' : '✅ Expansivo';
+            }
+        }
+    } catch (e) {
+        console.warn('Fed Rate fetch failed:', e);
+        document.getElementById('fed-rate').textContent = 'Indisponível';
+        document.getElementById('fed-interp').textContent = 'Falha na API';
+    }
+}
+
+// --- 7.7 DERIVATIVES (Basis, Long/Short Ratio)
+async function fetchDerivatives() {
+    try {
+        // Basis (perp vs spot)
+        const spot = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json());
+        const future = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT').then(r => r.json());
+        const spotPrice = parseFloat(spot.price);
+        const futurePrice = parseFloat(future.price);
+        if (!isNaN(spotPrice) && !isNaN(futurePrice)) {
+            const basis = ((futurePrice - spotPrice) / spotPrice) * 100;
+            document.getElementById('basis').textContent = basis.toFixed(2) + '% (live)';
+            document.getElementById('basis-interp').textContent = Math.abs(basis) > 0.5 ? '⚠️ Prêmio elevado' : 'ℹ️ Normal';
+        }
+
+        // Long/Short Ratio (posições)
+        const ls = await fetch('https://fapi.binance.com/fapi/v1/topLongShortRatio?symbol=BTCUSDT&period=24h').then(r => r.json());
+        if (ls.length > 0) {
+            const ratio = parseFloat(ls[0].longShortRatio);
+            if (!isNaN(ratio)) {
+                const longPct = (ratio * 100).toFixed(1);
+                const shortPct = (100 - ratio * 100).toFixed(1);
+                document.getElementById('ls-ratio-pos').textContent = longPct + '% / ' + shortPct + '% (live)';
+                document.getElementById('ls-ratio-pos-interp').textContent = ratio > 1.2 ? '⚠️ Long' : ratio < 0.8 ? '⚠️ Short' : 'ℹ️ Neutro';
+            }
+        }
+        // Long/Short Ratio (acc) – não disponível, indicar indisponível
+        document.getElementById('ls-ratio-acc').textContent = 'Indisponível';
+        document.getElementById('ls-ratio-acc-interp').textContent = 'Sem dados';
+        setTimestamp('onchainTimestamp');
+    } catch (e) {
+        console.warn('Derivatives fetch failed:', e);
+        document.getElementById('basis').textContent = 'Indisponível';
+        document.getElementById('ls-ratio-pos').textContent = 'Indisponível';
+        document.getElementById('ls-ratio-acc').textContent = 'Indisponível';
+    }
+}
+
+// --- 7.8 ETF FLOWS (Farside com fallback Bitbo)
+async function fetchETFData() {
+    try {
+        // Tenta Farside primeiro
+        const url = 'https://api.farside.co.uk/etf/flows/latest';
+        const resp = await fetch(url);
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data?.btc?.net_flow !== undefined) {
+                const btcFlow = data.btc.net_flow || 0;
+                const ethFlow = data.eth?.net_flow || 0;
+                document.getElementById('etf-btc-live').innerHTML = '<strong>' + (btcFlow >= 0 ? '+' : '') + btcFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
+                document.getElementById('etf-btc-interp').textContent = btcFlow > 0 ? '✅ Entrada' : btcFlow < 0 ? '⚠️ Saída' : 'ℹ️ Neutro';
+                document.getElementById('etf-eth-live').innerHTML = '<strong>' + (ethFlow >= 0 ? '+' : '') + ethFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
+                document.getElementById('etf-eth-interp').textContent = ethFlow > 0 ? '✅ Entrada' : ethFlow < 0 ? '⚠️ Saída' : 'ℹ️ Neutro';
+                return;
+            }
+        }
+        // Fallback: Bitbo.io (apenas BTC)
+        const btcUrl = 'https://charts.bitbo.io/api/v1/etf-flow-raw-btc/?latest=true';
+        const btcResp = await fetch(btcUrl);
+        if (btcResp.ok) {
+            const data = await btcResp.json();
+            if (data.data && data.data.length > 0) {
+                const flow = parseFloat(data.data[0][2]);
+                if (!isNaN(flow)) {
+                    document.getElementById('etf-btc-live').innerHTML = '<strong>' + (flow >= 0 ? '+' : '') + flow.toFixed(0) + ' BTC</strong>';
+                    document.getElementById('etf-btc-interp').textContent = flow > 0 ? '✅ Entrada' : flow < 0 ? '⚠️ Saída' : 'ℹ️ Neutro';
+                }
+            }
+        }
+        // ETH ETF não disponível em Bitbo
+        document.getElementById('etf-eth-live').textContent = 'Indisponível';
+        document.getElementById('etf-eth-interp').textContent = 'Sem dados';
+    } catch (e) {
+        console.warn('ETF flows fetch failed:', e);
+        document.getElementById('etf-btc-live').textContent = 'Indisponível';
+        document.getElementById('etf-eth-live').textContent = 'Indisponível';
+    }
 }
 
 // ================================================================
@@ -2440,7 +2552,7 @@ async function warmUpIndicators() {
             }
         }
     }
-    await fetchOnChainData();
+    await fetchBRK();
     await fetchMacroIndicators();
     await fetchOrderBook();
     await fetchFearGreed();
@@ -2453,14 +2565,6 @@ function init() {
     initAllCandles();
 
     warmUpIndicators();
-    await fetchBRK();
-await fetchHashrate();
-await fetchGasPrice();
-await fetchDefi();
-await fetchTetherPremium();
-await fetchFedRate();
-await fetchDerivatives();
-await fetchETFData();
     initWebSockets();
 
     // Inicia um WebSocket separado para klines (candles em tempo real)
@@ -2481,11 +2585,16 @@ await fetchETFData();
     setInterval(() => fetchOrderBook(), 60000);
     setInterval(() => fetchFearGreed(), 300000);
     setInterval(() => fetchETFData(), 21600000);
-    setInterval(() => fetchOnChainData(), 600000);
-    setInterval(() => fetchMacroIndicators(), 300000);
     setInterval(() => {
-        ASSETS.forEach(sym => fetchFundingRate(sym));
-        ASSETS.forEach(sym => fetchOpenInterest(sym));
+        fetchBRK();
+        fetchMacroIndicators();
+        fetchHashrate();
+        fetchGasPrice();
+        fetchDefi();
+        fetchTetherPremium();
+        fetchFedRate();
+        fetchDerivatives();
+        fetchETFData();
     }, 120000);
 
     // Atualiza timestamps
@@ -2496,264 +2605,7 @@ await fetchETFData();
         document.getElementById('globalUpdate').textContent = 'Última atualização geral: ' + str;
     }, 1000);
 }
-async function fetchBRK() {
-    try {
-        // MVRV, SOPR, Realized Price, Active Addresses
-        const metrics = ['MVRV_RATIO', 'MVRV_STH', 'SOPR', 'SOPR_ADJUSTED', 'REALIZED_PRICE_USD', 'ADDR_ACTIVE_COUNT'];
-        const results = await Promise.all(metrics.map(async (m) => {
-            const url = `https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=${m}&frequency=1d&limit=1`;
-            const resp = await fetch(url);
-            if (!resp.ok) return null;
-            const data = await resp.json();
-            if (data?.data?.length > 0) {
-                const val = parseFloat(data.data[0][m]);
-                return { metric: m, value: val };
-            }
-            return null;
-        }));
 
-        results.forEach(res => {
-            if (!res) return;
-            const { metric, value } = res;
-            const elMap = {
-                'MVRV_RATIO': 'mvrv',
-                'MVRV_STH': 'mvrv-sth',
-                'SOPR': 'sopr',
-                'SOPR_ADJUSTED': 'asopr',
-                'REALIZED_PRICE_USD': 'realized-price',
-                'ADDR_ACTIVE_COUNT': 'active-addresses'
-            };
-            const interpMap = {
-                'MVRV_RATIO': (v) => v > 3 ? '⚠️ Overvalued' : v > 2 ? '⚠️ Aquecido' : 'ℹ️ Neutro',
-                'MVRV_STH': (v) => v < 1 ? '✅ STH em perda' : '⚠️ STH em lucro',
-                'SOPR': (v) => v > 1 ? '✅ Lucro' : v < 1 ? '⚠️ Perda' : 'ℹ️ Neutro',
-                'SOPR_ADJUSTED': (v) => v < 1 ? '⚠️ Ajustado fraco' : 'ℹ️ Neutro',
-                'REALIZED_PRICE_USD': () => 'ℹ️ Preço médio',
-                'ADDR_ACTIVE_COUNT': (v) => v > 1e6 ? '✅ Alta' : v > 500000 ? 'ℹ️ Moderada' : '⚠️ Baixa'
-            };
-            const elId = elMap[metric];
-            const interpId = elId + '-interp';
-            const el = document.getElementById(elId);
-            const interpEl = document.getElementById(interpId);
-            if (el) {
-                let display = value;
-                if (metric === 'REALIZED_PRICE_USD') display = '$' + value.toFixed(0);
-                else if (metric === 'ADDR_ACTIVE_COUNT') display = value.toFixed(0);
-                else display = value.toFixed(2);
-                el.textContent = display + ' (live)';
-                // Atualiza também o cache para uso em outros lugares
-                if (metric === 'MVRV_RATIO') { assetsData['BTCUSDT'].mvrv = value; dataCache.onChain.mvrv = value; }
-                if (metric === 'SOPR') { assetsData['BTCUSDT'].sopr = value; dataCache.onChain.sopr = value; }
-                if (metric === 'REALIZED_PRICE_USD') { assetsData['BTCUSDT'].realizedPrice = value; dataCache.onChain.realizedPrice = value; }
-            }
-            if (interpEl && interpMap[metric]) {
-                interpEl.textContent = interpMap[metric](value);
-            }
-        });
-        setTimestamp('onchainTimestamp');
-    } catch (e) {
-        console.warn('BRK fetch failed:', e);
-    }
-}
-
-    async function fetchHashrate() {
-    try {
-        const url = 'https://api.blockchain.com/v3/exchange/rates/hashrate/BTC';
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('Hashrate API error');
-        const data = await resp.json();
-        const hashrate = parseFloat(data.hashrate);
-        if (!isNaN(hashrate)) {
-            const eh = hashrate / 1e18;
-            document.getElementById('btc-hashrate').textContent = eh.toFixed(0) + ' EH/s (live)';
-            document.getElementById('hashrate-interp').textContent = eh > 800 ? '✅ Elevado' : eh > 600 ? 'ℹ️ Moderado' : '⚠️ Baixo';
-            dataCache.hashrate.value = eh;
-            dataCache.hashrate.timestamp = Date.now();
-        }
-    } catch (e) {
-        console.warn('Hashrate fetch failed:', e);
-        document.getElementById('btc-hashrate').textContent = 'Indisponível';
-        document.getElementById('hashrate-interp').textContent = 'Falha na API';
-    }
-}
-
-    async function fetchGasPrice() {
-    try {
-        const url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle';
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('Gas API error');
-        const data = await resp.json();
-        if (data.status === '1' && data.result) {
-            const gas = parseFloat(data.result.ProposeGasPrice) / 10;
-            if (!isNaN(gas)) {
-                document.getElementById('eth-gas').textContent = gas.toFixed(2) + ' Gwei (live)';
-                document.getElementById('eth-gas-interp').textContent = gas > 50 ? '⚠️ Alto' : gas > 20 ? 'ℹ️ Moderado' : '✅ Baixo';
-                dataCache.gas.value = gas;
-                dataCache.gas.timestamp = Date.now();
-            }
-        }
-    } catch (e) {
-        console.warn('Gas fetch failed:', e);
-        document.getElementById('eth-gas').textContent = 'Indisponível';
-        document.getElementById('eth-gas-interp').textContent = 'Falha na API';
-    }
-}
-    async function fetchDefi() {
-    try {
-        const [stableResp, tvlResp] = await Promise.all([
-            fetch('https://api.llama.fi/stablecoins/total').then(r => r.json()),
-            fetch('https://api.llama.fi/tvl').then(r => r.json())
-        ]);
-        if (stableResp && stableResp.total) {
-            const supply = stableResp.total / 1e9;
-            document.getElementById('stablecoin-supply').textContent = '$' + supply.toFixed(0) + 'B (live)';
-            document.getElementById('stablecoin-interp').textContent = '✅ Liquidez';
-        }
-        if (tvlResp && typeof tvlResp === 'number') {
-            const tvlB = tvlResp / 1e9;
-            document.getElementById('defi-tvl').textContent = '$' + tvlB.toFixed(0) + 'B (live)';
-            document.getElementById('defi-tvl-interp').textContent = tvlB > 70 ? '⚠️ Comprimido' : tvlB > 50 ? 'ℹ️ Moderado' : '✅ Baixo';
-            // Tenta pegar TVL de 24h atrás
-            try {
-                const oldTvl = await fetch('https://api.llama.fi/tvl?timestamp=24h').then(r => r.json());
-                if (typeof oldTvl === 'number' && !isNaN(oldTvl)) {
-                    const change = ((tvlResp - oldTvl) / oldTvl) * 100;
-                    document.getElementById('defi-tvl-change').textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '% (live)';
-                    document.getElementById('defi-tvl-change-interp').textContent = Math.abs(change) < 2 ? 'ℹ️ Estável' : change > 0 ? '✅ Crescendo' : '⚠️ Caindo';
-                }
-            } catch (e) {
-                document.getElementById('defi-tvl-change').textContent = 'Indisponível';
-            }
-        }
-        setTimestamp('defiTimestamp');
-    } catch (e) {
-        console.warn('DeFi fetch failed:', e);
-        document.getElementById('stablecoin-supply').textContent = 'Indisponível';
-        document.getElementById('defi-tvl').textContent = 'Indisponível';
-        document.getElementById('defi-tvl-change').textContent = 'Indisponível';
-    }
-}
-async function fetchTetherPremium() {
-    try {
-        const url = 'https://api.exchangerate-api.com/v4/latest/USD';
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('ExchangeRate API error');
-        const data = await resp.json();
-        const brl = data.rates.BRL;
-        const binanceUrl = 'https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL';
-        const binanceResp = await fetch(binanceUrl);
-        if (!binanceResp.ok) throw new Error('Binance USDTBRL error');
-        const binanceData = await binanceResp.json();
-        const usdtBrl = parseFloat(binanceData.price);
-        const premium = ((usdtBrl - brl) / brl) * 100;
-        document.getElementById('tether-premium').textContent = premium.toFixed(2) + '% (live)';
-        document.getElementById('tether-premium-interp').textContent = premium > 1 ? '⚠️ Ágio' : premium < -1 ? '⚠️ Deságio' : 'ℹ️ Neutro';
-        setTimestamp('defiTimestamp');
-    } catch (e) {
-        console.warn('Tether premium fetch failed:', e);
-        document.getElementById('tether-premium').textContent = 'Indisponível';
-        document.getElementById('tether-premium-interp').textContent = 'Falha na API';
-    }
-}
-    async function fetchFedRate() {
-    try {
-        const url = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF&cosd=2023-01-01&coed=2026-01-01';
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('FRED error');
-        const csv = await resp.text();
-        const lines = csv.trim().split('\n');
-        const lastLine = lines[lines.length - 1];
-        const parts = lastLine.split(',');
-        if (parts.length >= 2) {
-            const fed = parseFloat(parts[1]);
-            if (!isNaN(fed)) {
-                document.getElementById('fed-rate').textContent = fed.toFixed(2) + '% (live)';
-                document.getElementById('fed-interp').textContent = fed > 4 ? '⚠️ Restritivo' : fed > 2 ? 'ℹ️ Neutro' : '✅ Expansivo';
-            }
-        }
-    } catch (e) {
-        console.warn('Fed Rate fetch failed:', e);
-        document.getElementById('fed-rate').textContent = 'Indisponível';
-        document.getElementById('fed-interp').textContent = 'Falha na API';
-    }
-}
-
-    async function fetchDerivatives() {
-    try {
-        // Basis (perp vs spot)
-        const spot = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json());
-        const future = await fetch('https://fapi.binance.com/fapi/v1/ticker/price?symbol=BTCUSDT').then(r => r.json());
-        const spotPrice = parseFloat(spot.price);
-        const futurePrice = parseFloat(future.price);
-        if (!isNaN(spotPrice) && !isNaN(futurePrice)) {
-            const basis = ((futurePrice - spotPrice) / spotPrice) * 100;
-            document.getElementById('basis').textContent = basis.toFixed(2) + '% (live)';
-            document.getElementById('basis-interp').textContent = Math.abs(basis) > 0.5 ? '⚠️ Prêmio elevado' : 'ℹ️ Normal';
-        }
-
-        // Long/Short Ratio (posições)
-        const ls = await fetch('https://fapi.binance.com/fapi/v1/topLongShortRatio?symbol=BTCUSDT&period=24h').then(r => r.json());
-        if (ls.length > 0) {
-            const ratio = parseFloat(ls[0].longShortRatio);
-            if (!isNaN(ratio)) {
-                const longPct = (ratio * 100).toFixed(1);
-                const shortPct = (100 - ratio * 100).toFixed(1);
-                document.getElementById('ls-ratio-pos').textContent = longPct + '% / ' + shortPct + '% (live)';
-                document.getElementById('ls-ratio-pos-interp').textContent = ratio > 1.2 ? '⚠️ Long' : ratio < 0.8 ? '⚠️ Short' : 'ℹ️ Neutro';
-            }
-        }
-        // Long/Short Ratio (acc) – não temos, então deixamos como não disponível
-        // Mas podemos usar o mesmo ratio para ambos os campos? Melhor deixar como 'Indisponível'
-        document.getElementById('ls-ratio-acc').textContent = 'Indisponível';
-        document.getElementById('ls-ratio-acc-interp').textContent = 'Sem dados';
-        setTimestamp('onchainTimestamp');
-    } catch (e) {
-        console.warn('Derivatives fetch failed:', e);
-        document.getElementById('basis').textContent = 'Indisponível';
-        document.getElementById('ls-ratio-pos').textContent = 'Indisponível';
-        document.getElementById('ls-ratio-acc').textContent = 'Indisponível';
-    }
-}
-
-    async function fetchETFData() {
-    try {
-        // Tenta Farside primeiro
-        const url = 'https://api.farside.co.uk/etf/flows/latest';
-        const resp = await fetch(url);
-        if (resp.ok) {
-            const data = await resp.json();
-            if (data?.btc?.net_flow !== undefined) {
-                const btcFlow = data.btc.net_flow || 0;
-                const ethFlow = data.eth?.net_flow || 0;
-                document.getElementById('etf-btc-live').innerHTML = '<strong>' + (btcFlow >= 0 ? '+' : '') + btcFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
-                document.getElementById('etf-btc-interp').textContent = btcFlow > 0 ? '✅ Entrada' : btcFlow < 0 ? '⚠️ Saída' : 'ℹ️ Neutro';
-                document.getElementById('etf-eth-live').innerHTML = '<strong>' + (ethFlow >= 0 ? '+' : '') + ethFlow.toLocaleString('en-US', {style: 'currency', currency: 'USD'}) + '</strong>';
-                document.getElementById('etf-eth-interp').textContent = ethFlow > 0 ? '✅ Entrada' : ethFlow < 0 ? '⚠️ Saída' : 'ℹ️ Neutro';
-                return;
-            }
-        }
-        // Fallback: Bitbo.io (apenas BTC)
-        const btcUrl = 'https://charts.bitbo.io/api/v1/etf-flow-raw-btc/?latest=true';
-        const btcResp = await fetch(btcUrl);
-        if (btcResp.ok) {
-            const data = await btcResp.json();
-            if (data.data && data.data.length > 0) {
-                const flow = parseFloat(data.data[0][2]);
-                if (!isNaN(flow)) {
-                    document.getElementById('etf-btc-live').innerHTML = '<strong>' + (flow >= 0 ? '+' : '') + flow.toFixed(0) + ' BTC</strong>';
-                    document.getElementById('etf-btc-interp').textContent = flow > 0 ? '✅ Entrada' : flow < 0 ? '⚠️ Saída' : 'ℹ️ Neutro';
-                }
-            }
-        }
-        // ETH ETF não disponível em Bitbo
-        document.getElementById('etf-eth-live').textContent = 'Indisponível';
-        document.getElementById('etf-eth-interp').textContent = 'Sem dados';
-    } catch (e) {
-        console.warn('ETF flows fetch failed:', e);
-        document.getElementById('etf-btc-live').textContent = 'Indisponível';
-        document.getElementById('etf-eth-live').textContent = 'Indisponível';
-    }
-}
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
